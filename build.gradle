@@ -12,6 +12,10 @@ buildscript {
         espressoVersion = '3.0.1'
         glideVersion = '4.7.1'
         gradleVersion = '3.2.0-beta04'
+        okHttp3Version ='3.11.0'
+        retrofit2Version='2.4.0'
+        jsoupVersion='1.11.3'
+        moshiVersion='1.6.0'
         gsonVersion = '2.8.2'
         junitVersion = '4.12'
         lifecycleVersion = '1.1.1'
@@ -23,6 +27,8 @@ buildscript {
         runnerVersion = '1.0.1'
         supportLibraryVersion = '28.0.0-alpha3'
         workVersion = '1.0.0-alpha05'
+
+
     }
     repositories {
         google()
