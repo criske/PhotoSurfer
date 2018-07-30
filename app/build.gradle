@@ -4,7 +4,6 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'androidx.navigation.safeargs'
 
-
 android {
     compileSdkVersion rootProject.compileSdkVersion
     dataBinding {
@@ -23,6 +22,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        buildTypes.each {
+            it.buildConfigField 'String', 'ACCESS_KEY', accessKey // from gradle.properties
+            it.buildConfigField 'String', 'SECRET_KEY', secretKey // from gradle.properties
         }
     }
     compileOptions {
@@ -48,7 +51,11 @@ dependencies {
 
     implementation "com.squareup.moshi:moshi:$rootProject.moshiVersion"
     implementation "com.squareup.moshi:moshi-kotlin:$rootProject.moshiVersion"
+    implementation "com.squareup.retrofit2:converter-moshi:$rootProject.moshiRetrofit2Version"
     implementation "com.squareup.okhttp3:okhttp:$rootProject.okHttp3Version"
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp-urlconnection
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp-urlconnection', version: '3.11.0'
+
     implementation "com.squareup.retrofit2:retrofit:$rootProject.retrofit2Version"
     implementation "org.jsoup:jsoup:$rootProject.jsoupVersion"
 

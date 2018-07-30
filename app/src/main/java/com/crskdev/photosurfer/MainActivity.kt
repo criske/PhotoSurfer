@@ -8,5 +8,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        println(BuildConfig.ACCESS_KEY)
+        println(BuildConfig.SECRET_KEY)
     }
 }
