@@ -4,7 +4,6 @@ package com.crskdev.photosurfer.data.remote
 
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
-import com.crskdev.photosurfer.data.remote.auth.OAuth2Authorizer
 import okhttp3.*
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -20,7 +19,7 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
 
     internal val client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
-            .addInterceptor(UnsplashInterceptor(tokenStorage, OAuth2Authorizer(), apiKeys))
+            .addInterceptor(UnsplashInterceptor(tokenStorage, apiKeys))
             .build()
 
     internal val caller: Caller = Caller(BASE_HOST_API).apply {

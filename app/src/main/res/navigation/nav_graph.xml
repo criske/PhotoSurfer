@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    app:startDestination="@id/fragment_list_photos">
+    <fragment
+        android:id="@+id/fragment_list_photos"
+        android:name="com.crskdev.photosurfer.presentation.ListPhotosFragment"
+        android:label="Blank"
+        tools:layout="@layout/fragment_list_photos"/>
+</navigation>
