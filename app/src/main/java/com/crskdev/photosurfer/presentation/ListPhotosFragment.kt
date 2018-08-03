@@ -45,9 +45,6 @@ class ListPhotosFragment : Fragment() {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide)
         }
-//        buttonGeneratePhoto.setOnClickListener {
-//            model.generatePhoto()
-//        }
         model.photosData.observe(this, Observer {
             it?.let {
                 (recyclerListPhotos.adapter as ListPhotosAdapter).submitList(it)
@@ -128,6 +125,7 @@ class ListPhotosViewModel : ViewModel() {
             }
 
     private class PhotoSourceFactory : DataSource.Factory<String, Photo>() {
+        @Suppress("UNCHECKED_CAST")
         override fun create(): DataSource<String, Photo> = TiledPhotoDataSource() as DataSource<String, Photo>
     }
 
