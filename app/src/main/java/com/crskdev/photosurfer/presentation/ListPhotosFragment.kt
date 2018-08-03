@@ -131,24 +131,13 @@ class ListPhotosViewModel : ViewModel() {
 
     private class TiledPhotoDataSource : PositionalDataSource<Photo>() {
 
-        private var photos = listOf<Photo>()
-
         override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<Photo>) {
-            Log.d(this.toString(), "${params.loadSize} pos: ${params.startPosition}")
             Thread.sleep(2000)
-            val position = params.startPosition
-            val remainsToCreate = when {
-                position > photos.lastIndex -> (position - photos.lastIndex) * params.loadSize
-                photos.lastIndex - position <= params.loadSize -> params.loadSize
-                else -> 0
-            }
-            photos += createNextPhotos(remainsToCreate)
-            callback.onResult(photos.subList(position, position + params.loadSize))
+            callback.onResult(createNextPhotos(params.loadSize))
         }
 
         override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<Photo>) {
-            photos += createNextPhotos(params.requestedLoadSize)
-            val subList = photos.subList(0, params.requestedLoadSize)
+            val subList = createNextPhotos(params.requestedLoadSize)
             callback.onResult(subList, params.requestedStartPosition, subList.size * params.pageSize)
         }
 
