@@ -3,7 +3,6 @@ package com.crskdev.photosurfer.presentation
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +18,6 @@ import com.bumptech.glide.RequestManager
 import com.crskdev.photosurfer.R
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
-import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -45,12 +43,14 @@ class ListPhotosFragment : Fragment() {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide)
         }
-        model.photosData.observe(this, Observer {
+        model.photosData.observe(this, Observer { it ->
             it?.let {
                 (recyclerListPhotos.adapter as ListPhotosAdapter).submitList(it)
             }
         })
-
+        refreshListPhotos.setOnClickListener {
+            model.refresh()
+        }
 
     }
 }
@@ -63,9 +63,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
         }) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListPhotosVH =
-            layoutInflater.inflate(R.layout.item_list_photos, parent, false).let {
-                ListPhotosVH(glide, it)
-            }
+            ListPhotosVH(glide, layoutInflater.inflate(R.layout.item_list_photos, parent, false))
 
 
     override fun onBindViewHolder(viewHolder: ListPhotosVH, position: Int) {
@@ -94,16 +92,6 @@ class ListPhotosVH(private val glide: RequestManager, view: View) : androidx.rec
 
 class ListPhotosViewModel : ViewModel() {
 
-    companion object {
-
-        private var ID_GENERATOR = 0
-
-        private fun createPhoto() =
-                Photo((ID_GENERATOR++).toString(), 0L, 0L, 300, 300, "",
-                        emptyMap(), emptyList(), 1, false, 1, "1", "Foo")
-
-    }
-
     val photosData = PagedList.Config.Builder()
             .setEnablePlaceholders(true)
             .setPrefetchDistance(10)
@@ -124,12 +112,32 @@ class ListPhotosViewModel : ViewModel() {
                         .build()
             }
 
+    fun refresh() {
+        photosData.value?.dataSource?.invalidate()
+    }
+
+
     private class PhotoSourceFactory : DataSource.Factory<String, Photo>() {
         @Suppress("UNCHECKED_CAST")
         override fun create(): DataSource<String, Photo> = TiledPhotoDataSource() as DataSource<String, Photo>
     }
 
     private class TiledPhotoDataSource : PositionalDataSource<Photo>() {
+
+        companion object {
+            var REFRESH_SEED = -1
+        }
+
+        init {
+            REFRESH_SEED++
+        }
+
+        private var ID_GENERATOR = 0
+
+        private fun createPhoto() =
+                Photo((ID_GENERATOR++).toString() + ": $REFRESH_SEED", 0L, 0L, 300, 300, "",
+                        emptyMap(), emptyList(), 1, false, 1, "1", "Foo")
+
 
         override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<Photo>) {
             Thread.sleep(2000)
@@ -138,7 +146,7 @@ class ListPhotosViewModel : ViewModel() {
 
         override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<Photo>) {
             val subList = createNextPhotos(params.requestedLoadSize)
-            callback.onResult(subList, params.requestedStartPosition, subList.size * params.pageSize)
+            callback.onResult(subList, params.requestedStartPosition, 100)
         }
 
         private fun createNextPhotos(size: Int): List<Photo> {
@@ -170,7 +178,6 @@ internal class BackgroundThreadExecutor : Executor {
         executorService.execute(command)
     }
 }
-
 
 
 data class Photo(val id: String, val createdAt: Long, val updatedAt: Long,
