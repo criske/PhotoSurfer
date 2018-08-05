@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.presentation
 
+import android.graphics.Rect
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,13 +14,28 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.paging.*
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.request.RequestOptions
+import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.data.remote.NetworkClient
+import com.crskdev.photosurfer.data.remote.RetrofitClient
+import com.crskdev.photosurfer.data.remote.auth.APIKeys
+import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
+import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.safeSet
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Created by Cristian Pela on 01.08.2018.
@@ -42,6 +58,11 @@ class ListPhotosFragment : Fragment() {
         recyclerListPhotos.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide)
+            addItemDecoration(object : RecyclerView.ItemDecoration() {
+                override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+                    outRect.set(0, 4, 0, 4)
+                }
+            })
         }
         model.photosData.observe(this, Observer { it ->
             it?.let {
@@ -72,6 +93,9 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                 ?: viewHolder.clear()
     }
 
+    override fun onViewRecycled(holder: ListPhotosVH) {
+        holder.clear()
+    }
 }
 
 
@@ -81,16 +105,40 @@ class ListPhotosVH(private val glide: RequestManager, view: View) : androidx.rec
 
     fun bind(photo: Photo) {
         this.photo = photo
-        itemView.textPhotoId.text = photo.id
+        itemView.textAuthor.text = photo.authorUsername
+        itemView.textId.text = photo.id
+        itemView.textOrder.text = "#" + photo.extras?.toString()
+        glide.asDrawable()
+                .load(photo.links["thumb"])
+                .apply(RequestOptions()
+                        .transforms(CenterCrop(), RoundedCorners(8)))
+                .into(itemView.imagePhoto)
     }
 
     fun clear() {
-        itemView.textPhotoId.text = null
+        itemView.textAuthor.text = null
+        itemView.textId.text = null
+        itemView.textOrder.text = null
+        glide.clear(itemView.imagePhoto)
+        itemView.imagePhoto.setImageDrawable(null)
     }
 
 }
 
 class ListPhotosViewModel : ViewModel() {
+
+
+    private val photoAPI = RetrofitClient(NetworkClient(AuthTokenStorage.NONE,
+            APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY)))
+            .retrofit
+            .create(PhotoAPI::class.java)
+
+    private val repository = PhotoRepository()
+
+    private val uiExecutor = UIThreadExecutor()
+
+    private val ioExecutor = IOThreadExecutor()
+
 
     val photosData = PagedList.Config.Builder()
             .setEnablePlaceholders(true)
@@ -98,15 +146,45 @@ class ListPhotosViewModel : ViewModel() {
             .setPageSize(10)
             .build()
             .let {
-                LivePagedListBuilder<String, Photo>(PhotoSourceFactory(), it)
+                LivePagedListBuilder<Int, Photo>(PhotoSourceFactory(repository), it)
                         .setFetchExecutor(BackgroundThreadExecutor())
                         .setBoundaryCallback(object : PagedList.BoundaryCallback<Photo>() {
-                            override fun onItemAtEndLoaded(itemAtEnd: Photo) {
-                                super.onItemAtEndLoaded(itemAtEnd)
-                            }
+
+                            val isLoading = AtomicBoolean(false)
 
                             override fun onItemAtFrontLoaded(itemAtFront: Photo) {
-                                super.onItemAtFrontLoaded(itemAtFront)
+                                tryLoadMore(itemAtFront.pagingData?.prev)
+                            }
+
+                            override fun onItemAtEndLoaded(itemAtEnd: Photo) {
+                                tryLoadMore(itemAtEnd.pagingData?.next)
+                            }
+
+                            override fun onZeroItemsLoaded() {
+                                tryLoadMore(1)
+                            }
+
+                            fun tryLoadMore(page: Int?) {
+                                if (page != null && !isLoading.get()) {
+                                    ioExecutor.execute {
+                                        isLoading.compareAndSet(false, true)
+                                        val response = photoAPI.getPhotos(page).execute()
+                                        val photoPagingData = PhotoPagingData.createFromHeader(response.headers())
+                                        response.body()?.map {
+                                            Photo(it.id, 0, 0, it.width, it.height,
+                                                    it.colorString, it.urls, it.categories,
+                                                    it.likes, it.likedByMe,
+                                                    it.views, it.author.id, it.author.username,
+                                                    photoPagingData)
+                                        }?.apply {
+                                            repository.insertPhotos(this)
+                                            uiExecutor.run {
+                                                refresh()
+                                            }
+                                        }
+                                        isLoading.compareAndSet(true, false)
+                                    }
+                                }
                             }
                         })
                         .build()
@@ -117,53 +195,81 @@ class ListPhotosViewModel : ViewModel() {
     }
 
 
-    private class PhotoSourceFactory : DataSource.Factory<String, Photo>() {
-        @Suppress("UNCHECKED_CAST")
-        override fun create(): DataSource<String, Photo> = TiledPhotoDataSource() as DataSource<String, Photo>
+    private class PhotoSourceFactory(private val repository: PhotoRepository) : DataSource.Factory<Int, Photo>() {
+        override fun create(): DataSource<Int, Photo> = PhotosDataSource(repository)
     }
 
-    private class TiledPhotoDataSource : PositionalDataSource<Photo>() {
+    private class PhotosDataSource(private val repository: PhotoRepository) : PageKeyedDataSource<Int, Photo>() {
 
-        companion object {
-            var REFRESH_SEED = -1
-        }
-
-        init {
-            REFRESH_SEED++
-        }
-
-        private var ID_GENERATOR = 0
-
-        private fun createPhoto() =
-                Photo((ID_GENERATOR++).toString() + ": $REFRESH_SEED", 0L, 0L, 300, 300, "",
-                        emptyMap(), emptyList(), 1, false, 1, "1", "Foo")
-
-
-        override fun loadRange(params: LoadRangeParams, callback: LoadRangeCallback<Photo>) {
-            Thread.sleep(2000)
-            callback.onResult(createNextPhotos(params.loadSize))
-        }
-
-        override fun loadInitial(params: LoadInitialParams, callback: LoadInitialCallback<Photo>) {
-            val subList = createNextPhotos(params.requestedLoadSize)
-            callback.onResult(subList, params.requestedStartPosition, 100)
-        }
-
-        private fun createNextPhotos(size: Int): List<Photo> {
-            var count = 0
-            val list = mutableListOf<Photo>()
-            while (count < size) {
-                list.add(createPhoto())
-                count++
+        override fun loadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, Photo>) {
+            val photos = repository.getCurrentPagePhotos()
+            if (photos.isNotEmpty()) {
+                val pagingData = photos.first().pagingData ?: throw Error("Paging data not present")
+                callback.onResult(photos, pagingData.prev, pagingData.next)
+            } else {
+                callback.onResult(emptyList(), 0, 0, null, null)
             }
-            return list
+        }
+
+        override fun loadAfter(params: LoadParams<Int>, callback: LoadCallback<Int, Photo>) {
+            val photos = repository.getPagePhotos(params.key)
+            if (photos.isNotEmpty()) {
+                callback.onResult(photos, photos.first().pagingData!!.next)
+            } else {
+                callback.onResult(emptyList(), null)
+            }
+        }
+
+        override fun loadBefore(params: LoadParams<Int>, callback: LoadCallback<Int, Photo>) {
+            val photos = repository.getPagePhotos(params.key)
+            if (photos.isNotEmpty()) {
+                callback.onResult(photos, photos.first().pagingData!!.prev)
+            } else {
+                callback.onResult(emptyList(), null)
+            }
         }
 
     }
 
 }
 
-internal class UiThreadExecutor : Executor {
+class PhotoRepository {
+
+    private val count = AtomicInteger(0)
+    private val currentPage = AtomicInteger(1)
+    private val pagedPhotosDb = ConcurrentHashMap<Int, List<Photo>>()
+
+    fun getPagePhotos(page: Int): List<Photo> {
+        val filter = pagedPhotosDb[page] ?: emptyList()
+        if (filter.isNotEmpty())
+            filter.first().pagingData?.curr?.let { currentPage.safeSet(it) }
+        return filter
+    }
+
+    fun getCurrentPagePhotos(): List<Photo> {
+        return pagedPhotosDb[currentPage.get()] ?: emptyList()
+    }
+
+    fun insertPhotos(photos: List<Photo>) {
+        if (photos.isNotEmpty()) {
+            photos.first().pagingData?.curr?.let {
+                pagedPhotosDb[it] = photos.map { it.copy(extras = count.incrementAndGet()) }
+            }
+        }
+
+    }
+
+    fun total(): Int = pagedPhotosDb.values.sumBy { it.size }
+
+    fun getIndexOf(photo: Photo): Int = (photo.extras as Int?) ?: -1
+
+    fun clear() {
+        pagedPhotosDb.clear()
+    }
+
+}
+
+internal class UIThreadExecutor : Executor {
     private val mHandler = Handler(Looper.getMainLooper())
 
     override fun execute(command: Runnable) {
@@ -179,6 +285,14 @@ internal class BackgroundThreadExecutor : Executor {
     }
 }
 
+internal class IOThreadExecutor : Executor {
+    private val executorService = Executors.newSingleThreadExecutor()
+
+    override fun execute(command: Runnable) {
+        executorService.execute(command)
+    }
+}
+
 
 data class Photo(val id: String, val createdAt: Long, val updatedAt: Long,
                  val width: Int, val height: Int, val colorString: String,
@@ -186,5 +300,7 @@ data class Photo(val id: String, val createdAt: Long, val updatedAt: Long,
                  val categories: List<String>,
                  val likes: Int, val likedByMe: Boolean, val views: Int,
                  val authorId: String,
-                 val authorUsername: String)
+                 val authorUsername: String,
+                 val pagingData: PhotoPagingData? = null,
+                 val extras: Any? = null)
 

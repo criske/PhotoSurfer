@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.data.remote.photo
 
 import com.squareup.moshi.Json
+import okhttp3.Headers
 
 class PhotoJSON {
     lateinit var id: String
@@ -21,4 +22,43 @@ class PhotoJSON {
     var views: Int = 0
     @Json(name = "user")
     lateinit var author: AuthorJSON
+}
+
+data class PhotoPagingData(val total: Int, val curr: Int, val prev: Int?, val next: Int?) {
+    companion object {
+        private fun extractQueryParams(link: String): Map<String, String> =
+                link.split("?").takeIf { it.size == 2 }
+                        ?.get(1)
+                        ?.split("&")
+                        ?.fold(mutableMapOf()) { acc, curr ->
+                            val pair = curr.split("=")
+                            acc[pair.first()] = pair.last()
+                            acc
+                        }
+                        ?: emptyMap()
+
+        fun createFromHeader(headers: Headers): PhotoPagingData {
+            val total = headers["x-total"]?.toInt()
+                    ?: throw Error("Could not find x-total entry in header")
+            val (curr: Int, prev: Int?, next: Int?) = headers["link"]?.let {
+                val split = it.split(",")
+                val prev = split.firstOrNull { it.contains("prev") }
+                        ?.split(";")
+                        ?.first()
+                        ?.let { extractQueryParams(it.substring(1, it.lastIndex)) }
+                        ?.get("page")
+                        ?.toInt()
+                val next = split.firstOrNull { it.contains("next") }
+                        ?.split(";")
+                        ?.first()
+                        ?.let { extractQueryParams(it.substring(1, it.lastIndex)) }
+                        ?.get("page")
+                        ?.toInt()
+                val curr = next?.let { it - 1 } ?: prev?.let { it + 1 } ?: 1
+                Triple(curr, prev, next)
+
+            } ?: throw Error("Could not find link entry in header")
+            return PhotoPagingData(total, curr, prev, next)
+        }
+    }
 }
