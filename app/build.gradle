@@ -44,6 +44,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0-alpha1'
     kapt "com.github.bumptech.glide:compiler:$rootProject.glideVersion"
     implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.lifecycleVersion"
     implementation "android.arch.navigation:navigation-fragment-ktx:$rootProject.navigationVersion"
@@ -55,6 +56,7 @@ dependencies {
     implementation "androidx.core:core-ktx:$rootProject.ktxVersion"
     implementation "androidx.paging:paging-runtime:$rootProject.pagingVersion"
     implementation "androidx.constraintlayout:constraintlayout:$rootProject.constraintLayoutVersion"
+    implementation "androidx.palette:palette:$rootProject.paletteVersion"
 
     //implementation "com.android.support:design:$rootProject.supportLibraryVersion"
     implementation "com.squareup.moshi:moshi:$rootProject.moshiVersion"

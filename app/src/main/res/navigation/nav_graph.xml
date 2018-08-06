@@ -7,5 +7,15 @@
         android:id="@+id/fragment_list_photos"
         android:name="com.crskdev.photosurfer.presentation.ListPhotosFragment"
         android:label="Blank"
-        tools:layout="@layout/fragment_list_photos"/>
+        tools:layout="@layout/fragment_list_photos">
+        <action
+            android:id="@+id/action_fragment_list_photos_to_fragment_photo_details"
+            app:destination="@id/fragment_photo_details" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragment_photo_details"
+        android:name="com.crskdev.photosurfer.presentation.photo.PhotoDetailsFragment"
+        android:label="Blank"
+        tools:layout="@layout/fragment_photo_details"/>
 </navigation>

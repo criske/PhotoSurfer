@@ -10,7 +10,7 @@ buildscript {
         constraintLayoutVersion = '1.1.2'
         espressoVersion = '3.0.1'
         glideVersion = '4.8.0-SNAPSHOT'
-        gradleVersion = '3.2.0-beta04'
+        gradleVersion = '3.2.0-beta05'
         okHttp3Version ='3.11.0'
         retrofit2Version='2.4.0'
         jsoupVersion='1.11.3'
@@ -28,6 +28,7 @@ buildscript {
         supportLibraryVersion = '27.1.1'
         pagingVersion = '2.0.0-beta01'
         workVersion = '1.0.0-alpha05'
+        paletteVersion ='1.0.0-alpha1'
     }
     repositories {
         google()

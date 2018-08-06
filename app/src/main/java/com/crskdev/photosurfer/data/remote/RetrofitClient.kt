@@ -6,7 +6,11 @@ import okhttp3.HttpUrl
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
-class RetrofitClient(networkClient: NetworkClient) {
+class RetrofitClient(val networkClient: NetworkClient) {
+
+    companion object {
+        val DEFAULT = RetrofitClient(NetworkClient.DEFAULT)
+    }
 
     val retrofit = Retrofit.Builder()
             .baseUrl(HttpUrl.Builder()

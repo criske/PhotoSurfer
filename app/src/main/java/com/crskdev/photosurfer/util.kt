@@ -1,5 +1,7 @@
 package com.crskdev.photosurfer
 
+import android.content.Context
+import androidx.core.content.ContextCompat
 import java.util.concurrent.atomic.AtomicInteger
 
 /**

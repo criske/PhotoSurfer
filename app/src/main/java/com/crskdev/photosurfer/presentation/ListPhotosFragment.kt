@@ -7,10 +7,12 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.findNavController
 import androidx.paging.*
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -57,7 +59,10 @@ class ListPhotosFragment : Fragment() {
         val glide = Glide.with(this)
         recyclerListPhotos.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide)
+            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) {
+                view.findNavController().navigate(R.id.action_fragment_list_photos_to_fragment_photo_details,
+                        bundleOf("ID" to it.id, "FULL" to it.links["full"]))
+            }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
                     outRect.set(0, 4, 0, 4)
@@ -77,14 +82,15 @@ class ListPhotosFragment : Fragment() {
 }
 
 class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
-                        private val glide: RequestManager) : PagedListAdapter<Photo, ListPhotosVH>(
+                        private val glide: RequestManager,
+                        private val action: (Photo) -> Unit) : PagedListAdapter<Photo, ListPhotosVH>(
         object : DiffUtil.ItemCallback<Photo>() {
             override fun areItemsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem.id == newItem.id
             override fun areContentsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem == newItem
         }) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListPhotosVH =
-            ListPhotosVH(glide, layoutInflater.inflate(R.layout.item_list_photos, parent, false))
+            ListPhotosVH(glide, layoutInflater.inflate(R.layout.item_list_photos, parent, false), action)
 
 
     override fun onBindViewHolder(viewHolder: ListPhotosVH, position: Int) {
@@ -99,9 +105,15 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
 }
 
 
-class ListPhotosVH(private val glide: RequestManager, view: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+class ListPhotosVH(private val glide: RequestManager,
+                   view: View,
+                   private val action: (Photo) -> Unit) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
 
-    private lateinit var photo: Photo
+    private var photo: Photo? = null
+
+    init {
+        itemView.imagePhoto.setOnClickListener { photo?.let { action(it) } }
+    }
 
     fun bind(photo: Photo) {
         this.photo = photo
@@ -116,6 +128,7 @@ class ListPhotosVH(private val glide: RequestManager, view: View) : androidx.rec
     }
 
     fun clear() {
+        photo = null
         itemView.textAuthor.text = null
         itemView.textId.text = null
         itemView.textOrder.text = null
@@ -179,7 +192,7 @@ class ListPhotosViewModel : ViewModel() {
                                         }?.apply {
                                             repository.insertPhotos(this)
                                             uiExecutor.run {
-                                                refresh()
+                                                invalidateDataSource()
                                             }
                                         }
                                         isLoading.compareAndSet(true, false)
@@ -191,6 +204,11 @@ class ListPhotosViewModel : ViewModel() {
             }
 
     fun refresh() {
+        repository.clear()
+        invalidateDataSource()
+    }
+
+    private fun invalidateDataSource() {
         photosData.value?.dataSource?.invalidate()
     }
 

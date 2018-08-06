@@ -2,8 +2,10 @@
 
 package com.crskdev.photosurfer.data.remote
 
+import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.squareup.moshi.Moshi
 import okhttp3.*
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -17,13 +19,28 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
                         setCookiePolicy(CookiePolicy.ACCEPT_ALL)
                     })) {
 
+
+    companion object {
+        val DEFAULT = NetworkClient(AuthTokenStorage.NONE, APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY))
+    }
+
+
+    @PublishedApi
+    internal val downloadInterceptor = DownloadInterceptor(Moshi.Builder().build())
+
     internal val client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(UnsplashInterceptor(tokenStorage, apiKeys))
+            .addInterceptor(downloadInterceptor)
             .build()
 
     internal val caller: Caller = Caller(BASE_HOST_API).apply {
         this.client = this@NetworkClient.client
+    }
+
+
+    inline fun addDownloadProgressListener(crossinline listener: (Long, Long, Boolean)-> Unit) {
+        downloadInterceptor.progressListener = ProgressListener { bytesRead, contentLength, done -> listener(bytesRead, contentLength, done) }
     }
 
 }
