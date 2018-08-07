@@ -39,8 +39,10 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
     }
 
 
-    inline fun addDownloadProgressListener(crossinline listener: (Long, Long, Boolean)-> Unit) {
-        downloadInterceptor.progressListener = ProgressListener { bytesRead, contentLength, done -> listener(bytesRead, contentLength, done) }
+    inline fun addDownloadProgressListener(crossinline listener: (Boolean, Long, Long, Boolean) -> Unit) {
+        downloadInterceptor.progressListener = ProgressListener { isStartingValue, bytesRead, contentLength, done ->
+            listener(isStartingValue, bytesRead, contentLength, done)
+        }
     }
 
 }

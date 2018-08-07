@@ -46,6 +46,7 @@ class ProgressResponseBody extends ResponseBody {
     private Source source(Source source) {
         return new ForwardingSource(source) {
             long totalBytesRead = 0L;
+            boolean isStartingValue = true;
 
             @Override
             public long read(Buffer sink, long byteCount) throws IOException {
@@ -53,7 +54,8 @@ class ProgressResponseBody extends ResponseBody {
                 // read() returns the number of bytes read, or -1 if this source is exhausted.
                 totalBytesRead += bytesRead != -1 ? bytesRead : 0;
                 if (progressListener != null)
-                    progressListener.update(totalBytesRead, responseBody.contentLength(), bytesRead == -1);
+                    progressListener.update(isStartingValue, totalBytesRead, responseBody.contentLength(), bytesRead == -1);
+                isStartingValue = false;
                 return bytesRead;
             }
         };

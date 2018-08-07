@@ -22,4 +22,14 @@ class RetrofitClient(val networkClient: NetworkClient) {
             )
             .client(networkClient.client)
             .build()
+
+    @Synchronized
+    inline fun addDownloadProgressListener(crossinline listener: (Boolean, Long, Long, Boolean) -> Unit) {
+        networkClient.addDownloadProgressListener(listener)
+    }
+
+    @Synchronized
+    fun removeDownloadProgressListener() {
+        networkClient.downloadInterceptor.progressListener = null
+    }
 }

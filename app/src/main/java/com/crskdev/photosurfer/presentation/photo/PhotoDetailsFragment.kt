@@ -4,12 +4,9 @@ package com.crskdev.photosurfer.presentation.photo
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.PorterDuff
-import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.view.*
-import androidx.cardview.widget.CardView
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
@@ -24,13 +21,17 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.*
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.data.remote.RetrofitClient
+import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 
 import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
-import com.google.android.material.behavior.SwipeDismissBehavior
+import com.crskdev.photosurfer.services.GalleryPhotoSaver
+import com.crskdev.photosurfer.services.PhotoSaver
 import kotlinx.android.synthetic.main.fragment_photo_details.*
 import kotlinx.android.synthetic.main.progress_layout.*
 import java.util.concurrent.Executor
+import kotlin.math.roundToInt
 
 /**
  * A simple [Fragment] subclass.
@@ -45,7 +46,10 @@ class PhotoDetailsFragment : Fragment() {
         viewModel = ViewModelProviders.of(activity!!, object : ViewModelProvider.Factory {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return PhotoDetailViewModel(UIThreadExecutor(), BackgroundThreadExecutor()) as T
+                return PhotoDetailViewModel(
+                        UIThreadExecutor(),
+                        BackgroundThreadExecutor(),
+                        GalleryPhotoSaver(this@PhotoDetailsFragment.activity!!.applicationContext)) as T
             }
         }).get(PhotoDetailViewModel::class.java)
     }
@@ -92,8 +96,10 @@ class PhotoDetailsFragment : Fragment() {
                 }
                 val accent = ContextCompat.getColor(view.context, R.color.colorAccent)
                 fabDownload.backgroundTintList = ColorStateList.valueOf(palette.getMutedColor(accent))
-                progressBarDownload.progressDrawable.colorFilter = PorterDuff.Mode.SRC_ATOP
+                val progreessColorFilter = PorterDuff.Mode.SRC_ATOP
                         .toColorFilter(accent)
+                progressBarDownload.progressDrawable.colorFilter = progreessColorFilter
+                progressBarDownload.indeterminateDrawable.colorFilter = progreessColorFilter
                 imgBtnDownloadCancel.drawable.setColorFilter(
                         palette.getMutedColor(accent), PorterDuff.Mode.SRC_ATOP)
                 textDownloadProgress.setTextColor(darkVibrantColor)
@@ -101,58 +107,57 @@ class PhotoDetailsFragment : Fragment() {
         })
 
         var isAnimatingTranslation = false
-        val originalCardX = IntArray(2)
-                .apply { cardProgressDownload.getLocationOnScreen(this)}[0]
-
+        var isDownloadShowing = false
         viewModel.downloadLiveData
                 .filter { it != PhotoDetailViewModel.DownloadProgress.NONE }
                 .observe(this, Observer {
-                    progressBarDownload.progress = it.percent
-                    textDownloadProgress.text = "${it.percent}%"
-                    if (it.isStaringValue || (!isAnimatingTranslation && cardProgressDownload.y < 0)) {
+
+                    val isIndeterminated = it.percent == -1
+                    progressBarDownload.isIndeterminate = isIndeterminated
+                    if (isIndeterminated) {
+                        textDownloadProgress.text = "?"
+
+                    } else {
+                        progressBarDownload.progress = it.percent
+                        textDownloadProgress.text = "${it.percent}%"
+                    }
+                    println(it.doneOrCanceled)
+
+                    if ((!isDownloadShowing && it.isStaringValue)
+                            || it.isStaringValue
+                            || (!isAnimatingTranslation && cardProgressDownload.y < 0)) {
                         isAnimatingTranslation = true
                         cardProgressDownload.animate().translationY(50f.dpToPx(resources))
                                 .onEnded {
                                     isAnimatingTranslation = false
+                                    isDownloadShowing = true
                                     fabDownload.hide()
                                 }
                                 .start()
                     }
-                    if (it.doneOrCanceled && !isAnimatingTranslation) {
+                    if (it.doneOrCanceled || it.percent == 100) {
                         isAnimatingTranslation = true
                         cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
                                 .onEnded {
                                     isAnimatingTranslation = false
-                                    println("Original $originalCardX Curr:  ${cardProgressDownload.x}")
-                                    cardProgressDownload.x = 100f
+                                    isDownloadShowing = false
                                     fabDownload.show()
                                 }
                                 .start()
                     }
                 })
 
-        fabDownload.setOnClickListener {
-            id?.let { viewModel.download(it) }
+        fabDownload.setOnClickListener { v ->
+            id?.let {
+                if (!AppPermissions.hasStoragePermission(v.context)) {
+                    AppPermissions.requestStoragePermission(activity!!)
+                } else
+                    viewModel.download(it)
+            }
         }
 
         imgBtnDownloadCancel.setOnClickListener {
             id?.let { viewModel.cancelDownload(it) }
-        }
-
-        (cardProgressDownload.layoutParams as CoordinatorLayout.LayoutParams).apply {
-            behavior = SwipeDismissBehavior<CardView>().apply {
-                setSwipeDirection(SwipeDismissBehavior.SWIPE_DIRECTION_END_TO_START)
-                setDragDismissDistance(200f)
-                setListener(object : SwipeDismissBehavior.OnDismissListener {
-                    override fun onDismiss(v: View) {
-                        println("dimissss")
-                        id?.let { viewModel.cancelDownload(it) }
-                    }
-
-                    override fun onDragStateChanged(state: Int) {
-                    }
-                })
-            }
         }
     }
 
@@ -183,7 +188,32 @@ class PhotoDetailsFragment : Fragment() {
 
 class PhotoDetailViewModel(
         private val uiExecutor: Executor,
-        private val backgroundExecutor: Executor) : ViewModel() {
+        private val backgroundExecutor: Executor,
+        private val photoSaver: PhotoSaver) : ViewModel() {
+
+
+    private val progressListener: (Boolean, Long, Long, Boolean) -> Unit = { isStartingValue, curr, total, done ->
+        println("Progress: $curr $total")
+        if (total == -1L && isStartingValue) { //indeterminated
+            downloadLiveData.postValue(DownloadProgress.INDETERMINATED_START)
+        } else {
+            val percent = (curr.toFloat() / total * 100).roundToInt()
+            if (percent % 10 == 0) // backpressure relief
+                downloadLiveData.postValue(DownloadProgress(percent, false, curr == total))
+        }
+        if (done) {
+            if (total == -1L) {
+                downloadLiveData.postValue(DownloadProgress.INDETERMINATED_END)
+            }
+            uiExecutor.execute {
+                RetrofitClient.DEFAULT.removeDownloadProgressListener()
+            }
+        }
+    }
+
+    private val photoApi = RetrofitClient.DEFAULT.apply {
+        networkClient.addDownloadProgressListener(progressListener)
+    }.retrofit.create(PhotoAPI::class.java)
 
     val paletteLiveData = MutableLiveData<Map<String, Palette>>().apply {
         value = emptyMap()
@@ -208,32 +238,17 @@ class PhotoDetailViewModel(
     private val lock = Any()
 
     fun download(id: String) {
+        RetrofitClient.DEFAULT.addDownloadProgressListener(progressListener)
         backgroundExecutor.execute {
-            var count = 0
-            downloadLiveData.postValue(DownloadProgress(count, true, false))
-            var lastTime = System.currentTimeMillis()
-            synchronized(lock) {
-                isDownloadCanceled = false
-            }
-            while (count <= 100) {
-                synchronized(lock) {
-                    if (isDownloadCanceled) {
-                        downloadLiveData.postValue(DownloadProgress(count, false, true))
-                        count = 100
-                    }
-                }
 
-                val now = System.currentTimeMillis()
-                if (now - lastTime >= 100) {
-                    downloadLiveData.postValue(DownloadProgress(count, false,
-                            count >= 100))
-                    count++
-                    lastTime = now
-                }
+            downloadLiveData.postValue(DownloadProgress(0, true, false))
+            val response = photoApi.download(id).execute()
+
+            response.body()?.source()?.let {
+                photoSaver.save(id, it)
             }
-            uiExecutor.execute {
-                downloadLiveData.value = DownloadProgress.NONE
-            }
+
+            downloadLiveData.postValue(DownloadProgress.NONE)
         }
 
     }
@@ -250,7 +265,9 @@ class PhotoDetailViewModel(
 
     data class DownloadProgress(val percent: Int, val isStaringValue: Boolean, val doneOrCanceled: Boolean) {
         companion object {
-            val NONE = DownloadProgress(-1, false, false)
+            val NONE = DownloadProgress(Int.MIN_VALUE, false, false)
+            val INDETERMINATED_START = DownloadProgress(-1, true, false)
+            val INDETERMINATED_END = DownloadProgress(-1, true, false)
         }
     }
 
