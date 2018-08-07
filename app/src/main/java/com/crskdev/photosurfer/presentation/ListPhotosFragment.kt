@@ -2,8 +2,6 @@ package com.crskdev.photosurfer.presentation
 
 import android.graphics.Rect
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,12 +28,13 @@ import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
+import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
+import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
 import com.crskdev.photosurfer.safeSet
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -285,30 +284,6 @@ class PhotoRepository {
         pagedPhotosDb.clear()
     }
 
-}
-
-internal class UIThreadExecutor : Executor {
-    private val mHandler = Handler(Looper.getMainLooper())
-
-    override fun execute(command: Runnable) {
-        mHandler.post(command)
-    }
-}
-
-internal class BackgroundThreadExecutor : Executor {
-    private val executorService = Executors.newSingleThreadExecutor()
-
-    override fun execute(command: Runnable) {
-        executorService.execute(command)
-    }
-}
-
-internal class IOThreadExecutor : Executor {
-    private val executorService = Executors.newSingleThreadExecutor()
-
-    override fun execute(command: Runnable) {
-        executorService.execute(command)
-    }
 }
 
 
