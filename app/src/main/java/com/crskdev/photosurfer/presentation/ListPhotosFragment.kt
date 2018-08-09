@@ -9,6 +9,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
 import androidx.paging.*
@@ -22,19 +23,26 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.data.local.photo.PhotoRepository
 import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.entities.Photo
+import com.crskdev.photosurfer.entities.toPhoto
 import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
+import com.crskdev.photosurfer.presentation.photo.PhotoDetailViewModel
 import com.crskdev.photosurfer.safeSet
+import com.crskdev.photosurfer.services.GalleryPhotoSaver
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -47,7 +55,18 @@ class ListPhotosFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        model = ViewModelProviders.of(activity!!).get(ListPhotosViewModel::class.java)
+        model = ViewModelProviders.of(activity!!, object : ViewModelProvider.Factory {
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                val graph = context!!.dependencyGraph()
+                @Suppress("UNCHECKED_CAST")
+                return ListPhotosViewModel(
+                        graph.uiThreadExecutor,
+                        graph.ioThreadExecutor,
+                        graph.backgroundThreadExecutor,
+                        graph.photoRepository
+                ) as T
+            }
+        }).get(ListPhotosViewModel::class.java)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -60,7 +79,7 @@ class ListPhotosFragment : Fragment() {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) {
                 view.findNavController().navigate(R.id.action_fragment_list_photos_to_fragment_photo_details,
-                        bundleOf("ID" to it.id, "FULL" to it.links["full"]))
+                        bundleOf("ID" to it.id, "FULL" to it.urls["full"]))
             }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
@@ -120,7 +139,7 @@ class ListPhotosVH(private val glide: RequestManager,
         itemView.textId.text = photo.id
         itemView.textOrder.text = "#" + photo.extras?.toString()
         glide.asDrawable()
-                .load(photo.links["thumb"])
+                .load(photo.urls["thumb"])
                 .apply(RequestOptions()
                         .transforms(CenterCrop(), RoundedCorners(8)))
                 .into(itemView.imagePhoto)
@@ -137,20 +156,11 @@ class ListPhotosVH(private val glide: RequestManager,
 
 }
 
-class ListPhotosViewModel : ViewModel() {
-
-
-    private val photoAPI = RetrofitClient(NetworkClient(AuthTokenStorage.NONE,
-            APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY)))
-            .retrofit
-            .create(PhotoAPI::class.java)
-
-    private val repository = PhotoRepository()
-
-    private val uiExecutor = UIThreadExecutor()
-
-    private val ioExecutor = IOThreadExecutor()
-
+class ListPhotosViewModel(private val uiExecutor: Executor,
+                          private val ioExecutor: Executor,
+                          private val backgroundThreadExecutor: Executor,
+                          private val repo: PhotoRepository
+) : ViewModel() {
 
     val photosData = PagedList.Config.Builder()
             .setEnablePlaceholders(true)
@@ -158,8 +168,8 @@ class ListPhotosViewModel : ViewModel() {
             .setPageSize(10)
             .build()
             .let {
-                LivePagedListBuilder<Int, Photo>(PhotoSourceFactory(repository), it)
-                        .setFetchExecutor(BackgroundThreadExecutor())
+                LivePagedListBuilder<Int, Photo>(repo.getPhotos(), it)
+                        .setFetchExecutor(backgroundThreadExecutor)
                         .setBoundaryCallback(object : PagedList.BoundaryCallback<Photo>() {
 
                             val isLoading = AtomicBoolean(false)
@@ -180,21 +190,10 @@ class ListPhotosViewModel : ViewModel() {
                                 if (page != null && !isLoading.get()) {
                                     ioExecutor.execute {
                                         isLoading.compareAndSet(false, true)
-                                        val response = photoAPI.getPhotos(page).execute()
-                                        val photoPagingData = PhotoPagingData.createFromHeader(response.headers())
-                                        response.body()?.map {
-                                            Photo(it.id, 0, 0, it.width, it.height,
-                                                    it.colorString, it.urls, it.categories,
-                                                    it.likes, it.likedByMe,
-                                                    it.views, it.author.id, it.author.username,
-                                                    photoPagingData)
-                                        }?.apply {
-                                            repository.insertPhotos(this)
-                                            uiExecutor.run {
-                                                invalidateDataSource()
-                                            }
+                                        backgroundThreadExecutor.execute {
+                                            repo.insertPhotos(page)
+                                            isLoading.compareAndSet(true, false)
                                         }
-                                        isLoading.compareAndSet(true, false)
                                     }
                                 }
                             }
@@ -203,8 +202,9 @@ class ListPhotosViewModel : ViewModel() {
             }
 
     fun refresh() {
-        repository.clear()
-        invalidateDataSource()
+        backgroundThreadExecutor.execute {
+            repo.clear()
+        }
     }
 
     private fun invalidateDataSource() {
@@ -212,14 +212,14 @@ class ListPhotosViewModel : ViewModel() {
     }
 
 
-    private class PhotoSourceFactory(private val repository: PhotoRepository) : DataSource.Factory<Int, Photo>() {
-        override fun create(): DataSource<Int, Photo> = PhotosDataSource(repository)
+    private class PhotoSourceFactory(private val repositoryInMemory: InMemoryPhotoRepository) : DataSource.Factory<Int, Photo>() {
+        override fun create(): DataSource<Int, Photo> = PhotosDataSource(repositoryInMemory)
     }
 
-    private class PhotosDataSource(private val repository: PhotoRepository) : PageKeyedDataSource<Int, Photo>() {
+    private class PhotosDataSource(private val repositoryInMemory: InMemoryPhotoRepository) : PageKeyedDataSource<Int, Photo>() {
 
         override fun loadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, Photo>) {
-            val photos = repository.getCurrentPagePhotos()
+            val photos = repositoryInMemory.getCurrentPagePhotos()
             if (photos.isNotEmpty()) {
                 val pagingData = photos.first().pagingData ?: throw Error("Paging data not present")
                 callback.onResult(photos, pagingData.prev, pagingData.next)
@@ -229,7 +229,7 @@ class ListPhotosViewModel : ViewModel() {
         }
 
         override fun loadAfter(params: LoadParams<Int>, callback: LoadCallback<Int, Photo>) {
-            val photos = repository.getPagePhotos(params.key)
+            val photos = repositoryInMemory.getPagePhotos(params.key)
             if (photos.isNotEmpty()) {
                 callback.onResult(photos, photos.first().pagingData!!.next)
             } else {
@@ -238,7 +238,7 @@ class ListPhotosViewModel : ViewModel() {
         }
 
         override fun loadBefore(params: LoadParams<Int>, callback: LoadCallback<Int, Photo>) {
-            val photos = repository.getPagePhotos(params.key)
+            val photos = repositoryInMemory.getPagePhotos(params.key)
             if (photos.isNotEmpty()) {
                 callback.onResult(photos, photos.first().pagingData!!.prev)
             } else {
@@ -250,7 +250,7 @@ class ListPhotosViewModel : ViewModel() {
 
 }
 
-class PhotoRepository {
+class InMemoryPhotoRepository {
 
     private val count = AtomicInteger(0)
     private val currentPage = AtomicInteger(1)
@@ -286,14 +286,4 @@ class PhotoRepository {
 
 }
 
-
-data class Photo(val id: String, val createdAt: Long, val updatedAt: Long,
-                 val width: Int, val height: Int, val colorString: String,
-                 val links: Map<String, String>,
-                 val categories: List<String>,
-                 val likes: Int, val likedByMe: Boolean, val views: Int,
-                 val authorId: String,
-                 val authorUsername: String,
-                 val pagingData: PhotoPagingData? = null,
-                 val extras: Any? = null)
 

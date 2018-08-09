@@ -39,7 +39,16 @@ import kotlin.math.roundToInt
  */
 class PhotoDetailsFragment : Fragment() {
 
+    companion object {
+        private const val KEY_IS_DOWNLOADING = "KEY_IS_DOWNLOADING"
+    }
+
     private lateinit var viewModel: PhotoDetailViewModel
+
+    private var progSlideDownAnimation: ViewPropertyAnimator? = null
+    private var progSlideUpAnimation: ViewPropertyAnimator? = null
+
+    private var isDownloadShowing: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,8 +56,8 @@ class PhotoDetailsFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return PhotoDetailViewModel(
-                        UIThreadExecutor(),
-                        BackgroundThreadExecutor(),
+                        context!!.dependencyGraph().uiThreadExecutor,
+                        context!!.dependencyGraph().backgroundThreadExecutor,
                         GalleryPhotoSaver(this@PhotoDetailsFragment.activity!!.applicationContext)) as T
             }
         }).get(PhotoDetailViewModel::class.java)
@@ -106,12 +115,15 @@ class PhotoDetailsFragment : Fragment() {
             }
         })
 
-        var isAnimatingTranslation = false
-        var isDownloadShowing = false
+
+
+        isDownloadShowing = savedInstanceState?.getBoolean(KEY_IS_DOWNLOADING, false) ?: false
+        (fabDownload as View).visibility = if (isDownloadShowing) View.GONE else View.VISIBLE
+
+        var isAnimatingSlide = false
         viewModel.downloadLiveData
                 .filter { it != PhotoDetailViewModel.DownloadProgress.NONE }
                 .observe(this, Observer {
-
                     val isIndeterminated = it.percent == -1
                     progressBarDownload.isIndeterminate = isIndeterminated
                     if (isIndeterminated) {
@@ -121,30 +133,31 @@ class PhotoDetailsFragment : Fragment() {
                         progressBarDownload.progress = it.percent
                         textDownloadProgress.text = "${it.percent}%"
                     }
-                    println(it.doneOrCanceled)
-
                     if ((!isDownloadShowing && it.isStaringValue)
                             || it.isStaringValue
-                            || (!isAnimatingTranslation && cardProgressDownload.y < 0)) {
-                        isAnimatingTranslation = true
-                        cardProgressDownload.animate().translationY(50f.dpToPx(resources))
+                            || (!isAnimatingSlide && cardProgressDownload.y < 0)) {
+                        isAnimatingSlide = true
+                        progSlideDownAnimation = cardProgressDownload.animate().translationY(50f.dpToPx(resources))
                                 .onEnded {
-                                    isAnimatingTranslation = false
+                                    isAnimatingSlide = false
+                                    (fabDownload as View).visibility = View.GONE
+                                    btnTestDownload.visibility = View.GONE
                                     isDownloadShowing = true
-                                    fabDownload.hide()
-                                }
-                                .start()
+                                }.apply { start() }
+                        (fabDownload as View).visibility = View.GONE
+
                     }
-                    if (it.doneOrCanceled || it.percent == 100) {
-                        isAnimatingTranslation = true
-                        cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
+                    if (it.doneOrCanceled) {
+                        isAnimatingSlide = true
+                        progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
                                 .onEnded {
-                                    isAnimatingTranslation = false
+                                    isAnimatingSlide = false
+                                    (fabDownload as View).visibility = View.VISIBLE
+                                    btnTestDownload.visibility = View.VISIBLE
                                     isDownloadShowing = false
-                                    fabDownload.show()
-                                }
-                                .start()
+                                }.apply { start() }
                     }
+
                 })
 
         fabDownload.setOnClickListener { v ->
@@ -173,13 +186,26 @@ class PhotoDetailsFragment : Fragment() {
 
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(KEY_IS_DOWNLOADING, isDownloadShowing)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onDestroyView() {
+        fabDownload.hide()
+        fabDownload.cancelPendingInputEvents()
+        progSlideUpAnimation?.cancel()
+        progSlideDownAnimation?.cancel()
+        super.onDestroyView()
+    }
+
     override fun onDestroy() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             val defaultPrimary = ContextCompat.getColor(context!!, R.color.colorPrimaryDark)
             activity!!.window.statusBarColor = defaultPrimary
         }
         arguments?.getString("ID")?.let {
-            viewModel.cancelDownload(it)
+            //      viewModel.cancelDownload(it)
         }
 
         super.onDestroy()
@@ -241,14 +267,41 @@ class PhotoDetailViewModel(
         RetrofitClient.DEFAULT.addDownloadProgressListener(progressListener)
         backgroundExecutor.execute {
 
-            downloadLiveData.postValue(DownloadProgress(0, true, false))
-            val response = photoApi.download(id).execute()
+            //            downloadLiveData.postValue(DownloadProgress(0, true, false))
+//            val response = photoApi.download(id).execute()
+//
+//            response.body()?.source()?.let {
+//                photoSaver.save(id, it)
+//            }
+//
+//            downloadLiveData.postValue(DownloadProgress.NONE)
 
-            response.body()?.source()?.let {
-                photoSaver.save(id, it)
+            var count = 0
+            downloadLiveData.postValue(DownloadProgress(count, true, false))
+            var lastTime = System.currentTimeMillis()
+            synchronized(lock) {
+                isDownloadCanceled = false
             }
+            val max = 1000
+            while (count <= max) {
+                synchronized(lock) {
+                    if (isDownloadCanceled) {
+                        downloadLiveData.postValue(DownloadProgress(count, false, true))
+                        count = 100
+                    }
+                }
 
-            downloadLiveData.postValue(DownloadProgress.NONE)
+                val now = System.currentTimeMillis()
+                if (now - lastTime >= 100) {
+                    downloadLiveData.postValue(DownloadProgress((count.toFloat() / max * 100).roundToInt(), false,
+                            count >= max))
+                    count++
+                    lastTime = now
+                }
+            }
+            uiExecutor.execute {
+                downloadLiveData.value = DownloadProgress.NONE
+            }
         }
 
     }

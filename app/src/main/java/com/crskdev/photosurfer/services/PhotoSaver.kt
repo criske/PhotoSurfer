@@ -2,10 +2,9 @@ package com.crskdev.photosurfer.services
 
 import android.content.Context
 import android.content.Intent
-import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Environment
-import com.crskdev.photosurfer.presentation.Photo
+import com.crskdev.photosurfer.entities.Photo
 import okio.Okio
 import okio.Source
 import java.io.File
