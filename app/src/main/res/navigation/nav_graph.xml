@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<navigation xmlns:app="http://schemas.android.com/apk/res-auto"
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android"
     app:startDestination="@id/fragment_list_photos">
     <fragment
         android:id="@+id/fragment_list_photos"
@@ -10,12 +10,20 @@
         tools:layout="@layout/fragment_list_photos">
         <action
             android:id="@+id/action_fragment_list_photos_to_fragment_photo_details"
-            app:destination="@id/fragment_photo_details" />
+            app:destination="@id/fragment_photo_details"
+            app:enterAnim="@anim/in_from_right"
+            app:exitAnim="@anim/out_to_left"
+            app:popEnterAnim="@anim/in_from_left"
+            app:popExitAnim="@anim/out_to_right" />
     </fragment>
 
     <fragment
         android:id="@+id/fragment_photo_details"
         android:name="com.crskdev.photosurfer.presentation.photo.PhotoDetailsFragment"
         android:label="Blank"
-        tools:layout="@layout/fragment_photo_details"/>
+        tools:layout="@layout/fragment_photo_details">
+        <argument
+            android:name="photo"
+            app:argType="com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto" />
+    </fragment>
 </navigation>

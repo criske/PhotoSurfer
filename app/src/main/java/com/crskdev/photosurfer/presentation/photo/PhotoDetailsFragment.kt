@@ -72,30 +72,30 @@ class PhotoDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         fabDownload.hide()
 
-        val id = arguments?.getString("ID")
+        val photo = PhotoDetailsFragmentArgs.fromBundle(arguments).photo
+        val id = photo.id
 
-        arguments?.getString("FULL")?.let { link ->
-            Glide.with(this).asBitmap()
-                    .load(link)
-                    .apply(RequestOptions().centerCrop())
-                    .addListener(object : RequestListener<Bitmap> {
-                        override fun onResourceReady(resource: Bitmap?,
-                                                     model: Any?, target: Target<Bitmap>?,
-                                                     dataSource: DataSource?,
-                                                     isFirstResource: Boolean): Boolean {
-                            setPalette(id, resource)
-                            view.postDelayed(300) {
-                                fabDownload.show()
-                            }
-                            return false
+        Glide.with(this).asBitmap()
+                .load(photo.urls["full"])
+                .apply(RequestOptions().centerCrop())
+                .addListener(object : RequestListener<Bitmap> {
+                    override fun onResourceReady(resource: Bitmap?,
+                                                 model: Any?, target: Target<Bitmap>?,
+                                                 dataSource: DataSource?,
+                                                 isFirstResource: Boolean): Boolean {
+                        setPalette(id, resource)
+                        view.postDelayed(300) {
+                            fabDownload.show()
                         }
+                        return false
+                    }
 
-                        override fun onLoadFailed(e: GlideException?, model: Any?,
-                                                  target: Target<Bitmap>?,
-                                                  isFirstResource: Boolean): Boolean = false
-                    })
-                    .into(imagePhoto)
-        }
+                    override fun onLoadFailed(e: GlideException?, model: Any?,
+                                              target: Target<Bitmap>?,
+                                              isFirstResource: Boolean): Boolean = false
+                })
+                .into(imagePhoto)
+
         viewModel.paletteLiveData.observe(this, Observer {
             it[id]?.let { palette ->
                 val darkVibrantColor = palette.getDarkVibrantColor(ContextCompat
@@ -204,10 +204,6 @@ class PhotoDetailsFragment : Fragment() {
             val defaultPrimary = ContextCompat.getColor(context!!, R.color.colorPrimaryDark)
             activity!!.window.statusBarColor = defaultPrimary
         }
-        arguments?.getString("ID")?.let {
-            //      viewModel.cancelDownload(it)
-        }
-
         super.onDestroy()
     }
 }

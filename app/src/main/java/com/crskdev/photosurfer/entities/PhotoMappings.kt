@@ -1,8 +1,11 @@
 package com.crskdev.photosurfer.entities
 
+import android.os.Bundle
+import androidx.core.os.bundleOf
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto
 
 /**
  * Created by Cristian Pela on 09.08.2018.
@@ -80,3 +83,17 @@ fun PhotoJSON.toDbEntity(pagingData: PhotoPagingData, nextIndex: Int): PhotoEnti
             indexInResponse = nextIndex
         }
 
+fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
+        createdAt, updatedAt,
+        width, height,
+        colorString,
+        urls, categories, likes, likedByMe, views, authorId, authorUsername,
+        pagingData?.total, pagingData?.curr, pagingData?.prev, pagingData?.next)
+
+fun ParcelizedPhoto.deparcelize(): Photo =
+        Photo(id,
+                createdAt, updatedAt,
+                width, height,
+                colorString,
+                urls, categories, likes, likedByMe, views, authorId, authorUsername,
+                PhotoPagingData(total ?: -1, curr ?: -1, prev, next))

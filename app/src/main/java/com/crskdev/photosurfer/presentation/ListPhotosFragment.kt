@@ -32,6 +32,7 @@ import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
+import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.entities.toPhoto
 import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
@@ -78,8 +79,9 @@ class ListPhotosFragment : Fragment() {
         recyclerListPhotos.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) {
-                view.findNavController().navigate(R.id.action_fragment_list_photos_to_fragment_photo_details,
-                        bundleOf("ID" to it.id, "FULL" to it.urls["full"]))
+                view.findNavController().navigate(
+                        ListPhotosFragmentDirections
+                                .actionFragmentListPhotosToFragmentPhotoDetails(it.parcelize()))
             }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {

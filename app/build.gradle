@@ -9,6 +9,9 @@ android {
     dataBinding {
         enabled = false
     }
+    androidExtensions {
+        experimental = true
+    }
     defaultConfig {
         applicationId "com.crskdev.photosurfer"
         minSdkVersion rootProject.minSdkVersion
