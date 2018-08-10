@@ -2,6 +2,7 @@ package com.crskdev.photosurfer
 
 import android.content.Context
 import com.crskdev.photosurfer.data.local.PhotoSurferDB
+import com.crskdev.photosurfer.data.local.TransactionRunnerImpl
 import com.crskdev.photosurfer.data.local.photo.PhotoRepository
 import com.crskdev.photosurfer.data.local.photo.PhotoRepositoryImpl
 import com.crskdev.photosurfer.data.remote.NetworkClient
@@ -23,9 +24,7 @@ object DependencyGraph {
 
     //EXECUTORS
     var uiThreadExecutor: Executor = UIThreadExecutor()
-
     var backgroundThreadExecutor: Executor = BackgroundThreadExecutor()
-
     var ioThreadExecutor: Executor = IOThreadExecutor()
 
     //DB
@@ -33,7 +32,6 @@ object DependencyGraph {
 
     //NETWORK
     val authTokenStorage: AuthTokenStorage = AuthTokenStorage.NONE
-
     val retrofit = RetrofitClient(NetworkClient(authTokenStorage,
             APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY)))
             .retrofit
@@ -44,8 +42,12 @@ object DependencyGraph {
     fun init(context: Context) {
         if (isInit) return
 
-        db = PhotoSurferDB.create(context, true)
-        photoRepository = PhotoRepositoryImpl(retrofit.create(PhotoAPI::class.java), db.photoDAO())
+        db = PhotoSurferDB.create(context, false)
+        photoRepository = PhotoRepositoryImpl(
+                TransactionRunnerImpl(db),
+                retrofit.create(PhotoAPI::class.java),
+                db.photoDAO()
+        )
 
         isInit = true
     }

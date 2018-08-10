@@ -5,14 +5,18 @@ import androidx.room.RoomDatabase
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
-interface ITransactionRunner {
+interface TransactionRunner {
 
-    fun transaction(body: Runnable)
+    fun transaction(body: () -> Unit)
 
+    operator fun invoke(body: () -> Unit) = transaction(body)
 }
 
-class TransactionRunner(private val db: RoomDatabase) : ITransactionRunner {
+class TransactionRunnerImpl(@PublishedApi internal val db: RoomDatabase) : TransactionRunner {
 
-    override fun transaction(body: Runnable) = db.runInTransaction(body)
+    override fun transaction(body: () -> Unit) = db.runInTransaction {
+        body()
+    }
+
 
 }

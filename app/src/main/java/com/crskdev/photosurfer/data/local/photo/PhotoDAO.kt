@@ -21,4 +21,8 @@ interface PhotoDAO {
 
     @Query("SELECT MAX(indexInResponse) + 1 FROM photos")
     fun getNextIndex(): Int
+
+    @Query("SELECT count(*) == 0 FROM photos")
+    fun isEmpty(): Boolean
+
 }

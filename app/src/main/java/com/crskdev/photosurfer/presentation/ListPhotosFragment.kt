@@ -1,16 +1,14 @@
 package com.crskdev.photosurfer.presentation
 
 import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.*
 import androidx.navigation.findNavController
 import androidx.paging.*
 import androidx.recyclerview.widget.DiffUtil
@@ -18,34 +16,23 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
-import com.crskdev.photosurfer.BuildConfig
+import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.PhotoRepository
-import com.crskdev.photosurfer.data.remote.NetworkClient
-import com.crskdev.photosurfer.data.remote.RetrofitClient
-import com.crskdev.photosurfer.data.remote.auth.APIKeys
-import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
-import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
-import com.crskdev.photosurfer.entities.toPhoto
-import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
-import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
-import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
-import com.crskdev.photosurfer.presentation.photo.PhotoDetailViewModel
-import com.crskdev.photosurfer.safeSet
-import com.crskdev.photosurfer.services.GalleryPhotoSaver
+import com.crskdev.photosurfer.util.SingleLiveEvent
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Created by Cristian Pela on 01.08.2018.
@@ -61,7 +48,6 @@ class ListPhotosFragment : Fragment() {
                 val graph = context!!.dependencyGraph()
                 @Suppress("UNCHECKED_CAST")
                 return ListPhotosViewModel(
-                        graph.uiThreadExecutor,
                         graph.ioThreadExecutor,
                         graph.backgroundThreadExecutor,
                         graph.photoRepository
@@ -93,6 +79,9 @@ class ListPhotosFragment : Fragment() {
             it?.let {
                 (recyclerListPhotos.adapter as ListPhotosAdapter).submitList(it)
             }
+        })
+        model.errorData.observe(this, Observer {
+            Toast.makeText(context!!, it.message, Toast.LENGTH_SHORT).show()
         })
         refreshListPhotos.setOnClickListener {
             model.refresh()
@@ -144,25 +133,39 @@ class ListPhotosVH(private val glide: RequestManager,
                 .load(photo.urls["thumb"])
                 .apply(RequestOptions()
                         .transforms(CenterCrop(), RoundedCorners(8)))
+                .addListener(object : RequestListener<Drawable> {
+                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?,
+                                              isFirstResource: Boolean): Boolean {
+                        itemView.textError.text = e?.message
+                        return true
+                    }
+
+                    override fun onResourceReady(resource: Drawable, model: Any, target: Target<Drawable>,
+                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean = false
+
+                })
                 .into(itemView.imagePhoto)
     }
 
     fun clear() {
         photo = null
-        itemView.textAuthor.text = null
-        itemView.textId.text = null
-        itemView.textOrder.text = null
-        glide.clear(itemView.imagePhoto)
-        itemView.imagePhoto.setImageDrawable(null)
+        with(itemView) {
+            textAuthor.text = null
+            textId.text = null
+            textOrder.text = null
+            textError.text = null
+            glide.clear(imagePhoto)
+            imagePhoto.setImageDrawable(null)
+        }
     }
 
 }
 
-class ListPhotosViewModel(private val uiExecutor: Executor,
-                          private val ioExecutor: Executor,
+class ListPhotosViewModel(private val ioExecutor: Executor,
                           private val backgroundThreadExecutor: Executor,
-                          private val repo: PhotoRepository
-) : ViewModel() {
+                          private val repository: PhotoRepository) : ViewModel() {
+
+    val errorData = SingleLiveEvent<Throwable>()
 
     val photosData = PagedList.Config.Builder()
             .setEnablePlaceholders(true)
@@ -170,7 +173,7 @@ class ListPhotosViewModel(private val uiExecutor: Executor,
             .setPageSize(10)
             .build()
             .let {
-                LivePagedListBuilder<Int, Photo>(repo.getPhotos(), it)
+                LivePagedListBuilder<Int, Photo>(repository.getPhotos(), it)
                         .setFetchExecutor(backgroundThreadExecutor)
                         .setBoundaryCallback(object : PagedList.BoundaryCallback<Photo>() {
 
@@ -192,10 +195,12 @@ class ListPhotosViewModel(private val uiExecutor: Executor,
                                 if (page != null && !isLoading.get()) {
                                     ioExecutor.execute {
                                         isLoading.compareAndSet(false, true)
-                                        backgroundThreadExecutor.execute {
-                                            repo.insertPhotos(page)
-                                            isLoading.compareAndSet(true, false)
-                                        }
+                                        repository.insertPhotos(page, object : PhotoRepository.Callback {
+                                            override fun onError(error: Throwable) {
+                                                errorData.postValue(error)
+                                            }
+                                        })
+                                        isLoading.compareAndSet(true, false)
                                     }
                                 }
                             }
@@ -204,86 +209,13 @@ class ListPhotosViewModel(private val uiExecutor: Executor,
             }
 
     fun refresh() {
-        backgroundThreadExecutor.execute {
-            repo.clear()
+        ioExecutor.execute {
+            repository.refresh()
         }
     }
 
-    private fun invalidateDataSource() {
-        photosData.value?.dataSource?.invalidate()
-    }
-
-
-    private class PhotoSourceFactory(private val repositoryInMemory: InMemoryPhotoRepository) : DataSource.Factory<Int, Photo>() {
-        override fun create(): DataSource<Int, Photo> = PhotosDataSource(repositoryInMemory)
-    }
-
-    private class PhotosDataSource(private val repositoryInMemory: InMemoryPhotoRepository) : PageKeyedDataSource<Int, Photo>() {
-
-        override fun loadInitial(params: LoadInitialParams<Int>, callback: LoadInitialCallback<Int, Photo>) {
-            val photos = repositoryInMemory.getCurrentPagePhotos()
-            if (photos.isNotEmpty()) {
-                val pagingData = photos.first().pagingData ?: throw Error("Paging data not present")
-                callback.onResult(photos, pagingData.prev, pagingData.next)
-            } else {
-                callback.onResult(emptyList(), 0, 0, null, null)
-            }
-        }
-
-        override fun loadAfter(params: LoadParams<Int>, callback: LoadCallback<Int, Photo>) {
-            val photos = repositoryInMemory.getPagePhotos(params.key)
-            if (photos.isNotEmpty()) {
-                callback.onResult(photos, photos.first().pagingData!!.next)
-            } else {
-                callback.onResult(emptyList(), null)
-            }
-        }
-
-        override fun loadBefore(params: LoadParams<Int>, callback: LoadCallback<Int, Photo>) {
-            val photos = repositoryInMemory.getPagePhotos(params.key)
-            if (photos.isNotEmpty()) {
-                callback.onResult(photos, photos.first().pagingData!!.prev)
-            } else {
-                callback.onResult(emptyList(), null)
-            }
-        }
-
-    }
-
-}
-
-class InMemoryPhotoRepository {
-
-    private val count = AtomicInteger(0)
-    private val currentPage = AtomicInteger(1)
-    private val pagedPhotosDb = ConcurrentHashMap<Int, List<Photo>>()
-
-    fun getPagePhotos(page: Int): List<Photo> {
-        val filter = pagedPhotosDb[page] ?: emptyList()
-        if (filter.isNotEmpty())
-            filter.first().pagingData?.curr?.let { currentPage.safeSet(it) }
-        return filter
-    }
-
-    fun getCurrentPagePhotos(): List<Photo> {
-        return pagedPhotosDb[currentPage.get()] ?: emptyList()
-    }
-
-    fun insertPhotos(photos: List<Photo>) {
-        if (photos.isNotEmpty()) {
-            photos.first().pagingData?.curr?.let {
-                pagedPhotosDb[it] = photos.map { it.copy(extras = count.incrementAndGet()) }
-            }
-        }
-
-    }
-
-    fun total(): Int = pagedPhotosDb.values.sumBy { it.size }
-
-    fun getIndexOf(photo: Photo): Int = (photo.extras as Int?) ?: -1
-
-    fun clear() {
-        pagedPhotosDb.clear()
+    fun cancel() {
+        repository.cancel()
     }
 
 }

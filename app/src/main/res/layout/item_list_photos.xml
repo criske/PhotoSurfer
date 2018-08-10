@@ -64,4 +64,13 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Foo" />
 
+    <TextView
+        android:id="@+id/textError"
+        android:textColor="@android:color/holo_red_dark"
+        tools:text="Error!"
+        android:layout_gravity="center"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
 </FrameLayout>

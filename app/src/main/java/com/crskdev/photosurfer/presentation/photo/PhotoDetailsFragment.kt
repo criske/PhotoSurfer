@@ -6,12 +6,19 @@ import android.graphics.Bitmap
 import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.postDelayed
 import androidx.lifecycle.*
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.Navigation
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment.findNavController
 import androidx.palette.graphics.Palette
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -23,6 +30,7 @@ import com.crskdev.photosurfer.*
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
+import com.crskdev.photosurfer.presentation.HasUpOrBackAwareness
 
 import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
@@ -37,31 +45,53 @@ import kotlin.math.roundToInt
  * A simple [Fragment] subclass.
  *
  */
-class PhotoDetailsFragment : Fragment() {
+class PhotoDetailsFragment : Fragment(), NavController.OnNavigatedListener {
 
     companion object {
         private const val KEY_IS_DOWNLOADING = "KEY_IS_DOWNLOADING"
     }
 
     private lateinit var viewModel: PhotoDetailViewModel
-
     private var progSlideDownAnimation: ViewPropertyAnimator? = null
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
-
     private var isDownloadShowing: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //make sure NavHostFragment#onCreate() is called before calling findNavController
+        //to avoid when rotate screen: java.lang.IllegalStateException: NavController is not available before onCreate()
+        Handler(Looper.getMainLooper()).post {
+            findNavController(this).addOnNavigatedListener(this)
+        }
         viewModel = ViewModelProviders.of(activity!!, object : ViewModelProvider.Factory {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                val dependencyGraph = context!!.dependencyGraph()
                 @Suppress("UNCHECKED_CAST")
                 return PhotoDetailViewModel(
-                        context!!.dependencyGraph().uiThreadExecutor,
-                        context!!.dependencyGraph().backgroundThreadExecutor,
+                        dependencyGraph.uiThreadExecutor,
+                        dependencyGraph.backgroundThreadExecutor,
                         GalleryPhotoSaver(this@PhotoDetailsFragment.activity!!.applicationContext)) as T
             }
         }).get(PhotoDetailViewModel::class.java)
     }
+
+    override fun onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val defaultPrimary = ContextCompat.getColor(context!!, R.color.colorPrimaryDark)
+            activity!!.window.statusBarColor = defaultPrimary
+        }
+        findNavController(this).removeOnNavigatedListener(this)
+        super.onDestroy()
+    }
+
+
+
+    override fun onNavigated(controller: NavController, destination: NavDestination) {
+        if (destination.id != R.id.fragment_photo_details) { // cancel
+            viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
+        }
+    }
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -199,13 +229,8 @@ class PhotoDetailsFragment : Fragment() {
         super.onDestroyView()
     }
 
-    override fun onDestroy() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val defaultPrimary = ContextCompat.getColor(context!!, R.color.colorPrimaryDark)
-            activity!!.window.statusBarColor = defaultPrimary
-        }
-        super.onDestroy()
-    }
+
+
 }
 
 class PhotoDetailViewModel(
