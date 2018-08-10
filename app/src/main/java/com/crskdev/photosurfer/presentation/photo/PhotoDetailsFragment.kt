@@ -16,8 +16,6 @@ import androidx.core.view.postDelayed
 import androidx.lifecycle.*
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
-import androidx.navigation.Navigation
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment.findNavController
 import androidx.palette.graphics.Palette
 import com.bumptech.glide.Glide
@@ -30,10 +28,8 @@ import com.crskdev.photosurfer.*
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.presentation.HasUpOrBackAwareness
+import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 
-import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
-import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
 import com.crskdev.photosurfer.services.GalleryPhotoSaver
 import com.crskdev.photosurfer.services.PhotoSaver
 import kotlinx.android.synthetic.main.fragment_photo_details.*
@@ -45,7 +41,7 @@ import kotlin.math.roundToInt
  * A simple [Fragment] subclass.
  *
  */
-class PhotoDetailsFragment : Fragment(), NavController.OnNavigatedListener {
+class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
 
     companion object {
         private const val KEY_IS_DOWNLOADING = "KEY_IS_DOWNLOADING"
@@ -58,11 +54,6 @@ class PhotoDetailsFragment : Fragment(), NavController.OnNavigatedListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //make sure NavHostFragment#onCreate() is called before calling findNavController
-        //to avoid when rotate screen: java.lang.IllegalStateException: NavController is not available before onCreate()
-        Handler(Looper.getMainLooper()).post {
-            findNavController(this).addOnNavigatedListener(this)
-        }
         viewModel = ViewModelProviders.of(activity!!, object : ViewModelProvider.Factory {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 val dependencyGraph = context!!.dependencyGraph()
@@ -80,18 +71,12 @@ class PhotoDetailsFragment : Fragment(), NavController.OnNavigatedListener {
             val defaultPrimary = ContextCompat.getColor(context!!, R.color.colorPrimaryDark)
             activity!!.window.statusBarColor = defaultPrimary
         }
-        findNavController(this).removeOnNavigatedListener(this)
         super.onDestroy()
     }
 
-
-
-    override fun onNavigated(controller: NavController, destination: NavDestination) {
-        if (destination.id != R.id.fragment_photo_details) { // cancel
-            viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
-        }
+    override fun onBackOrUpPressed() {
+        viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
     }
-
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {

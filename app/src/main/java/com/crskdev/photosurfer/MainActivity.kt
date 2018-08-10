@@ -2,9 +2,9 @@ package com.crskdev.photosurfer
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.Navigation
+import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
-import com.crskdev.photosurfer.presentation.HasUpOrBackAwareness
+import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 
 
 class MainActivity : AppCompatActivity() {
@@ -24,25 +24,30 @@ class MainActivity : AppCompatActivity() {
         AppPermissions.showPermissionsGrantingStatus(this, requestCode, permissions, grantResults)
     }
 
-//    override fun onBackPressed() {
-//        //TODO use a navigation framework aproach
-//        val fragments = supportFragmentManager.fragments
-//        if (supportFragmentManager.backStackEntryCount > 0) {
-//            val currentFragment = supportFragmentManager.let {
-//                val lastIndex = it.backStackEntryCount - 1
-//                it.getBackStackEntryAt(lastIndex)
-//            }
-//            if (currentFragment is HasUpOrBackAwareness) {
-//                currentFragment.onBackOrUpPressed()
-//                if (!currentFragment.handleBack()) {
-//                    super.onBackPressed()
-//                }
-//            }
-//        } else {
-//            super.onBackPressed()
-//        }
-//        val fragments2 = supportFragmentManager.fragments
-//        val br = true
-//    }
+    override fun onBackPressed() {
+        //TODO use a navigation framework approach?
+        val navHostFragment = supportFragmentManager.fragments[0] // nav host fragment
+        val topFragment = navHostFragment.childFragmentManager
+                .takeIf { it.backStackEntryCount > 0 }
+                ?.let {
+                    var f:Fragment? = null
+                    it.fragments.forEach{
+                        if(it.isResumed){
+                            f = it
+                            return@forEach
+                        }
+                    }
+                    f
+                }
+        if(topFragment!= null && topFragment is HasUpOrBackPressedAwareness){
+            topFragment.onBackOrUpPressed()
+            if(!topFragment.handleBack()){
+                super.onBackPressed()
+            }
+        }else{
+            super.onBackPressed()
+        }
+
+    }
 
 }
