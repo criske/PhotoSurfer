@@ -157,7 +157,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
                         (fabDownload as View).visibility = View.GONE
 
                     }
-                    if (it.doneOrCanceled) {
+                    if (it.doneOrCanceled && isDownloadShowing && !isAnimatingSlide) {
                         isAnimatingSlide = true
                         progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
                                 .onEnded {
@@ -245,7 +245,14 @@ class PhotoDetailViewModel(
         backgroundExecutor.execute {
             photoRepository.download(id, object : PhotoRepository.Callback {
                 override fun onSuccess(data: Any?) {
-                    downloadLiveData.postValue(data as DownloadProgress)
+                    val downloadProgress = data as DownloadProgress
+                    if(downloadProgress.doneOrCanceled){
+                        uiExecutor.execute { // make sure the done value is consumed
+                            downloadLiveData.value = downloadProgress
+                        }
+                    }else {
+                        downloadLiveData.postValue(downloadProgress)
+                    }
                 }
 
                 override fun onError(error: Throwable) {
