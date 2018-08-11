@@ -1,4 +1,4 @@
-package com.crskdev.photosurfer.data.remote;
+package com.crskdev.photosurfer.data.remote.download;
 
 import java.io.IOException;
 

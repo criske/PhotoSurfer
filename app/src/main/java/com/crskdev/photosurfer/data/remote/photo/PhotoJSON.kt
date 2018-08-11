@@ -37,7 +37,7 @@ data class PhotoPagingData(val total: Int, val curr: Int, val prev: Int?, val ne
                         }
                         ?: emptyMap()
 
-        fun createFromHeader(headers: Headers): PhotoPagingData {
+        fun createFromHeaders(headers: Headers): PhotoPagingData {
             val total = headers["x-total"]?.toInt()
                     ?: throw Error("Could not find x-total entry in header")
             val (curr: Int, prev: Int?, next: Int?) = headers["link"]?.let {

@@ -19,7 +19,7 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=4>; rel=\"next\"")
                 .add("X-Total", "100")
                 .build()
-        assertEquals(PhotoPagingData(100, 3,2, 4), PhotoPagingData.createFromHeader(headers))
+        assertEquals(PhotoPagingData(100, 3,2, 4), PhotoPagingData.createFromHeaders(headers))
     }
 
     @Test
@@ -30,7 +30,7 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=346&foo=foo>; rel=\"last\",")
                 .add("X-Total", "100")
                 .build()
-        assertEquals(PhotoPagingData(100, 3, 2, null), PhotoPagingData.createFromHeader(headers))
+        assertEquals(PhotoPagingData(100, 3, 2, null), PhotoPagingData.createFromHeaders(headers))
     }
 
     @Test
@@ -41,7 +41,7 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=4>; rel=\"next\"")
                 .add("X-Total", "100")
                 .build()
-        assertEquals(PhotoPagingData(100, 3,null, 4), PhotoPagingData.createFromHeader(headers))
+        assertEquals(PhotoPagingData(100, 3,null, 4), PhotoPagingData.createFromHeaders(headers))
     }
 
     @Test(expected = Error::class)
@@ -51,6 +51,6 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=346>; rel=\"last\"," +
                         "<https://api.unsplash.com/photos?page=4>; rel=\"next\"")
                 .build()
-        PhotoPagingData.createFromHeader(headers)
+        PhotoPagingData.createFromHeaders(headers)
     }
 }

@@ -6,17 +6,15 @@ import android.graphics.Bitmap
 import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.view.*
-import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewPropertyAnimator
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.postDelayed
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination
-import androidx.navigation.fragment.NavHostFragment.findNavController
 import androidx.palette.graphics.Palette
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -26,16 +24,13 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.*
 import com.crskdev.photosurfer.R
-import com.crskdev.photosurfer.data.remote.RetrofitClient
-import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
+import com.crskdev.photosurfer.data.remote.download.DownloadProgress
+import com.crskdev.photosurfer.data.local.photo.PhotoRepository
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
-
-import com.crskdev.photosurfer.services.GalleryPhotoSaver
-import com.crskdev.photosurfer.services.PhotoSaver
+import com.crskdev.photosurfer.util.SingleLiveEvent
 import kotlinx.android.synthetic.main.fragment_photo_details.*
 import kotlinx.android.synthetic.main.progress_layout.*
 import java.util.concurrent.Executor
-import kotlin.math.roundToInt
 
 /**
  * A simple [Fragment] subclass.
@@ -61,7 +56,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
                 return PhotoDetailViewModel(
                         dependencyGraph.uiThreadExecutor,
                         dependencyGraph.backgroundThreadExecutor,
-                        GalleryPhotoSaver(this@PhotoDetailsFragment.activity!!.applicationContext)) as T
+                        dependencyGraph.photoRepository) as T
             }
         }).get(PhotoDetailViewModel::class.java)
     }
@@ -137,7 +132,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
 
         var isAnimatingSlide = false
         viewModel.downloadLiveData
-                .filter { it != PhotoDetailViewModel.DownloadProgress.NONE }
+                .filter { it != DownloadProgress.NONE }
                 .observe(this, Observer {
                     val isIndeterminated = it.percent == -1
                     progressBarDownload.isIndeterminate = isIndeterminated
@@ -215,37 +210,14 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
 
-
 }
 
 class PhotoDetailViewModel(
         private val uiExecutor: Executor,
         private val backgroundExecutor: Executor,
-        private val photoSaver: PhotoSaver) : ViewModel() {
+        private val photoRepository: PhotoRepository) : ViewModel() {
 
-
-    private val progressListener: (Boolean, Long, Long, Boolean) -> Unit = { isStartingValue, curr, total, done ->
-        println("Progress: $curr $total")
-        if (total == -1L && isStartingValue) { //indeterminated
-            downloadLiveData.postValue(DownloadProgress.INDETERMINATED_START)
-        } else {
-            val percent = (curr.toFloat() / total * 100).roundToInt()
-            if (percent % 10 == 0) // backpressure relief
-                downloadLiveData.postValue(DownloadProgress(percent, false, curr == total))
-        }
-        if (done) {
-            if (total == -1L) {
-                downloadLiveData.postValue(DownloadProgress.INDETERMINATED_END)
-            }
-            uiExecutor.execute {
-                RetrofitClient.DEFAULT.removeDownloadProgressListener()
-            }
-        }
-    }
-
-    private val photoApi = RetrofitClient.DEFAULT.apply {
-        networkClient.addDownloadProgressListener(progressListener)
-    }.retrofit.create(PhotoAPI::class.java)
+    val errorLiveData = SingleLiveEvent<Throwable>()
 
     val paletteLiveData = MutableLiveData<Map<String, Palette>>().apply {
         value = emptyMap()
@@ -270,44 +242,16 @@ class PhotoDetailViewModel(
     private val lock = Any()
 
     fun download(id: String) {
-        RetrofitClient.DEFAULT.addDownloadProgressListener(progressListener)
         backgroundExecutor.execute {
-
-            //            downloadLiveData.postValue(DownloadProgress(0, true, false))
-//            val response = photoApi.download(id).execute()
-//
-//            response.body()?.source()?.let {
-//                photoSaver.save(id, it)
-//            }
-//
-//            downloadLiveData.postValue(DownloadProgress.NONE)
-
-            var count = 0
-            downloadLiveData.postValue(DownloadProgress(count, true, false))
-            var lastTime = System.currentTimeMillis()
-            synchronized(lock) {
-                isDownloadCanceled = false
-            }
-            val max = 1000
-            while (count <= max) {
-                synchronized(lock) {
-                    if (isDownloadCanceled) {
-                        downloadLiveData.postValue(DownloadProgress(count, false, true))
-                        count = 100
-                    }
+            photoRepository.download(id, object : PhotoRepository.Callback {
+                override fun onSuccess(data: Any?) {
+                    downloadLiveData.postValue(data as DownloadProgress)
                 }
 
-                val now = System.currentTimeMillis()
-                if (now - lastTime >= 100) {
-                    downloadLiveData.postValue(DownloadProgress((count.toFloat() / max * 100).roundToInt(), false,
-                            count >= max))
-                    count++
-                    lastTime = now
+                override fun onError(error: Throwable) {
+                    errorLiveData.postValue(error)
                 }
-            }
-            uiExecutor.execute {
-                downloadLiveData.value = DownloadProgress.NONE
-            }
+            })
         }
 
     }
@@ -322,12 +266,5 @@ class PhotoDetailViewModel(
         super.onCleared()
     }
 
-    data class DownloadProgress(val percent: Int, val isStaringValue: Boolean, val doneOrCanceled: Boolean) {
-        companion object {
-            val NONE = DownloadProgress(Int.MIN_VALUE, false, false)
-            val INDETERMINATED_START = DownloadProgress(-1, true, false)
-            val INDETERMINATED_END = DownloadProgress(-1, true, false)
-        }
-    }
 
 }

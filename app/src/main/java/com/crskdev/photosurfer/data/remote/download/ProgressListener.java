@@ -1,4 +1,4 @@
-package com.crskdev.photosurfer.data.remote;
+package com.crskdev.photosurfer.data.remote.download;
 
 /**
  * Created by Cristian Pela on 06.08.2018.

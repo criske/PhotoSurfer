@@ -9,10 +9,13 @@ import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
+import com.crskdev.photosurfer.services.GalleryPhotoSaver
+import com.crskdev.photosurfer.services.PhotoSaver
 import java.util.concurrent.Executor
 
 /**
@@ -30,23 +33,33 @@ object DependencyGraph {
     //DB
     lateinit var db: PhotoSurferDB
 
+    lateinit var photoSaver: PhotoSaver
+
     //NETWORK
     val authTokenStorage: AuthTokenStorage = AuthTokenStorage.NONE
-    val retrofit = RetrofitClient(NetworkClient(authTokenStorage,
+    private val retrofitClient = RetrofitClient(NetworkClient(authTokenStorage,
             APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY)))
-            .retrofit
+    val retrofit = retrofitClient.retrofit
+    val progressListenerRegistrar: ProgressListenerRegistrar = ProgressListenerRegistrarImpl(retrofitClient)
+    lateinit var downloadManager: DownloadManager
+    lateinit var photoDownloader: PhotoDownloader
 
     //repositories
     lateinit var photoRepository: PhotoRepository
 
     fun init(context: Context) {
         if (isInit) return
-
         db = PhotoSurferDB.create(context, false)
+        val photoAPI = retrofit.create(PhotoAPI::class.java)
+
+        photoSaver = GalleryPhotoSaver(context)
+        photoDownloader = PhotoDownloaderImpl(photoAPI)
+        downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, photoSaver)
         photoRepository = PhotoRepositoryImpl(
                 TransactionRunnerImpl(db),
-                retrofit.create(PhotoAPI::class.java),
-                db.photoDAO()
+                photoAPI,
+                db.photoDAO(),
+                downloadManager //TODO use real downloadManager in prod
         )
 
         isInit = true

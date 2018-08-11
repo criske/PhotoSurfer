@@ -29,22 +29,15 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.fragments[0] // nav host fragment
         val topFragment = navHostFragment.childFragmentManager
                 .takeIf { it.backStackEntryCount > 0 }
-                ?.let {
-                    var f:Fragment? = null
-                    it.fragments.forEach{
-                        if(it.isResumed){
-                            f = it
-                            return@forEach
-                        }
-                    }
-                    f
-                }
-        if(topFragment!= null && topFragment is HasUpOrBackPressedAwareness){
+                ?.fragments
+                ?.firstOrNull { f -> f.isResumed }
+
+        if (topFragment != null && topFragment is HasUpOrBackPressedAwareness) {
             topFragment.onBackOrUpPressed()
-            if(!topFragment.handleBack()){
+            if (!topFragment.handleBack()) {
                 super.onBackPressed()
             }
-        }else{
+        } else {
             super.onBackPressed()
         }
 

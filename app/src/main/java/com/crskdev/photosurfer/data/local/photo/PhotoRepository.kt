@@ -3,14 +3,16 @@ package com.crskdev.photosurfer.data.local.photo
 import androidx.annotation.AnyThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.TransactionRunner
+import com.crskdev.photosurfer.data.remote.RequestLimit
+import com.crskdev.photosurfer.data.remote.download.DownloadManager
+import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.toDbEntity
 import com.crskdev.photosurfer.entities.toPhoto
 import retrofit2.Call
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.roundToInt
 
 /**
  * Created by Cristian Pela on 09.08.2018.
@@ -18,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference
 interface PhotoRepository {
 
     interface Callback {
-        fun onSuccess() = Unit
+        fun onSuccess(data: Any? = null) = Unit
         fun onError(error: Throwable)
     }
 
@@ -29,18 +31,21 @@ interface PhotoRepository {
     fun refresh()
 
     fun cancel()
+
+    fun download(id: String, callback: Callback? = null)
 }
 
 class PhotoRepositoryImpl(
         private val transactional: TransactionRunner,
         private val api: PhotoAPI,
-        private val dao: PhotoDAO
+        private val dao: PhotoDAO,
+        private val downloadManager: DownloadManager
 ) : PhotoRepository {
-
     @Volatile
-    private var apiCall: Call<List<PhotoJSON>>? = null
+    private var cancelableApiCall: Call<*>? = null
 
     companion object {
+
         private val EMPTY_ENTITY = PhotoEntity().apply {
             id = ""
             createdAt = ""
@@ -56,19 +61,22 @@ class PhotoRepositoryImpl(
     override fun getPhotos(): DataSource.Factory<Int, Photo> = dao.getPhotos()
             .mapByPage { page -> page.map { it.toPhoto() } }
 
-
     //this must be called on the io thread
     override fun insertPhotos(page: Int, callback: PhotoRepository.Callback?) {
         try {
-            apiCall = api.getPhotos(page)
-            val response = apiCall?.execute()
+            val response = api.getPhotos(page).apply { cancelableApiCall = this }.execute()
             response?.apply {
-                val pagingData = PhotoPagingData.createFromHeader(headers())
-                if (isSuccessful) {
+                val headers = headers()
+                val pagingData = PhotoPagingData.createFromHeaders(headers)
+                val requestLimit = RequestLimit.createFromHeaders(headers)
+                if (requestLimit.isLimitReached) {
+                    callback?.onError(Error("Request limit reached: $requestLimit"))
+                } else if (isSuccessful) {
                     body()?.map {
                         it.toDbEntity(pagingData, dao.getNextIndex())
                     }?.apply {
                         dao.insertPhotos(this)
+                        callback?.onSuccess()
                     }
                 } else {
                     callback?.onError(Error("${code()}:${errorBody()?.string()}"))
@@ -78,6 +86,33 @@ class PhotoRepositoryImpl(
             callback?.onError(ex)
         }
 
+    }
+
+
+    override fun download(id: String, callback: PhotoRepository.Callback?) {
+        val now = System.currentTimeMillis()
+        var start = true
+        downloadManager.download(id) { isStartingValue, bytesRead, contentLength, done ->
+            val passed = System.currentTimeMillis() - now
+            if (passed < 500 && done) {
+                callback?.onSuccess(DownloadProgress(100, false, true))
+            } else {
+                if (contentLength == -1L) { //indeterminated
+                    if(start){
+                        callback?.onSuccess(DownloadProgress.INDETERMINATED_START)
+                    }else if(done){
+                        callback?.onSuccess(DownloadProgress.INDETERMINATED_END)
+                    }
+                }else {
+                    val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
+                    if (percent % 10 == 0 || done) // backpressure relief
+                        callback?.onSuccess(DownloadProgress(percent, start , done))
+                }
+                start = false
+            }
+
+        }
+        callback?.onSuccess(DownloadProgress.NONE)
     }
 
     override fun refresh() {
@@ -95,7 +130,10 @@ class PhotoRepositoryImpl(
 
     @AnyThread
     override fun cancel() {
-        apiCall?.cancel()
+        cancelableApiCall?.cancel()
+        downloadManager.cancel()
     }
 
 }
+
+

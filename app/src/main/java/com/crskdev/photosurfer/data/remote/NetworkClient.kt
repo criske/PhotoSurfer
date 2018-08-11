@@ -5,6 +5,8 @@ package com.crskdev.photosurfer.data.remote
 import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.crskdev.photosurfer.data.remote.download.DownloadInterceptor
+import com.crskdev.photosurfer.data.remote.download.ProgressListener
 import com.squareup.moshi.Moshi
 import okhttp3.*
 import java.net.CookieManager
