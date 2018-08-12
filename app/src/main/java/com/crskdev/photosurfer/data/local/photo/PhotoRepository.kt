@@ -105,8 +105,8 @@ class PhotoRepositoryImpl(
                     }
                 }else {
                     val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
-                    if (percent % 20 == 0 || percent == 100) // backpressure relief
-                        callback?.onSuccess(DownloadProgress(percent, start , percent == 100))
+                    if (percent % 10 == 0 || percent == 100 || done) // backpressure relief
+                        callback?.onSuccess(DownloadProgress(percent, start , percent == 100 || done))
                 }
                 start = false
             }

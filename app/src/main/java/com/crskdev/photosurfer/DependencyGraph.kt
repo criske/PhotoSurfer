@@ -59,7 +59,7 @@ object DependencyGraph {
                 TransactionRunnerImpl(db),
                 photoAPI,
                 db.photoDAO(),
-                downloadManager //TODO use real downloadManager in prod
+                DownloadManager.MOCK//TODO use real downloadManager in prod
         )
 
         isInit = true

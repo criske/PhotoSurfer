@@ -6,10 +6,12 @@ import android.graphics.Bitmap
 import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.postDelayed
@@ -28,6 +30,7 @@ import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.local.photo.PhotoRepository
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.util.SingleLiveEvent
+import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_photo_details.*
 import kotlinx.android.synthetic.main.progress_layout.*
 import java.util.concurrent.Executor
@@ -36,16 +39,17 @@ import java.util.concurrent.Executor
  * A simple [Fragment] subclass.
  *
  */
-class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
+class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
 
     companion object {
-        private const val KEY_IS_DOWNLOADING = "KEY_IS_DOWNLOADING"
+        private const val KEY_UI_STATE = "com.crskdev.photosurfer.presentation.photo.PhotoDetailsFragment:UIState"
     }
 
     private lateinit var viewModel: PhotoDetailViewModel
     private var progSlideDownAnimation: ViewPropertyAnimator? = null
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
-    private var isDownloadShowing: Boolean = false
+    private var uiState: UIState = UIState()
+    private val photo by lazy(LazyThreadSafetyMode.NONE) { PhotoDetailsFragmentArgs.fromBundle(arguments).photo }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +63,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
                         dependencyGraph.photoRepository) as T
             }
         }).get(PhotoDetailViewModel::class.java)
+        uiState = savedInstanceState?.getParcelable(KEY_UI_STATE) ?: uiState
     }
 
     override fun onDestroy() {
@@ -73,6 +78,13 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
         viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
     }
 
+    override fun onPermissionsGranted(permissions: List<String>) {
+        uiState.pendingPermissionForDownloadPhotoId?.let {
+            viewModel.download(it)
+        }
+        uiState = uiState.copy(pendingPermissionForDownloadPhotoId = null)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
@@ -82,7 +94,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         fabDownload.hide()
 
-        val photo = PhotoDetailsFragmentArgs.fromBundle(arguments).photo
         val id = photo.id
 
         Glide.with(this).asBitmap()
@@ -126,24 +137,21 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
         })
 
 
-
-        isDownloadShowing = savedInstanceState?.getBoolean(KEY_IS_DOWNLOADING, false) ?: false
-        (fabDownload as View).visibility = if (isDownloadShowing) View.GONE else View.VISIBLE
-
+        (fabDownload as View).visibility = if (uiState.isDownloadShowing) View.GONE else View.VISIBLE
         var isAnimatingSlide = false
         viewModel.downloadLiveData
                 .filter { it != DownloadProgress.NONE }
                 .observe(this, Observer {
-                    val isIndeterminated = it.percent == -1
-                    progressBarDownload.isIndeterminate = isIndeterminated
-                    if (isIndeterminated) {
-                        textDownloadProgress.text = "?"
+                    val isIndeterminate = it.percent == -1
+                    progressBarDownload.isIndeterminate = isIndeterminate
 
+                    if (isIndeterminate) {
+                        textDownloadProgress.text = "?"
                     } else {
                         progressBarDownload.progress = it.percent
                         textDownloadProgress.text = "${it.percent}%"
                     }
-                    if ((!isDownloadShowing && it.isStaringValue)
+                    if ((!uiState.isDownloadShowing && it.isStaringValue)
                             || it.isStaringValue
                             || (!isAnimatingSlide && cardProgressDownload.y < 0)) {
                         isAnimatingSlide = true
@@ -151,37 +159,35 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
                                 .onEnded {
                                     isAnimatingSlide = false
                                     (fabDownload as View).visibility = View.GONE
-                                    btnTestDownload.visibility = View.GONE
-                                    isDownloadShowing = true
+                                    uiState = uiState.copy(isDownloadShowing = true)
                                 }.apply { start() }
                         (fabDownload as View).visibility = View.GONE
 
                     }
-                    if (it.doneOrCanceled && isDownloadShowing && !isAnimatingSlide) {
+                    if (it.doneOrCanceled && uiState.isDownloadShowing && !isAnimatingSlide) {
                         isAnimatingSlide = true
                         progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
                                 .onEnded {
                                     isAnimatingSlide = false
                                     (fabDownload as View).visibility = View.VISIBLE
-                                    btnTestDownload.visibility = View.VISIBLE
-                                    isDownloadShowing = false
+                                    uiState = uiState.copy(isDownloadShowing = false)
                                 }.apply { start() }
                     }
 
                 })
 
         fabDownload.setOnClickListener { v ->
-            id?.let {
-                if (!AppPermissions.hasStoragePermission(v.context)) {
-                    AppPermissions.requestStoragePermission(activity!!)
-                } else
-                    viewModel.download(it)
-            }
+            if (!AppPermissions.hasStoragePermission(v.context)) {
+                uiState = uiState.copy(pendingPermissionForDownloadPhotoId = photo.id)
+                AppPermissions.requestStoragePermission(activity!!)
+            } else
+                viewModel.download(id)
         }
 
         imgBtnDownloadCancel.setOnClickListener {
-            id?.let { viewModel.cancelDownload(it) }
+            viewModel.cancelDownload(id)
         }
+
     }
 
     fun setPalette(id: String?, bitmap: Bitmap?) {
@@ -197,7 +203,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(KEY_IS_DOWNLOADING, isDownloadShowing)
+        outState.putParcelable(KEY_UI_STATE, uiState)
         super.onSaveInstanceState(outState)
     }
 
@@ -210,6 +216,9 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
 
+    @Parcelize
+    data class UIState(val isDownloadShowing: Boolean = false,
+                       val pendingPermissionForDownloadPhotoId: String? = null) : Parcelable
 }
 
 class PhotoDetailViewModel(
@@ -236,21 +245,17 @@ class PhotoDetailViewModel(
     }
 
 
-    @Volatile
-    private var isDownloadCanceled: Boolean = false
-
-    private val lock = Any()
-
     fun download(id: String) {
         backgroundExecutor.execute {
             photoRepository.download(id, object : PhotoRepository.Callback {
                 override fun onSuccess(data: Any?) {
                     val downloadProgress = data as DownloadProgress
-                    if(downloadProgress.doneOrCanceled){
-                        uiExecutor.execute { // make sure the done value is consumed
+                    if (downloadProgress.doneOrCanceled) {
+                        uiExecutor.execute {
+                            // make sure the done value is consumed
                             downloadLiveData.value = downloadProgress
                         }
-                    }else {
+                    } else {
                         downloadLiveData.postValue(downloadProgress)
                     }
                 }
@@ -264,9 +269,7 @@ class PhotoDetailViewModel(
     }
 
     fun cancelDownload(id: String) {
-        synchronized(lock) {
-            isDownloadCanceled = true
-        }
+        photoRepository.cancel()
     }
 
     override fun onCleared() {

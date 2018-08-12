@@ -4,6 +4,6 @@ data class DownloadProgress(val percent: Int, val isStaringValue: Boolean, val d
     companion object {
         val NONE = DownloadProgress(Int.MIN_VALUE, false, false)
         val INDETERMINATED_START = DownloadProgress(-1, true, false)
-        val INDETERMINATED_END = DownloadProgress(-1, true, false)
+        val INDETERMINATED_END = DownloadProgress(-1, false, true)
     }
 }
