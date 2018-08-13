@@ -18,8 +18,10 @@ class RetrofitClient(val networkClient: NetworkClient) {
                     .host(BASE_HOST_API)
                     .build())
             .addConverterFactory(MoshiConverterFactory.create(
-                    Moshi.Builder().add(KotlinJsonAdapterFactory()).build())
-            )
+                    Moshi.Builder()
+                            .add(KotlinJsonAdapterFactory())
+                            .build())
+                    .asLenient())
             .client(networkClient.client)
             .build()
 

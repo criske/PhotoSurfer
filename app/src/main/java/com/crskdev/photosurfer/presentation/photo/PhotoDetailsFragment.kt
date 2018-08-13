@@ -7,11 +7,8 @@ import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewPropertyAnimator
-import androidx.appcompat.app.AppCompatActivity
+import android.view.*
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.postDelayed
@@ -28,6 +25,8 @@ import com.crskdev.photosurfer.*
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.local.photo.PhotoRepository
+import com.crskdev.photosurfer.entities.Photo
+import com.crskdev.photosurfer.entities.deparcelize
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.util.SingleLiveEvent
 import kotlinx.android.parcel.Parcelize
@@ -80,7 +79,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onPermissionsGranted(permissions: List<String>) {
         uiState.pendingPermissionForDownloadPhotoId?.let {
-            viewModel.download(it)
+            viewModel.download(photo.deparcelize())
         }
         uiState = uiState.copy(pendingPermissionForDownloadPhotoId = null)
     }
@@ -94,8 +93,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         fabDownload.hide()
 
-        val id = photo.id
-
         Glide.with(this).asBitmap()
                 .load(photo.urls["full"])
                 .apply(RequestOptions().centerCrop())
@@ -104,7 +101,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                                                  model: Any?, target: Target<Bitmap>?,
                                                  dataSource: DataSource?,
                                                  isFirstResource: Boolean): Boolean {
-                        setPalette(id, resource)
+                        setPalette(this@PhotoDetailsFragment.photo.id, resource)
                         view.postDelayed(300) {
                             fabDownload.show()
                         }
@@ -117,25 +114,39 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 })
                 .into(imagePhoto)
 
+        subscribeToViewModel(view)
+
+        fabDownload.setOnClickListener { v ->
+            if (!AppPermissions.hasStoragePermission(v.context)) {
+                uiState = uiState.copy(pendingPermissionForDownloadPhotoId = photo.id)
+                AppPermissions.requestStoragePermission(activity!!)
+            } else
+                viewModel.download(photo.deparcelize())
+        }
+
+        imgBtnDownloadCancel.setOnClickListener {
+            viewModel.cancelDownload(photo.id)
+        }
+
+    }
+
+    private fun subscribeToViewModel(view: View) {
+
         viewModel.paletteLiveData.observe(this, Observer {
-            it[id]?.let { palette ->
+            it[photo.id]?.let { palette ->
                 val darkVibrantColor = palette.getDarkVibrantColor(ContextCompat
                         .getColor(view.context, R.color.colorPrimaryDark))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    activity!!.window.statusBarColor = darkVibrantColor
-                }
+                activity?.setStatusBarColor(darkVibrantColor, 0.9f)
                 val accent = ContextCompat.getColor(view.context, R.color.colorAccent)
                 fabDownload.backgroundTintList = ColorStateList.valueOf(palette.getMutedColor(accent))
-                val progreessColorFilter = PorterDuff.Mode.SRC_ATOP
-                        .toColorFilter(accent)
-                progressBarDownload.progressDrawable.colorFilter = progreessColorFilter
-                progressBarDownload.indeterminateDrawable.colorFilter = progreessColorFilter
+                val progressColorFilter = PorterDuff.Mode.SRC_ATOP.toColorFilter(accent)
+                progressBarDownload.progressDrawable.colorFilter = progressColorFilter
+                progressBarDownload.indeterminateDrawable.colorFilter = progressColorFilter
                 imgBtnDownloadCancel.drawable.setColorFilter(
                         palette.getMutedColor(accent), PorterDuff.Mode.SRC_ATOP)
                 textDownloadProgress.setTextColor(darkVibrantColor)
             }
         })
-
 
         (fabDownload as View).visibility = if (uiState.isDownloadShowing) View.GONE else View.VISIBLE
         var isAnimatingSlide = false
@@ -176,18 +187,11 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
                 })
 
-        fabDownload.setOnClickListener { v ->
-            if (!AppPermissions.hasStoragePermission(v.context)) {
-                uiState = uiState.copy(pendingPermissionForDownloadPhotoId = photo.id)
-                AppPermissions.requestStoragePermission(activity!!)
-            } else
-                viewModel.download(id)
-        }
-
-        imgBtnDownloadCancel.setOnClickListener {
-            viewModel.cancelDownload(id)
-        }
-
+        viewModel.isDownloadedLiveData.observe(this, Observer {
+            if (it) {
+                Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     fun setPalette(id: String?, bitmap: Bitmap?) {
@@ -228,6 +232,8 @@ class PhotoDetailViewModel(
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
+    val isDownloadedLiveData = SingleLiveEvent<Boolean>()
+
     val paletteLiveData = MutableLiveData<Map<String, Palette>>().apply {
         value = emptyMap()
     }
@@ -245,25 +251,30 @@ class PhotoDetailViewModel(
     }
 
 
-    fun download(id: String) {
+    fun download(photo: Photo) {
         backgroundExecutor.execute {
-            photoRepository.download(id, object : PhotoRepository.Callback {
-                override fun onSuccess(data: Any?) {
-                    val downloadProgress = data as DownloadProgress
-                    if (downloadProgress.doneOrCanceled) {
-                        uiExecutor.execute {
-                            // make sure the done value is consumed
-                            downloadLiveData.value = downloadProgress
+            val isDownloaded = photoRepository.isDownloaded(photo.id)
+            if (isDownloaded) {
+                isDownloadedLiveData.postValue(true)
+            } else {
+                photoRepository.download(photo, object : PhotoRepository.Callback {
+                    override fun onSuccess(data: Any?) {
+                        val downloadProgress = data as DownloadProgress
+                        if (downloadProgress.doneOrCanceled) {
+                            uiExecutor.execute {
+                                // make sure the done value is consumed
+                                downloadLiveData.value = downloadProgress
+                            }
+                        } else {
+                            downloadLiveData.postValue(downloadProgress)
                         }
-                    } else {
-                        downloadLiveData.postValue(downloadProgress)
                     }
-                }
 
-                override fun onError(error: Throwable) {
-                    errorLiveData.postValue(error)
-                }
-            })
+                    override fun onError(error: Throwable) {
+                        errorLiveData.postValue(error)
+                    }
+                })
+            }
         }
 
     }

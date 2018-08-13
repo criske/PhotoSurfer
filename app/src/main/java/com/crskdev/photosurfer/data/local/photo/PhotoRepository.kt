@@ -32,7 +32,9 @@ interface PhotoRepository {
 
     fun cancel()
 
-    fun download(id: String, callback: Callback? = null)
+    fun download(photo: Photo, callback: Callback? = null)
+
+    fun isDownloaded(id: String): Boolean
 }
 
 class PhotoRepositoryImpl(
@@ -41,6 +43,7 @@ class PhotoRepositoryImpl(
         private val dao: PhotoDAO,
         private val downloadManager: DownloadManager
 ) : PhotoRepository {
+
     @Volatile
     private var cancelableApiCall: Call<*>? = null
 
@@ -89,24 +92,24 @@ class PhotoRepositoryImpl(
     }
 
 
-    override fun download(id: String, callback: PhotoRepository.Callback?) {
+    override fun download(photo: Photo, callback: PhotoRepository.Callback?) {
         val now = System.currentTimeMillis()
         var start = true
-        downloadManager.download(id) { isStartingValue, bytesRead, contentLength, done ->
+        downloadManager.download(photo) { isStartingValue, bytesRead, contentLength, done ->
             val passed = System.currentTimeMillis() - now
             if (passed < 500 && done) {
                 callback?.onSuccess(DownloadProgress(100, false, true))
             } else {
                 if (contentLength == -1L) { //indeterminated
-                    if(start){
+                    if (start) {
                         callback?.onSuccess(DownloadProgress.INDETERMINATED_START)
-                    }else if(done){
+                    } else if (done) {
                         callback?.onSuccess(DownloadProgress.INDETERMINATED_END)
                     }
-                }else {
+                } else {
                     val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
                     if (percent % 10 == 0 || percent == 100 || done) // backpressure relief
-                        callback?.onSuccess(DownloadProgress(percent, start , percent == 100 || done))
+                        callback?.onSuccess(DownloadProgress(percent, start, percent == 100 || done))
                 }
                 start = false
             }
@@ -114,6 +117,8 @@ class PhotoRepositoryImpl(
         }
         callback?.onSuccess(DownloadProgress.NONE)
     }
+
+    override fun isDownloaded(id: String): Boolean = downloadManager.isDownloaded(id)
 
     override fun refresh() {
         transactional {

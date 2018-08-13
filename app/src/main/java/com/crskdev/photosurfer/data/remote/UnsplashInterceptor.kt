@@ -2,6 +2,7 @@ package com.crskdev.photosurfer.data.remote
 
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.crskdev.photosurfer.data.remote.auth.OAuth2Authorizer
 import okhttp3.*
 
 internal class UnsplashInterceptor(private val tokenStorage: AuthTokenStorage,
@@ -11,6 +12,7 @@ internal class UnsplashInterceptor(private val tokenStorage: AuthTokenStorage,
         val req = chain.request()
         return when {
             requestHas(req, HEADER_KEY_BYPASS) -> chain.proceed(req)
+            requestHas(req, HEADER_KEY_AUTHORIZING) -> OAuth2Authorizer().authorize(chain, apiKeys)
             requestHas(req, HEADER_KEY_AUTH) -> tokenStorage.getToken()?.let { chain.proceed(appendOAuthToken(req, it.access)) }
                     ?: unauthorizedResponse()
             else -> chain.proceed(appendClientIdKey(req))

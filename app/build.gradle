@@ -29,6 +29,7 @@ android {
         buildTypes.each {
             it.buildConfigField 'String', 'ACCESS_KEY', accessKey // from gradle.properties
             it.buildConfigField 'String', 'SECRET_KEY', secretKey // from gradle.properties
+            it.buildConfigField 'String', 'REDIRECT_URI', redirectURI // from gradle.properties
         }
     }
     compileOptions {
@@ -40,6 +41,7 @@ android {
 
 repositories {
     jcenter()
+    maven { url "https://jitpack.io" }
     maven {
         name 'glide-snapshot'
         url 'http://oss.sonatype.org/content/repositories/snapshots'
@@ -71,9 +73,14 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.11.0'
     implementation "com.squareup.retrofit2:retrofit:$rootProject.retrofit2Version"
     implementation "org.jsoup:jsoup:$rootProject.jsoupVersion"
+    implementation "com.github.franmontiel:PersistentCookieJar:$rootProject.persistentCoookieJar"
+    implementation 'org.nanohttpd:nanohttpd:2.2.0'
+
     implementation "com.github.bumptech.glide:glide:$rootProject.glideVersion"
     annotationProcessor "com.github.bumptech.glide:compiler:$rootProject.glideVersion"
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$rootProject.kotlinVersion"
+
 
     // Testing dependencies
     androidTestImplementation "com.android.support.test.espresso:espresso-intents:$rootProject.espressoVersion"

@@ -13,9 +13,12 @@ internal const val HEADER_KEY_AUTHORIZING = "AUTHORIZING"
 
 internal const val HEADER_KEY_BYPASS = "BYPASS"
 
-internal const val AUTHORIZING = "$HEADER_KEY_AUTHORIZING : true"
+internal const val AUTHORIZING = "$HEADER_KEY_AUTHORIZING:true"
 
-internal const val REQUIRE_AUTH = "$HEADER_KEY_AUTH : true"
+internal const val REQUIRE_AUTH = "$HEADER_KEY_AUTH:true"
+
+internal const val LOGIN_FORM_EMAIL ="user[email]"
+internal const val LOGIN_FORM_PASSWORD ="user[password]"
 
 
 

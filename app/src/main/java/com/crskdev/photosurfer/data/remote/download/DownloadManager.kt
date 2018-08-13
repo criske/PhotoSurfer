@@ -3,7 +3,7 @@ package com.crskdev.photosurfer.data.remote.download
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.safeSet
-import com.crskdev.photosurfer.services.PhotoSaver
+import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
 import okio.Source
 import retrofit2.Call
 import java.util.concurrent.atomic.AtomicBoolean
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class DownloadManager(
         private val progressListenerRegistrar: ProgressListenerRegistrar,
         private val photoDownloader: PhotoDownloader,
-        private val photoSaver: PhotoSaver) {
+        private val externalPhotoGalleryDAO: ExternalPhotoGalleryDAO) {
 
 
     private class MockPhotoDownloader(private val reg: ProgressListenerRegistrar) : PhotoDownloader {
@@ -22,7 +22,7 @@ class DownloadManager(
         private val isCanceled = AtomicBoolean(false)
         private var isIndeterminate = true
 
-        override fun data(id: String): Source? {
+        override fun data(photo: Photo): Source? {
             //prepare
             var count = 0L
             var lastTime = System.currentTimeMillis()
@@ -32,7 +32,7 @@ class DownloadManager(
 
             //
             while (count <= max && !isCanceled.get()) {
-                if(isCanceled.get()){
+                if (isCanceled.get()) {
                     break
                 }
                 val now = System.currentTimeMillis()
@@ -42,7 +42,7 @@ class DownloadManager(
                     lastTime = now
                 }
             }
-            if(count < max)
+            if (count < max)
                 reg.progressListener?.update(false, count, len(max), true)
             isCanceled.safeSet(false)
             return null
@@ -53,7 +53,7 @@ class DownloadManager(
         }
 
         @Suppress("ConstantConditionIf")
-        private fun len(value: Long): Long = if(isIndeterminate) -1 else value
+        private fun len(value: Long): Long = if (isIndeterminate) -1 else value
 
     }
 
@@ -61,20 +61,18 @@ class DownloadManager(
         private val registrar = object : ProgressListenerRegistrar {
             override var progressListener: ProgressListener? = null
         }
-        private val photoSaver = object : PhotoSaver {
+        private val externalPhotoGalleryDAO = object : ExternalPhotoGalleryDAO {
+            override fun isDownloaded(id: String): Boolean = false
             override fun save(photo: Photo, source: Source) = Unit
-
-            override fun save(id: String, source: Source) = Unit
-
         }
         val MOCK = DownloadManager(
                 registrar,
                 MockPhotoDownloader(registrar),
-                photoSaver
+                externalPhotoGalleryDAO
         )
     }
 
-    fun download(id: String, progress: ((Boolean, Long, Long, Boolean) -> Unit)) {
+    fun download(photo: Photo, progress: ((Boolean, Long, Long, Boolean) -> Unit)) {
         val progressListener = ProgressListener { isStartingValue, bytesRead, contentLength, done ->
             progress(isStartingValue, bytesRead, contentLength, done)
             if (done) {
@@ -83,18 +81,21 @@ class DownloadManager(
         }
         progressListenerRegistrar.progressListener = progressListener
 
-        photoDownloader.data(id)?.let { photoSaver.save(id, it) }
+        photoDownloader.data(photo)?.let { externalPhotoGalleryDAO.save(photo, it) }
     }
+
+    fun isDownloaded(id: String): Boolean = externalPhotoGalleryDAO.isDownloaded(id)
 
     fun cancel() {
         photoDownloader.cancel()
     }
 
+
 }
 
 interface PhotoDownloader {
 
-    fun data(id: String): Source?
+    fun data(photo: Photo): Source?
 
     fun cancel()
 
@@ -106,8 +107,8 @@ class PhotoDownloaderImpl(private val photoAPI: PhotoAPI) : PhotoDownloader {
     @Volatile
     private var call: Call<*>? = null
 
-    override fun data(id: String): Source? {
-        val response = photoAPI.download(id).apply { call = this }.execute()
+    override fun data(photo: Photo): Source? {
+        val response = photoAPI.download(photo.id).apply { call = this }.execute()
         return response.body()?.source()
     }
 

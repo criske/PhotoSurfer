@@ -14,7 +14,7 @@ class DownloadInterceptorTest {
     @Test
     fun intercept() {
 
-        RetrofitClient.DEFAULT.networkClient.addDownloadProgressListener{ curr, total, done ->
+        RetrofitClient.DEFAULT.networkClient.addDownloadProgressListener{ _, curr, total, done ->
             val percent = "%.2f".format(curr.toFloat()/total * 100)
             println("Current: $percent")
         }

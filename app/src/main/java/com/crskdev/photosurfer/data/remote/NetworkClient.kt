@@ -2,6 +2,8 @@
 
 package com.crskdev.photosurfer.data.remote
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
@@ -11,6 +13,7 @@ import com.squareup.moshi.Moshi
 import okhttp3.*
 import java.net.CookieManager
 import java.net.CookiePolicy
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Cristian Pela on 29.07.2018.
@@ -23,7 +26,8 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
 
 
     companion object {
-        val DEFAULT = NetworkClient(AuthTokenStorage.NONE, APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY))
+        val DEFAULT = NetworkClient(AuthTokenStorage.NONE, APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY,
+                BuildConfig.REDIRECT_URI))
     }
 
 
@@ -32,7 +36,9 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
 
     internal val client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
+            .readTimeout(1, TimeUnit.MINUTES)
             .addInterceptor(UnsplashInterceptor(tokenStorage, apiKeys))
+           // .addNetworkInterceptor(OAuth2RedirectURIInterceptor(apiKeys))
             .addInterceptor(downloadInterceptor)
             .build()
 
@@ -53,6 +59,7 @@ class Caller(private val host: String) {
 
     lateinit var client: OkHttpClient
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun call(vararg pathSegments: String): (Map<String, String>) -> Response {
         return {
             val httpUrl = HttpUrl.Builder()

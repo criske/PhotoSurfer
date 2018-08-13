@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.res.Resources
 import android.util.TypedValue
 import android.view.ViewPropertyAnimator
+import androidx.annotation.FloatRange
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import java.util.concurrent.atomic.AtomicBoolean
@@ -26,6 +28,9 @@ fun AtomicBoolean.safeSet(value: Boolean) {
         println(lastValue)
     } while (!compareAndSet(lastValue, value))
 }
+
+fun Int.setAlphaComponent(@FloatRange(from = 0.0, to = 1.0, fromInclusive = true, toInclusive = true) alpha: Float): Int =
+    ColorUtils.setAlphaComponent(this, (alpha * 255).toInt())
 
 inline fun ViewPropertyAnimator.onEnded(crossinline action: () -> Unit): ViewPropertyAnimator {
     this.setListener(object : Animator.AnimatorListener {
