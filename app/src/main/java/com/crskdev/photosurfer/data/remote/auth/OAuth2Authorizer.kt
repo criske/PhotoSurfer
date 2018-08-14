@@ -10,7 +10,7 @@ import org.jsoup.nodes.Document
 /**
  * Created by Cristian Pela on 30.07.2018.
  */
-class OAuth2Authorizer() {
+class OAuth2Authorizer {
 
     private val scopes = listOf(
             "public",
@@ -33,10 +33,11 @@ class OAuth2Authorizer() {
 
     fun authorize(chain: Interceptor.Chain, apiKeys: APIKeys): Response {
 
+        //setup server
         val (hostName, port) = HttpUrl.parse(apiKeys.redirectURI)!!.let {
             it.host() to it.port()
         }
-        val redirectServer = OAuth2RedirectURIServer(hostName, port)
+        val redirectURIServer = OAuth2RedirectURIServer(hostName, port)
                 .apply { start() }
 
         val loginRequest = chain.request()
@@ -44,7 +45,7 @@ class OAuth2Authorizer() {
         val email = internalLoginUrl.queryParameter(LOGIN_FORM_EMAIL) ?: ""
         val password = internalLoginUrl.queryParameter(LOGIN_FORM_PASSWORD) ?: ""
 
-        var authorizationCode: String? = null
+        var authorizationCode: String?
 
         val responseAuthenticityToken = requestAuthenticityToken(chain, apiKeys)
         return if (responseAuthenticityToken.isSuccessful) {
@@ -54,6 +55,11 @@ class OAuth2Authorizer() {
                 val loginResponse = requestLogin(chain, email, password, doc)
                 if (loginResponse.isSuccessful) {
                     doc = Jsoup.parse(loginResponse.body()?.string())
+                    val invalidCredentials = tryGetInvalidCredentials(doc)
+                    if(invalidCredentials!= null){
+                        redirectURIServer.stop()
+                        return unauthorizedResponse(loginRequest, invalidCredentials)
+                    }
                     authorizationCode = tryExtractAuthorizationCode(doc)
                     if (authorizationCode == null) {
                         val grantResponse = requestGrant(chain, apiKeys, doc)
@@ -61,27 +67,33 @@ class OAuth2Authorizer() {
                             doc = Jsoup.parse(grantResponse.body()?.string())
                             authorizationCode = tryExtractAuthorizationCode(doc)
                         } else {
-                            redirectServer.stop()
+                            redirectURIServer.stop()
                             return grantResponse
                         }
                     }
                 } else {
-                    redirectServer.stop()
+                    redirectURIServer.stop()
                     return loginResponse
                 }
             }
             return if (authorizationCode != null) {
-                redirectServer.stop()
+                redirectURIServer.stop()
                 requestToken(chain, apiKeys, authorizationCode)
             } else {
-                redirectServer.stop()
-                unauthorizedResponse()
+                redirectURIServer.stop()
+                unauthorizedResponse(loginRequest)
             }
         } else {
-            redirectServer.stop()
+            redirectURIServer.stop()
             responseAuthenticityToken
         }
 
+    }
+
+    private fun tryGetInvalidCredentials(doc: Document): String? {
+        val selector = "body > div.flash.flash--alert.animated.js-flash.js-flash-alert > div > div >" +
+                " div.col-xs-10.col-sm-6.center-block.flash__message"
+        return doc.selectFirst(selector)?.text()
     }
 
 
@@ -154,10 +166,11 @@ class OAuth2Authorizer() {
     }
 
 
-    private fun unauthorizedResponse() =
+    private fun unauthorizedResponse(request: Request, message: String = "") =
             Response.Builder().code(401)
-                    .body(ResponseBody.create(MediaType.get("text/plain"), ""))
-                    .message("")
+                    .body(ResponseBody.create(MediaType.get("text/plain"), message))
+                    .request(request)
+                    .message(message)
                     .protocol(Protocol.HTTP_1_1)
                     .build()
 

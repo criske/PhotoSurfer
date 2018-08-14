@@ -15,6 +15,20 @@
             app:exitAnim="@anim/out_to_left"
             app:popEnterAnim="@anim/in_from_left"
             app:popExitAnim="@anim/out_to_right" />
+        <action
+            android:id="@+id/action_fragment_list_photos_to_userProfileFragment"
+            app:destination="@id/fragment_user_profile"
+            app:enterAnim="@anim/in_from_right"
+            app:exitAnim="@anim/out_to_left"
+            app:popEnterAnim="@anim/in_from_left"
+            app:popExitAnim="@anim/out_to_right" />
+        <action
+            android:id="@+id/action_login"
+            app:destination="@id/fragment_login"
+            app:enterAnim="@anim/in_from_right"
+            app:exitAnim="@anim/out_to_left"
+            app:popEnterAnim="@anim/in_from_left"
+            app:popExitAnim="@anim/out_to_right" />
     </fragment>
 
     <fragment
@@ -25,5 +39,20 @@
         <argument
             android:name="photo"
             app:argType="com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragment_login"
+        android:name="com.crskdev.photosurfer.presentation.user.LoginFragment"
+        android:label="fragment_login"
+        tools:layout="@layout/fragment_login" />
+    <fragment
+        android:id="@+id/fragment_user_profile"
+        android:name="com.crskdev.photosurfer.presentation.user.UserProfileFragment"
+        android:label="fragment_user_profile"
+        tools:layout="@layout/fragment_user_profile">
+        <argument
+            android:name="id"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 </navigation>

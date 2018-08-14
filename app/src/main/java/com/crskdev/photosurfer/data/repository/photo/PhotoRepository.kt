@@ -1,13 +1,16 @@
-package com.crskdev.photosurfer.data.local.photo
+package com.crskdev.photosurfer.data.repository.photo
 
 import androidx.annotation.AnyThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.TransactionRunner
+import com.crskdev.photosurfer.data.local.photo.PhotoDAO
+import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.remote.RequestLimit
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.toDbEntity
 import com.crskdev.photosurfer.entities.toPhoto
@@ -17,22 +20,17 @@ import kotlin.math.roundToInt
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
-interface PhotoRepository {
-
-    interface Callback {
-        fun onSuccess(data: Any? = null) = Unit
-        fun onError(error: Throwable)
-    }
+interface PhotoRepository: Repository {
 
     fun getPhotos(): DataSource.Factory<Int, Photo>
 
-    fun insertPhotos(page: Int, callback: Callback? = null)
+    fun insertPhotos(page: Int, callback: Repository.Callback<Unit>? = null)
 
     fun refresh()
 
     fun cancel()
 
-    fun download(photo: Photo, callback: Callback? = null)
+    fun download(photo: Photo, callback: Repository.Callback<DownloadProgress>? = null)
 
     fun isDownloaded(id: String): Boolean
 }
@@ -65,7 +63,7 @@ class PhotoRepositoryImpl(
             .mapByPage { page -> page.map { it.toPhoto() } }
 
     //this must be called on the io thread
-    override fun insertPhotos(page: Int, callback: PhotoRepository.Callback?) {
+    override fun insertPhotos(page: Int, callback: Repository.Callback<Unit>?) {
         try {
             val response = api.getPhotos(page).apply { cancelableApiCall = this }.execute()
             response?.apply {
@@ -79,7 +77,7 @@ class PhotoRepositoryImpl(
                         it.toDbEntity(pagingData, dao.getNextIndex())
                     }?.apply {
                         dao.insertPhotos(this)
-                        callback?.onSuccess()
+                        callback?.onSuccess(Unit)
                     }
                 } else {
                     callback?.onError(Error("${code()}:${errorBody()?.string()}"))
@@ -92,7 +90,7 @@ class PhotoRepositoryImpl(
     }
 
 
-    override fun download(photo: Photo, callback: PhotoRepository.Callback?) {
+    override fun download(photo: Photo, callback: Repository.Callback<DownloadProgress>?) {
         val now = System.currentTimeMillis()
         var start = true
         downloadManager.download(photo) { isStartingValue, bytesRead, contentLength, done ->

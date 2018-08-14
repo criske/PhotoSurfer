@@ -19,6 +19,19 @@ interface AuthTokenStorage {
 
     fun saveToken(token: AuthToken)
 
+    fun hasToken(): Boolean = getToken() != null
+
+}
+
+class InMemoryAuthTokenStorage : AuthTokenStorage {
+
+    private var token: AuthToken? = null
+
+    override fun getToken(): AuthToken? = token
+
+    override fun saveToken(token: AuthToken) {
+        this.token = token
+    }
 }
 
 class AuthTokenStorageImpl(private val prefs: SharedPreferences) : AuthTokenStorage {

@@ -64,7 +64,7 @@ fun FragmentActivity.setWindowFlag(bits: Int, on: Boolean) {
 }
 
 
-fun FragmentActivity.setStatusBarColor(@ColorInt color: Int, alpha : Float = 0f) {
+fun FragmentActivity.setStatusBarColor(@ColorInt color: Int, alpha: Float = 0f) {
     if (Build.VERSION.SDK_INT in 19..20) {
         setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, true);
     }

@@ -24,7 +24,8 @@ import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.*
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
-import com.crskdev.photosurfer.data.local.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.Repository
+import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
@@ -257,8 +258,8 @@ class PhotoDetailViewModel(
             if (isDownloaded) {
                 isDownloadedLiveData.postValue(true)
             } else {
-                photoRepository.download(photo, object : PhotoRepository.Callback {
-                    override fun onSuccess(data: Any?) {
+                photoRepository.download(photo, object : Repository.Callback<DownloadProgress> {
+                    override fun onSuccess(data: DownloadProgress, extras: Any?) {
                         val downloadProgress = data as DownloadProgress
                         if (downloadProgress.doneOrCanceled) {
                             uiExecutor.execute {

@@ -3,8 +3,8 @@ package com.crskdev.photosurfer
 import android.content.Context
 import com.crskdev.photosurfer.data.local.PhotoSurferDB
 import com.crskdev.photosurfer.data.local.TransactionRunnerImpl
-import com.crskdev.photosurfer.data.local.photo.PhotoRepository
-import com.crskdev.photosurfer.data.local.photo.PhotoRepositoryImpl
+import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
 import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
@@ -16,13 +16,17 @@ import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
-import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorageImpl
+import com.crskdev.photosurfer.data.remote.auth.AuthAPI
+import com.crskdev.photosurfer.data.remote.auth.InMemoryAuthTokenStorage
+import com.crskdev.photosurfer.data.remote.user.UserAPI
+import com.crskdev.photosurfer.data.repository.user.UserRepository
+import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
+import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
-
 
 
 /**
@@ -46,8 +50,8 @@ object DependencyGraph {
 
     //NETWORK
     lateinit var authTokenStorage: AuthTokenStorage
-            private set
-    lateinit var retrofit : Retrofit
+        private set
+    lateinit var retrofit: Retrofit
         private set
     lateinit var progressListenerRegistrar: ProgressListenerRegistrar
         private set
@@ -59,6 +63,12 @@ object DependencyGraph {
     //repositories
     lateinit var photoRepository: PhotoRepository
         private set
+    lateinit var userRepository: UserRepository
+        private set
+
+    //nav
+    lateinit var authNavigatorMiddleware: AuthNavigatorMiddleware
+        private set
 
     fun init(context: Context) {
         if (isInit) return
@@ -66,7 +76,8 @@ object DependencyGraph {
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
         //NETWORK
-        authTokenStorage  = AuthTokenStorageImpl(preferences)
+        //authTokenStorage = AuthTokenStorageImpl(preferences)
+        authTokenStorage = InMemoryAuthTokenStorage()
         val retrofitClient = RetrofitClient(NetworkClient(
                 authTokenStorage,
                 APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY, BuildConfig.REDIRECT_URI),
@@ -75,8 +86,10 @@ object DependencyGraph {
         retrofit = retrofitClient.retrofit
         progressListenerRegistrar = ProgressListenerRegistrarImpl(retrofitClient)
 
-        //DB
+        //db
         db = PhotoSurferDB.create(context, false)
+
+        //photo
         val photoAPI = retrofit.create(PhotoAPI::class.java)
         externalPhotoGalleryDAO = ExternalPhotoGalleryDAOImpl(context)
         photoDownloader = PhotoDownloaderImpl(photoAPI)
@@ -87,6 +100,13 @@ object DependencyGraph {
                 db.photoDAO(),
                 downloadManager//TODO use real downloadManager in prod
         )
+
+        //user and auth
+        val userAPI = retrofit.create(UserAPI::class.java)
+        val authAPI: AuthAPI = retrofit.create(AuthAPI::class.java)
+        userRepository = UserRepositoryImpl(userAPI, authAPI, authTokenStorage)
+
+        authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 
         isInit = true
     }

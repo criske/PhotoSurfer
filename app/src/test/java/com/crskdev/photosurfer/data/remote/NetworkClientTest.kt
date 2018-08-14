@@ -1,11 +1,9 @@
 package com.crskdev.photosurfer.data.remote
 
 import com.crskdev.photosurfer.BuildConfig
-import com.crskdev.photosurfer.data.remote.auth.APIKeys
-import com.crskdev.photosurfer.data.remote.auth.AuthAPI
-import com.crskdev.photosurfer.data.remote.auth.AuthToken
-import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
+import com.crskdev.photosurfer.data.remote.user.UserAPI
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -14,11 +12,20 @@ import org.junit.Test
  */
 class NetworkClientTest {
 
+    private val testAuthTokenStorage: AuthTokenStorage = object : AuthTokenStorage {
+
+        var authToken: AuthToken? = null
+
+        override fun getToken(): AuthToken? = authToken
+
+        override fun saveToken(token: AuthToken) {
+            authToken = token
+        }
+
+    }
+
     private val networkClient = NetworkClient(
-            object : AuthTokenStorage {
-                override fun getToken(): AuthToken? = AuthToken("", "", "", "",0L)
-                override fun saveToken(token: AuthToken) = Unit
-            },
+            testAuthTokenStorage,
             APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY, BuildConfig.REDIRECT_URI)
     )
 
@@ -43,12 +50,22 @@ class NetworkClientTest {
     fun testAuthentication() {
         val authAPI = retrofit.create(AuthAPI::class.java)
 
-        val execute = authAPI.authorize("cristypela05@gmail.com", "26041985").execute()
-        println(execute.errorBody()?.string())
-        val auth = execute.body()
-        println(auth)
+        val authResponse = authAPI.authorize("cristypela05@gmail.com", "aa26041985").execute()
+        assertTrue(authResponse.isSuccessful)
+
+        val token = authResponse.body()?.toAuthToken()!!
+        //testAuthTokenStorage.saveToken(token)
+
+        val userAPI = retrofit.create(UserAPI::class.java)
+
+        val meResponse = userAPI.getMe().execute()
+
+        assertTrue(meResponse.isSuccessful)
+        val user = meResponse.body()!!
+
+
         val b = true
 
-        assertTrue(execute.isSuccessful)
+
     }
 }

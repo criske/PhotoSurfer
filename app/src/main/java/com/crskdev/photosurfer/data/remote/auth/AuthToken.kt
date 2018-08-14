@@ -20,3 +20,5 @@ class AuthTokenJSON{
     @Json(name = "created_at")
     var createdAt: Long = -1L
 }
+
+fun AuthTokenJSON.toAuthToken() = AuthToken(accessToken, tokenType, refreshToken, scope, createdAt)

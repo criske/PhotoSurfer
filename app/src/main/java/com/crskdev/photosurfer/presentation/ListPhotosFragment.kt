@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import androidx.navigation.findNavController
@@ -24,11 +25,13 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
-import com.crskdev.photosurfer.data.local.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.Repository
+import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.util.SingleLiveEvent
+import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
 import java.util.concurrent.Executor
@@ -61,8 +64,23 @@ class ListPhotosFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        toolbarListPhotos.apply {
+            inflateMenu(R.menu.menu_list_photos)
+            setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.menu_item_account -> context.dependencyGraph().authNavigatorMiddleware.navigate(
+                            findNavController(),
+                            ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(null))
+                }
+                true
+            }
+        }
+
+
         val glide = Glide.with(this)
         recyclerListPhotos.apply {
+            (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) {
                 view.findNavController().navigate(
@@ -195,7 +213,7 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
                                 if (page != null && !isLoading.get()) {
                                     ioExecutor.execute {
                                         isLoading.compareAndSet(false, true)
-                                        repository.insertPhotos(page, object : PhotoRepository.Callback {
+                                        repository.insertPhotos(page, object : Repository.Callback<Unit> {
                                             override fun onError(error: Throwable) {
                                                 errorData.postValue(error)
                                             }

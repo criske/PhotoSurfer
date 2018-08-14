@@ -1,7 +1,9 @@
 package com.crskdev.photosurfer.data.remote.user
 
+import com.crskdev.photosurfer.data.remote.REQUIRE_AUTH
 import retrofit2.Call
 import retrofit2.http.GET
+import retrofit2.http.Headers
 import retrofit2.http.Path
 
 /**
@@ -11,5 +13,13 @@ interface UserAPI {
 
     @GET("users/{userName}")
     fun getPublicProfile(@Path("userName") userName: String): Call<UserJSON>
+
+
+    @GET("me")
+    @Headers(REQUIRE_AUTH)
+    fun getMe(): Call<UserJSON>
+
+    @GET("users/{id}")
+    fun getUser(@Path("id") id: String): Call<UserJSON>
 
 }
