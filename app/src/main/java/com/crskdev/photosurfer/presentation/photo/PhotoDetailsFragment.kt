@@ -11,6 +11,7 @@ import android.view.*
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
+import androidx.core.view.isVisible
 import androidx.core.view.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
@@ -34,6 +35,7 @@ import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_photo_details.*
 import kotlinx.android.synthetic.main.progress_layout.*
 import java.util.concurrent.Executor
+import kotlin.properties.Delegates
 
 /**
  * A simple [Fragment] subclass.
@@ -48,8 +50,18 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     private lateinit var viewModel: PhotoDetailViewModel
     private var progSlideDownAnimation: ViewPropertyAnimator? = null
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
-    private var uiState: UIState = UIState()
+
+    private var uiState: UIState by Delegates.observable(UIState()) { _, _, new ->
+        //make sure we have view created
+        if (view != null) {
+            (fabDownload as View).visibility = if (new.isDownloadShowing || !new.isPhotoDisplayed)
+                View.GONE else View.VISIBLE
+            progressBarLoading.isVisible = !new.isPhotoDisplayed
+        }
+    }
+
     private val photo by lazy(LazyThreadSafetyMode.NONE) { PhotoDetailsFragmentArgs.fromBundle(arguments).photo }
+    private val glide by lazy { Glide.with(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +75,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                         dependencyGraph.photoRepository) as T
             }
         }).get(PhotoDetailViewModel::class.java)
-        uiState = savedInstanceState?.getParcelable(KEY_UI_STATE) ?: uiState
     }
 
     override fun onDestroy() {
@@ -75,6 +86,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     override fun onBackOrUpPressed() {
+        glide.clear(imagePhoto)
         viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
     }
 
@@ -92,9 +104,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        fabDownload.hide()
-
-        Glide.with(this).asBitmap()
+        uiState = savedInstanceState?.getParcelable(KEY_UI_STATE) ?: uiState
+        glide.asBitmap()
                 .load(photo.urls["full"])
                 .apply(RequestOptions().centerCrop())
                 .addListener(object : RequestListener<Bitmap> {
@@ -102,10 +113,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                                                  model: Any?, target: Target<Bitmap>?,
                                                  dataSource: DataSource?,
                                                  isFirstResource: Boolean): Boolean {
+                        uiState = uiState.copy(isPhotoDisplayed = true)
                         setPalette(this@PhotoDetailsFragment.photo.id, resource)
-                        view.postDelayed(300) {
-                            fabDownload.show()
-                        }
                         return false
                     }
 
@@ -132,7 +141,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     private fun subscribeToViewModel(view: View) {
-
         viewModel.paletteLiveData.observe(this, Observer {
             it[photo.id]?.let { palette ->
                 val darkVibrantColor = palette.getDarkVibrantColor(ContextCompat
@@ -148,8 +156,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 textDownloadProgress.setTextColor(darkVibrantColor)
             }
         })
-
-        (fabDownload as View).visibility = if (uiState.isDownloadShowing) View.GONE else View.VISIBLE
         var isAnimatingSlide = false
         viewModel.downloadLiveData
                 .filter { it != DownloadProgress.NONE }
@@ -170,7 +176,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                         progSlideDownAnimation = cardProgressDownload.animate().translationY(50f.dpToPx(resources))
                                 .onEnded {
                                     isAnimatingSlide = false
-                                    (fabDownload as View).visibility = View.GONE
                                     uiState = uiState.copy(isDownloadShowing = true)
                                 }.apply { start() }
                         (fabDownload as View).visibility = View.GONE
@@ -181,7 +186,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                         progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
                                 .onEnded {
                                     isAnimatingSlide = false
-                                    (fabDownload as View).visibility = View.VISIBLE
                                     uiState = uiState.copy(isDownloadShowing = false)
                                 }.apply { start() }
                     }
@@ -192,6 +196,9 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             if (it) {
                 Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
             }
+        })
+        viewModel.errorLiveData.observe(this, Observer {
+            Toast.makeText(this.context, it.message, Toast.LENGTH_SHORT).show()
         })
     }
 
@@ -213,8 +220,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     override fun onDestroyView() {
-        fabDownload.hide()
-        fabDownload.cancelPendingInputEvents()
         progSlideUpAnimation?.cancel()
         progSlideDownAnimation?.cancel()
         super.onDestroyView()
@@ -223,6 +228,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     @Parcelize
     data class UIState(val isDownloadShowing: Boolean = false,
+                       val isPhotoDisplayed: Boolean = false,
                        val pendingPermissionForDownloadPhotoId: String? = null) : Parcelable
 }
 

@@ -20,7 +20,7 @@ import kotlin.math.roundToInt
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
-interface PhotoRepository: Repository {
+interface PhotoRepository : Repository {
 
     fun getPhotos(): DataSource.Factory<Int, Photo>
 
@@ -91,29 +91,34 @@ class PhotoRepositoryImpl(
 
 
     override fun download(photo: Photo, callback: Repository.Callback<DownloadProgress>?) {
-        val now = System.currentTimeMillis()
-        var start = true
-        downloadManager.download(photo) { isStartingValue, bytesRead, contentLength, done ->
-            val passed = System.currentTimeMillis() - now
-            if (passed < 500 && done) {
-                callback?.onSuccess(DownloadProgress(100, false, true))
-            } else {
-                if (contentLength == -1L) { //indeterminated
-                    if (start) {
-                        callback?.onSuccess(DownloadProgress.INDETERMINATED_START)
-                    } else if (done) {
-                        callback?.onSuccess(DownloadProgress.INDETERMINATED_END)
-                    }
+        try {
+            val now = System.currentTimeMillis()
+            var start = true
+            downloadManager.download(photo) { _, bytesRead, contentLength, done ->
+                val passed = System.currentTimeMillis() - now
+                if (passed < 500 && done) {
+                    callback?.onSuccess(DownloadProgress(100, false, true))
                 } else {
-                    val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
-                    if (percent % 10 == 0 || percent == 100 || done) // backpressure relief
-                        callback?.onSuccess(DownloadProgress(percent, start, percent == 100 || done))
+                    if (contentLength == -1L) { //indeterminated
+                        if (start) {
+                            callback?.onSuccess(DownloadProgress.INDETERMINATED_START)
+                        } else if (done) {
+                            callback?.onSuccess(DownloadProgress.INDETERMINATED_END)
+                        }
+                    } else {
+                        val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
+                        if (percent % 10 == 0 || percent == 100 || done) // backpressure relief
+                            callback?.onSuccess(DownloadProgress(percent, start, percent == 100 || done))
+                    }
+                    start = false
                 }
-                start = false
-            }
 
+            }
+            callback?.onSuccess(DownloadProgress.NONE)
+        } catch (ex: Exception) {
+            callback?.onSuccess(DownloadProgress.INDETERMINATED_END)
+            callback?.onError(ex)
         }
-        callback?.onSuccess(DownloadProgress.NONE)
     }
 
     override fun isDownloaded(id: String): Boolean = downloadManager.isDownloaded(id)
