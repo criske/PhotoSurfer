@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_user_profile_graph"
+    app:startDestination="@+id/fragment_user_profile_details">
+    <fragment
+        android:id="@+id/fragment_splash"
+        android:name="com.crskdev.photosurfer.presentation.SplashFragment"
+        tools:layout="@layout/fragment_splash" />
+    <fragment
+        android:id="@+id/fragment_user_profile_details"
+        android:name="com.crskdev.photosurfer.presentation.user.UserProfileDetailsFragment"
+        android:label="@string/details"
+        app:clearTask="true"
+        tools:layout="@layout/fragment_user_profile_details">
+        <argument
+            android:name="id"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragment_user_profile_photos"
+        android:name="com.crskdev.photosurfer.presentation.user.UserProfileListPhotos"
+        android:label="@string/photos"
+        app:clearTask="true"
+        tools:layout="@layout/fragment_user_profile_list_photos">
+        <argument
+            android:name="id"
+            app:argType="string" />
+    </fragment>
+</navigation>

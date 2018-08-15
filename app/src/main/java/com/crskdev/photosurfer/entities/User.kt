@@ -18,6 +18,5 @@ data class User(
     val totalPhotos: Int = 0,
     val totalCollections: Int = 0,
     val isFollowedByMe: Boolean = false,
-    val downloads: Int = 0,
-    val photos: List<Photo>
+    val downloads: Int = 0
 )

@@ -6,35 +6,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import com.crskdev.photosurfer.R
-import com.crskdev.photosurfer.data.repository.Repository
-import com.crskdev.photosurfer.data.repository.user.UserRepository
-import com.crskdev.photosurfer.dependencyGraph
-import com.crskdev.photosurfer.entities.User
-import com.crskdev.photosurfer.util.SingleLiveEvent
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.defaultTransitionNavOptionsBuilder
 import kotlinx.android.synthetic.main.fragment_user_profile.*
-import java.util.concurrent.Executor
 
 class UserProfileFragment : Fragment() {
 
-    private lateinit var viewModel: UserProfileViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        viewModel = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                val dependencies = context!!.dependencyGraph()
-                @Suppress("UNCHECKED_CAST")
-                return UserProfileViewModel(dependencies.ioThreadExecutor, dependencies.userRepository) as T
-            }
-
-        }).get(UserProfileViewModel::class.java)
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -44,43 +24,39 @@ class UserProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        val userId = UserProfileFragmentArgs.fromBundle(arguments).id
+        val navHostFragment = NavHostFragment.create(R.navigation.nav_user_profile_graph)
+        childFragmentManager.beginTransaction()
+                .replace(R.id.nav_host_user_profile_container, navHostFragment)
+                .setPrimaryNavigationFragment(navHostFragment)
+                .commitNow()
 
-        viewModel.userLiveData.observe(this, Observer {
-            txtUserProfile.text = it.toString()
-        })
-
-        viewModel.getUser(userId)
-
-    }
-}
-
-class UserProfileViewModel(
-        private val ioThreadExecutor: Executor,
-        private val userRepository: UserRepository
-) : ViewModel() {
-
-    val userLiveData = MutableLiveData<User>()
-
-    val errorLiveData = SingleLiveEvent<Throwable>()
-
-    fun getUser(id: String?) {
-        ioThreadExecutor.execute {
-            val cb = object : Repository.Callback<User> {
-                override fun onSuccess(data: User, extras: Any?) {
-                    userLiveData.postValue(data)
+        val parentNavController = view.findNavController()
+        val navController = navHostFragment.navController
+        toolbarProfile.apply {
+            inflateMenu(R.menu.menu_user_profile)
+            setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.menu_action_user_photos ->
+                        if (!navController.popBackStack(R.id.fragment_user_profile_photos, false))
+                            navController.navigate(R.id.fragment_user_profile_photos, arguments?.copy(),
+                                    defaultTransitionNavOptions())
+                    R.id.menu_action_user_details ->
+                        if (!navController.popBackStack(R.id.fragment_user_profile_details, false))
+                            navController.navigate(R.id.fragment_user_profile_details, arguments?.copy(),
+                                    defaultTransitionNavOptions())
                 }
-
-                override fun onError(error: Throwable) {
-                    errorLiveData.postValue(error)
-                }
+                true
             }
-            if (id == null) {
-                userRepository.me(cb)
-            } else {
-                userRepository.getUser(id, cb)
+            setNavigationOnClickListener {
+                if (!navController.navigateUp())//if child backstack is depleted - exit to parent
+                    parentNavController.navigateUp()
             }
         }
+        navController.navigate(R.id.fragment_user_profile_details, arguments?.copy(),
+                defaultTransitionNavOptionsBuilder().setLaunchSingleTop(true).build())
     }
 
+
+    private fun Bundle.copy() = Bundle().apply { putAll(this@copy) }
 }
+

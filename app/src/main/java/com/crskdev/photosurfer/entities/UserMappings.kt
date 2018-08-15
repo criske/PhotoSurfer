@@ -7,4 +7,4 @@ import com.crskdev.photosurfer.data.remote.user.UserJSON
  */
 fun UserJSON.toUser() = User(
         id, lastUpdated, userName, firstName, lastName, profileImageLinks, twitterUserName, portfolioUrl, bio, location,
-        totalLikes, totalPhotos, totalCollections, isFollowedByMe, downloads, photos.map { it.toPhoto() })
+        totalLikes, totalPhotos, totalCollections, isFollowedByMe, downloads)

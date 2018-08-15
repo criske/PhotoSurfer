@@ -8,4 +8,6 @@
     <string name="e_mail">E-mail</string>
     <string name="remember_credentials">Remember credentials?</string>
     <string name="login">Login</string>
+    <string name="photos">Photos</string>
+    <string name="details">Details</string>
 </resources>

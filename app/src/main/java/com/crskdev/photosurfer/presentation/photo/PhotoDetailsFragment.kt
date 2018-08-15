@@ -7,12 +7,14 @@ import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewPropertyAnimator
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.isVisible
-import androidx.core.view.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import androidx.palette.graphics.Palette
@@ -37,10 +39,6 @@ import kotlinx.android.synthetic.main.progress_layout.*
 import java.util.concurrent.Executor
 import kotlin.properties.Delegates
 
-/**
- * A simple [Fragment] subclass.
- *
- */
 class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
 
     companion object {
@@ -51,7 +49,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     private var progSlideDownAnimation: ViewPropertyAnimator? = null
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
 
-    private var uiState: UIState by Delegates.observable(UIState()) { _, _, new ->
+    private var uiState: UIState by Delegates.observable(UIState.INITIAL) { _, _, new ->
         //make sure we have view created
         if (view != null) {
             (fabDownload as View).visibility = if (new.isDownloadShowing || !new.isPhotoDisplayed)
@@ -193,9 +191,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 })
 
         viewModel.isDownloadedLiveData.observe(this, Observer {
-            if (it) {
-                Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
         })
         viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(this.context, it.message, Toast.LENGTH_SHORT).show()
@@ -229,7 +225,11 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     @Parcelize
     data class UIState(val isDownloadShowing: Boolean = false,
                        val isPhotoDisplayed: Boolean = false,
-                       val pendingPermissionForDownloadPhotoId: String? = null) : Parcelable
+                       val pendingPermissionForDownloadPhotoId: String? = null) : Parcelable {
+        companion object {
+            val INITIAL = UIState()
+        }
+    }
 }
 
 class PhotoDetailViewModel(
@@ -239,7 +239,7 @@ class PhotoDetailViewModel(
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
-    val isDownloadedLiveData = SingleLiveEvent<Boolean>()
+    val isDownloadedLiveData = SingleLiveEvent<Unit>()
 
     val paletteLiveData = MutableLiveData<Map<String, Palette>>().apply {
         value = emptyMap()
@@ -262,7 +262,7 @@ class PhotoDetailViewModel(
         backgroundExecutor.execute {
             val isDownloaded = photoRepository.isDownloaded(photo.id)
             if (isDownloaded) {
-                isDownloadedLiveData.postValue(true)
+                isDownloadedLiveData.postValue(Unit)
             } else {
                 photoRepository.download(photo, object : Repository.Callback<DownloadProgress> {
                     override fun onSuccess(data: DownloadProgress, extras: Any?) {
@@ -289,10 +289,5 @@ class PhotoDetailViewModel(
     fun cancelDownload(id: String) {
         photoRepository.cancel()
     }
-
-    override fun onCleared() {
-        super.onCleared()
-    }
-
 
 }

@@ -30,5 +30,4 @@ class UserJSON {
     @Json(name="followed_by_user")
     var isFollowedByMe: Boolean = false
     var downloads: Int = 0
-    lateinit var photos: List<PhotoJSON>
 }

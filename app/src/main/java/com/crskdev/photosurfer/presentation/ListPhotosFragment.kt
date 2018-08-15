@@ -9,9 +9,14 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.*
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
-import androidx.paging.*
+import androidx.paging.LivePagedListBuilder
+import androidx.paging.PagedList
+import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,6 +36,7 @@ import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.util.SingleLiveEvent
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
@@ -65,13 +71,17 @@ class ListPhotosFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
+        val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
+
         toolbarListPhotos.apply {
             inflateMenu(R.menu.menu_list_photos)
             setOnMenuItemClickListener {
                 when (it.itemId) {
-                    R.id.menu_item_account -> context.dependencyGraph().authNavigatorMiddleware.navigate(
-                            findNavController(),
-                            ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(null))
+                    R.id.menu_item_account -> {
+                        authNavigatorMiddleware.navigate(
+                                findNavController(),
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(""))
+                    }
                 }
                 true
             }
@@ -80,12 +90,24 @@ class ListPhotosFragment : Fragment() {
 
         val glide = Glide.with(this)
         recyclerListPhotos.apply {
-            (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
+            (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior() as CoordinatorLayout.Behavior<*>
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) {
-                view.findNavController().navigate(
-                        ListPhotosFragmentDirections
-                                .actionFragmentListPhotosToFragmentPhotoDetails(it.parcelize()))
+            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) { what, photo ->
+                val navController = view.findNavController()
+                when (what) {
+                    ActionWhat.PHOTO_DETAIL -> {
+                        navController.navigate(
+                                ListPhotosFragmentDirections
+                                        .actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()),
+                                defaultTransitionNavOptions())
+                    }
+                    ActionWhat.AUTHOR -> {
+                        navController.navigate(
+                                ListPhotosFragmentDirections
+                                        .actionFragmentListPhotosToUserProfileFragment(photo.authorUsername),
+                                defaultTransitionNavOptions())
+                    }
+                }
             }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
@@ -110,7 +132,7 @@ class ListPhotosFragment : Fragment() {
 
 class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                         private val glide: RequestManager,
-                        private val action: (Photo) -> Unit) : PagedListAdapter<Photo, ListPhotosVH>(
+                        private val action: (ActionWhat, Photo) -> Unit) : PagedListAdapter<Photo, ListPhotosVH>(
         object : DiffUtil.ItemCallback<Photo>() {
             override fun areItemsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem.id == newItem.id
             override fun areContentsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem == newItem
@@ -131,15 +153,20 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
     }
 }
 
+enum class ActionWhat {
+    PHOTO_DETAIL, AUTHOR
+}
 
 class ListPhotosVH(private val glide: RequestManager,
                    view: View,
-                   private val action: (Photo) -> Unit) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+                   private val action: (ActionWhat, Photo) -> Unit) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+
 
     private var photo: Photo? = null
 
     init {
-        itemView.imagePhoto.setOnClickListener { photo?.let { action(it) } }
+        itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ActionWhat.PHOTO_DETAIL, it) } }
+        itemView.textAuthor.setOnClickListener { _ -> photo?.let { action(ActionWhat.AUTHOR, it) } }
     }
 
     fun bind(photo: Photo) {

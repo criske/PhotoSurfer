@@ -2,6 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_graph"
     app:startDestination="@id/fragment_list_photos">
     <fragment
         android:id="@+id/fragment_list_photos"
@@ -10,27 +11,11 @@
         tools:layout="@layout/fragment_list_photos">
         <action
             android:id="@+id/action_fragment_list_photos_to_fragment_photo_details"
-            app:destination="@id/fragment_photo_details"
-            app:enterAnim="@anim/in_from_right"
-            app:exitAnim="@anim/out_to_left"
-            app:popEnterAnim="@anim/in_from_left"
-            app:popExitAnim="@anim/out_to_right" />
+            app:destination="@id/fragment_photo_details" />
         <action
             android:id="@+id/action_fragment_list_photos_to_userProfileFragment"
-            app:destination="@id/fragment_user_profile"
-            app:enterAnim="@anim/in_from_right"
-            app:exitAnim="@anim/out_to_left"
-            app:popEnterAnim="@anim/in_from_left"
-            app:popExitAnim="@anim/out_to_right" />
-        <action
-            android:id="@+id/action_login"
-            app:destination="@id/fragment_login"
-            app:enterAnim="@anim/in_from_right"
-            app:exitAnim="@anim/out_to_left"
-            app:popEnterAnim="@anim/in_from_left"
-            app:popExitAnim="@anim/out_to_right" />
+            app:destination="@id/fragment_user_profile" />
     </fragment>
-
     <fragment
         android:id="@+id/fragment_photo_details"
         android:name="com.crskdev.photosurfer.presentation.photo.PhotoDetailsFragment"
@@ -52,7 +37,11 @@
         tools:layout="@layout/fragment_user_profile">
         <argument
             android:name="id"
-            app:argType="string"
-            app:nullable="true" />
+            app:argType="string" />
     </fragment>
+
+    <!-- global actions -->
+    <action
+        android:id="@+id/action_global_login"
+        app:destination="@id/fragment_login" />
 </navigation>
