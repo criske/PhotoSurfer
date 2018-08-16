@@ -2,6 +2,7 @@ package com.crskdev.photosurfer.presentation.user
 
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -13,6 +14,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
+import androidx.palette.graphics.Palette
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
@@ -64,9 +66,15 @@ class UserProfileDetailsFragment : Fragment() {
 
         viewModel.userLiveData.observe(this, Observer {
             displayAvatar(username, it.profileImageLinks[ImageType.LARGE]!!)
-            textProfileFullName.text = it.firstName
-            textProfileUsername.text = it.userName
+            textProfileFullName.text = "${it.firstName.capitalize()} ${it.lastName.capitalize()}"
+            textProfileUsername.text = "@${it.userName}"
             textProfileLocation.text = it.location ?: "?"
+            textProfileFollowers.text = it.followers.toString()
+            textProfileFollowing.text = it.following.toString()
+            textProfileLikes.text = it.likes.toString()
+            textProfileDownloads.text = it.downloads.toString()
+            textProfileBio.text = it.bio
+            btnProfileFollow.text = if (it.isFollowedByMe) "Unfollow" else "Follow"
         })
 
         viewModel.errorLiveData.observe(this, Observer {
@@ -98,8 +106,8 @@ class UserProfileDetailsFragment : Fragment() {
                         return true
                     }
 
-                    override fun onResourceReady(resource: Bitmap?, model: Any?, target: Target<Bitmap>?,
-                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                    override fun onResourceReady(resource: Bitmap, model: Any, target: Target<Bitmap>,
+                                                 dataSource: DataSource, isFirstResource: Boolean): Boolean {
                         return false
                     }
 

@@ -51,15 +51,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     private var progSlideDownAnimation: ViewPropertyAnimator? = null
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
 
-    private var uiState: UIState by Delegates.observable(UIState.INITIAL) { _, _, new ->
-        //make sure we have view created
-        if (view != null) {
-            (fabDownload as View).visibility = if (new.isDownloadShowing || !new.isPhotoDisplayed)
-                View.GONE else View.VISIBLE
-            progressBarLoading.isVisible = !new.isPhotoDisplayed && !new.hasDisplayingError
-        }
-    }
-
     private val photo by lazy(LazyThreadSafetyMode.NONE) { PhotoDetailsFragmentArgs.fromBundle(arguments).photo.deparcelize() }
     private val glide by lazy { Glide.with(this) }
 
@@ -89,10 +80,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     override fun onPermissionsGranted(permissions: List<String>) {
-        uiState.pendingPermissionForDownloadPhotoId?.let {
-            viewModel.download(photo)
-        }
-        uiState = uiState.copy(pendingPermissionForDownloadPhotoId = null)
+        viewModel.download(photo)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -102,13 +90,10 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        uiState = savedInstanceState?.getParcelable(KEY_UI_STATE) ?: uiState
         subscribeToViewModel(view)
-
         displayPhoto()
         fabDownload.setOnClickListener { v ->
             if (!AppPermissions.hasStoragePermission(v.context)) {
-                uiState = uiState.copy(pendingPermissionForDownloadPhotoId = photo.id)
                 AppPermissions.requestStoragePermission(activity!!)
             } else
                 viewModel.download(photo)
@@ -121,7 +106,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     private fun displayPhoto() {
-        uiState = uiState.copy(hasDisplayingError = false)
         glide.asBitmap()
                 .load(photo.urls[ImageType.FULL])
                 .apply(RequestOptions().centerCrop())
@@ -130,8 +114,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                                                  model: Any?, target: Target<Bitmap>?,
                                                  dataSource: DataSource?,
                                                  isFirstResource: Boolean): Boolean {
-                        uiState = uiState.copy(isPhotoDisplayed = true)
                         setPalette(this@PhotoDetailsFragment.photo.id, resource)
+                        viewModel.photoDisplayedLiveData.value = photo.id
                         return false
                     }
 
@@ -139,12 +123,15 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                                               target: Target<Bitmap>?,
                                               isFirstResource: Boolean): Boolean {
                         view?.let {
+                            viewModel.photoDisplayedLiveData.value = photo.id
                             Snackbar.make(it, e?.message
                                     ?: "Unknown Error", Snackbar.LENGTH_INDEFINITE)
-                                    .setAction("Retry") { _ -> displayPhoto() }
+                                    .setAction("Retry") { _ ->
+                                        viewModel.photoDisplayedLiveData.value = ""
+                                        displayPhoto()
+                                    }
                                     .show()
                         }
-                        uiState = uiState.copy(hasDisplayingError = true)
                         return true
                     }
                 })
@@ -167,45 +154,38 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 textDownloadProgress.setTextColor(darkVibrantColor)
             }
         })
-        var isAnimatingSlide = false
         viewModel.downloadLiveData
                 .filter { it != DownloadProgress.NONE }
                 .observe(this, Observer {
                     val isIndeterminate = it.percent == -1
                     progressBarDownload.isIndeterminate = isIndeterminate
-
                     if (isIndeterminate) {
                         textDownloadProgress.text = "?"
                     } else {
                         progressBarDownload.progress = it.percent
                         textDownloadProgress.text = "${it.percent}%"
                     }
-                    if (((uiState.isDownloadShowing && !it.isStaringValue) || it.isStaringValue) && !isAnimatingSlide) {
-                        isAnimatingSlide = true
-                        progSlideDownAnimation = cardProgressDownload.animate().translationY(50f.dpToPx(resources))
-                                .onEnded {
-                                    isAnimatingSlide = false
-                                    uiState = uiState.copy(isDownloadShowing = true)
-                                }.apply { start() }
-                        (fabDownload as View).visibility = View.GONE
-
-                    }
-                    if (it.doneOrCanceled && uiState.isDownloadShowing && !isAnimatingSlide) {
-                        isAnimatingSlide = true
-                        progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
-                                .onEnded {
-                                    isAnimatingSlide = false
-                                    uiState = uiState.copy(isDownloadShowing = false)
-                                }.apply { start() }
-                    }
-
                 })
-
         viewModel.isDownloadedLiveData.observe(this, Observer {
             Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
         })
         viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(this.context, it.message, Toast.LENGTH_SHORT).show()
+        })
+        viewModel.downloadStateLiveData.observe(this, Observer {
+            if (it == PhotoDetailViewModel.DOWNLOADING) {
+                progSlideDownAnimation = cardProgressDownload.animate().translationY(50f.dpToPx(resources)).apply { start() }
+                (fabDownload as View).visibility = View.GONE
+            } else if (cardProgressDownload.y > 0) {
+                progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
+                        .apply { start() }
+                (fabDownload as View).visibility = View.VISIBLE
+            }
+        })
+        viewModel.photoDisplayedLiveData.observe(this, Observer {
+            val isVisible = it != photo.id
+            progressBarLoading.isVisible = isVisible
+            (fabDownload as View).isVisible = !isVisible
         })
     }
 
@@ -218,12 +198,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 }
             }
         }
-
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable(KEY_UI_STATE, uiState)
-        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -232,22 +206,17 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         super.onDestroyView()
     }
 
-
-    @Parcelize
-    data class UIState(val isDownloadShowing: Boolean = false,
-                       val isPhotoDisplayed: Boolean = false,
-                       val hasDisplayingError: Boolean = false,
-                       val pendingPermissionForDownloadPhotoId: String? = null) : Parcelable {
-        companion object {
-            val INITIAL = UIState()
-        }
-    }
 }
 
 class PhotoDetailViewModel(
         private val uiExecutor: Executor,
         private val backgroundExecutor: Executor,
         private val photoRepository: PhotoRepository) : ViewModel() {
+
+    companion object {
+        const val IDLE = 0
+        const val DOWNLOADING = 1
+    }
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
@@ -259,6 +228,24 @@ class PhotoDetailViewModel(
 
     val downloadLiveData = MutableLiveData<DownloadProgress>().apply {
         value = DownloadProgress.NONE
+    }
+
+    //photo id
+    val photoDisplayedLiveData = MutableLiveData<String>().apply {
+        value = ""
+    }
+
+    val downloadStateLiveData = MediatorLiveData<Int>().apply {
+        value = IDLE
+        addSource(downloadLiveData) {
+            if (it.isStaringValue)
+                postValue(DOWNLOADING)
+            else if (it.doneOrCanceled)
+                postValue(IDLE)
+        }
+        addSource(errorLiveData) {
+            postValue(IDLE)
+        }
     }
 
     fun updatePalette(id: String, palette: Palette) {

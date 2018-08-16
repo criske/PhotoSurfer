@@ -20,6 +20,9 @@ data class User(
         val totalPhotos: Int = 0,
         val totalCollections: Int = 0,
         val isFollowedByMe: Boolean = false,
+        val followers: Int = 0,
+        val following: Int = 0,
+        val likes: Int = 0,
         val downloads: Int = 0
 )
 

@@ -10,4 +10,18 @@
     <string name="login">Login</string>
     <string name="photos">Photos</string>
     <string name="details">Details</string>
+    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+        sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Orci phasellus egestas tellus rutrum tellus.
+        Cursus turpis massa tincidunt dui ut ornare lectus.
+        Lorem ipsum dolor sit amet consectetur adipiscing elit.
+        Enim lobortis scelerisque fermentum dui faucibus in ornare quam.
+        Aliquet lectus proin nibh nisl condimentum id venenatis.
+        Eget mauris pharetra et ultrices neque ornare. Vitae congue mauris rhoncus aenean vel.
+        Massa tincidunt dui ut ornare lectus. Posuere sollicitudin aliquam ultrices sagittis orci.
+        Convallis a cras semper auctor neque vitae tempus. Ut etiam sit amet nisl purus in mollis.
+        Elementum nibh tellus molestie nunc non blandit. Leo in vitae turpis massa.
+        Velit sed ullamcorper morbi tincidunt ornare massa eget egestas purus.
+        Sagittis nisl rhoncus mattis rhoncus urna. Diam phasellus vestibulum lorem sed.
+        Aenean vel elit scelerisque mauris. Quis commodo odio aenean sed adipiscing diam donec adipiscing.</string>
 </resources>

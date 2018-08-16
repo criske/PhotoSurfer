@@ -11,9 +11,9 @@ class UserJSON {
     @Json(name = "username")
     lateinit var userName: String
     @Json(name = "first_name")
-    lateinit var firstName: String
+    var firstName: String? = null
     @Json(name = "last_name")
-    lateinit var lastName: String
+    var lastName: String? = null
     @Json(name = "profile_image")
     lateinit var profileImageLinks: EnumMap<ImageType, String>
     @Json(name = "twitter_username")
@@ -30,5 +30,11 @@ class UserJSON {
     var totalCollections: Int = 0
     @Json(name = "followed_by_user")
     var isFollowedByMe: Boolean = false
+    @Json(name = "followers_count")
+    var followers: Int =0
+    @Json(name = "following_count")
+    var following: Int =0
+    @Json(name = "total_likes")
+    var likes: Int = 0
     var downloads: Int = 0
 }

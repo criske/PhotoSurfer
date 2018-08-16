@@ -15,11 +15,12 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:fitsSystemWindows="true"
-            app:layout_scrollFlags="scroll|enterAlwaysCollapsed">
+            app:layout_scrollFlags="scroll|enterAlways|enterAlwaysCollapsed">
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbarListPhotos"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
+                android:elevation="5dp"
                 app:layout_collapseMode="parallax"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
         </com.google.android.material.appbar.CollapsingToolbarLayout>
