@@ -32,18 +32,20 @@ class UserProfileFragment : Fragment() {
 
         val parentNavController = view.findNavController()
         val navController = navHostFragment.navController
+        val navOptions = defaultTransitionNavOptionsBuilder().setLaunchSingleTop(true).build()
         toolbarProfile.apply {
             inflateMenu(R.menu.menu_user_profile)
             setOnMenuItemClickListener {
+
                 when (it.itemId) {
                     R.id.menu_action_user_photos ->
                         if (!navController.popBackStack(R.id.fragment_user_profile_photos, false))
                             navController.navigate(R.id.fragment_user_profile_photos, arguments?.copy(),
-                                    defaultTransitionNavOptions())
+                                    navOptions)
                     R.id.menu_action_user_details ->
                         if (!navController.popBackStack(R.id.fragment_user_profile_details, false))
                             navController.navigate(R.id.fragment_user_profile_details, arguments?.copy(),
-                                    defaultTransitionNavOptions())
+                                    navOptions)
                 }
                 true
             }
@@ -53,7 +55,7 @@ class UserProfileFragment : Fragment() {
             }
         }
         navController.navigate(R.id.fragment_user_profile_details, arguments?.copy(),
-                defaultTransitionNavOptionsBuilder().setLaunchSingleTop(true).build())
+                navOptions)
     }
 
 

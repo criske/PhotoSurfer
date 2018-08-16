@@ -36,9 +36,9 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
 
     internal val client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
-            .readTimeout(1, TimeUnit.MINUTES)
+            .readTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(UnsplashInterceptor(tokenStorage, apiKeys))
-           // .addNetworkInterceptor(OAuth2RedirectURIInterceptor(apiKeys))
+            .addInterceptor(RateLimitInterceptor())
             .addInterceptor(downloadInterceptor)
             .build()
 

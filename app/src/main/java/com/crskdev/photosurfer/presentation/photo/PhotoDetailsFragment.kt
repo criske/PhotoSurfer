@@ -33,6 +33,7 @@ import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.util.SingleLiveEvent
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_photo_details.*
 import kotlinx.android.synthetic.main.progress_layout.*
@@ -54,7 +55,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         if (view != null) {
             (fabDownload as View).visibility = if (new.isDownloadShowing || !new.isPhotoDisplayed)
                 View.GONE else View.VISIBLE
-            progressBarLoading.isVisible = !new.isPhotoDisplayed
+            progressBarLoading.isVisible = !new.isPhotoDisplayed && !new.hasDisplayingError
         }
     }
 
@@ -76,10 +77,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     override fun onDestroy() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val defaultPrimary = ContextCompat.getColor(context!!, R.color.colorPrimaryDark)
-            activity!!.window.statusBarColor = defaultPrimary
-        }
+        val defaultPrimary = ContextCompat.getColor(context!!, R.color.colorPrimaryDark)
+        activity!!.setStatusBarColor(defaultPrimary)
         super.onDestroy()
     }
 
@@ -103,6 +102,25 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         uiState = savedInstanceState?.getParcelable(KEY_UI_STATE) ?: uiState
+        subscribeToViewModel(view)
+
+        displayPhoto()
+        fabDownload.setOnClickListener { v ->
+            if (!AppPermissions.hasStoragePermission(v.context)) {
+                uiState = uiState.copy(pendingPermissionForDownloadPhotoId = photo.id)
+                AppPermissions.requestStoragePermission(activity!!)
+            } else
+                viewModel.download(photo.deparcelize())
+        }
+
+        imgBtnDownloadCancel.setOnClickListener {
+            viewModel.cancelDownload(photo.id)
+        }
+
+    }
+
+    private fun displayPhoto() {
+        uiState = uiState.copy(hasDisplayingError = false)
         glide.asBitmap()
                 .load(photo.urls["full"])
                 .apply(RequestOptions().centerCrop())
@@ -118,24 +136,18 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
                     override fun onLoadFailed(e: GlideException?, model: Any?,
                                               target: Target<Bitmap>?,
-                                              isFirstResource: Boolean): Boolean = false
+                                              isFirstResource: Boolean): Boolean {
+                        view?.let {
+                            Snackbar.make(it, e?.message
+                                    ?: "Unknown Error", Snackbar.LENGTH_INDEFINITE)
+                                    .setAction("Retry") { _ -> displayPhoto() }
+                                    .show()
+                        }
+                        uiState = uiState.copy(hasDisplayingError = true)
+                        return true
+                    }
                 })
                 .into(imagePhoto)
-
-        subscribeToViewModel(view)
-
-        fabDownload.setOnClickListener { v ->
-            if (!AppPermissions.hasStoragePermission(v.context)) {
-                uiState = uiState.copy(pendingPermissionForDownloadPhotoId = photo.id)
-                AppPermissions.requestStoragePermission(activity!!)
-            } else
-                viewModel.download(photo.deparcelize())
-        }
-
-        imgBtnDownloadCancel.setOnClickListener {
-            viewModel.cancelDownload(photo.id)
-        }
-
     }
 
     private fun subscribeToViewModel(view: View) {
@@ -143,7 +155,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             it[photo.id]?.let { palette ->
                 val darkVibrantColor = palette.getDarkVibrantColor(ContextCompat
                         .getColor(view.context, R.color.colorPrimaryDark))
-                activity?.setStatusBarColor(darkVibrantColor, 0.9f)
+                activity?.setStatusBarColor(darkVibrantColor)
                 val accent = ContextCompat.getColor(view.context, R.color.colorAccent)
                 fabDownload.backgroundTintList = ColorStateList.valueOf(palette.getMutedColor(accent))
                 val progressColorFilter = PorterDuff.Mode.SRC_ATOP.toColorFilter(accent)
@@ -225,6 +237,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     @Parcelize
     data class UIState(val isDownloadShowing: Boolean = false,
                        val isPhotoDisplayed: Boolean = false,
+                       val hasDisplayingError: Boolean = false,
                        val pendingPermissionForDownloadPhotoId: String? = null) : Parcelable {
         companion object {
             val INITIAL = UIState()

@@ -65,14 +65,12 @@ class PhotoRepositoryImpl(
     //this must be called on the io thread
     override fun insertPhotos(page: Int, callback: Repository.Callback<Unit>?) {
         try {
-            val response = api.getPhotos(page).apply { cancelableApiCall = this }.execute()
+            val response = api.getPhotos(page).apply { cancelableApiCall = this }
+                    .execute()
             response?.apply {
                 val headers = headers()
                 val pagingData = PhotoPagingData.createFromHeaders(headers)
-                val requestLimit = RequestLimit.createFromHeaders(headers)
-                if (requestLimit.isLimitReached) {
-                    callback?.onError(Error("Request limit reached: $requestLimit"))
-                } else if (isSuccessful) {
+                if (isSuccessful) {
                     body()?.map {
                         it.toDbEntity(pagingData, dao.getNextIndex())
                     }?.apply {
