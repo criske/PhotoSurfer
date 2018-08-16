@@ -1,11 +1,13 @@
 package com.crskdev.photosurfer.entities
 
+import android.media.Image
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
 import com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto
+import java.util.*
 
 /**
  * Created by Cristian Pela on 09.08.2018.
@@ -28,7 +30,8 @@ fun PhotoEntity.toPhoto(): Photo =
                 width, height,
                 colorString,
                 urls.split(ENTRY_DELIM)
-                        .fold(mutableMapOf()) { a, c -> c.split(KV_DELIM).let { a.apply { a[it[0]] = it[1] } } },
+                        .fold(EnumMap<ImageType, String>(ImageType::class.java))
+                        { a, c -> c.split(KV_DELIM).let { a.apply { a[ImageType.valueOf(it[0].toUpperCase())] = it[1] } } },
                 categories?.split(ENTRY_DELIM)?.toList() ?: emptyList(),
                 likes, likedByMe,
                 views,
@@ -87,7 +90,8 @@ fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
         createdAt, updatedAt,
         width, height,
         colorString,
-        urls, categories, likes, likedByMe, views, authorId, authorUsername,
+        urls.entries.fold(mutableMapOf()) { a, c -> a.apply { put(c.key.toString(), c.value) } },
+        categories, likes, likedByMe, views, authorId, authorUsername,
         pagingData?.total, pagingData?.curr, pagingData?.prev, pagingData?.next)
 
 fun ParcelizedPhoto.deparcelize(): Photo =
@@ -95,5 +99,7 @@ fun ParcelizedPhoto.deparcelize(): Photo =
                 createdAt, updatedAt,
                 width, height,
                 colorString,
-                urls, categories, likes, likedByMe, views, authorId, authorUsername,
+                urls.entries.fold(EnumMap<ImageType, String>(ImageType::class.java))
+                { a, c -> a.apply { put(ImageType.valueOf(c.key.toUpperCase()), c.value) } },
+                categories, likes, likedByMe, views, authorId, authorUsername,
                 PhotoPagingData(total ?: -1, curr ?: -1, prev, next))

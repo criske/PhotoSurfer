@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.data.remote.auth
 import com.crskdev.photosurfer.data.remote.BASE_HOST_AUTHORIZING
 import com.crskdev.photosurfer.data.remote.LOGIN_FORM_EMAIL
 import com.crskdev.photosurfer.data.remote.LOGIN_FORM_PASSWORD
+import com.crskdev.photosurfer.data.remote.errorResponse
 import okhttp3.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -56,9 +57,9 @@ class OAuth2Authorizer {
                 if (loginResponse.isSuccessful) {
                     doc = Jsoup.parse(loginResponse.body()?.string())
                     val invalidCredentials = tryGetInvalidCredentials(doc)
-                    if(invalidCredentials!= null){
+                    if (invalidCredentials != null) {
                         redirectURIServer.stop()
-                        return unauthorizedResponse(loginRequest, invalidCredentials)
+                        return errorResponse(loginRequest, 401, invalidCredentials)
                     }
                     authorizationCode = tryExtractAuthorizationCode(doc)
                     if (authorizationCode == null) {
@@ -81,7 +82,7 @@ class OAuth2Authorizer {
                 requestToken(chain, apiKeys, authorizationCode)
             } else {
                 redirectURIServer.stop()
-                unauthorizedResponse(loginRequest)
+                errorResponse(loginRequest, 401)
             }
         } else {
             redirectURIServer.stop()
@@ -165,14 +166,6 @@ class OAuth2Authorizer {
                 .build())
     }
 
-
-    private fun unauthorizedResponse(request: Request, message: String = "") =
-            Response.Builder().code(401)
-                    .body(ResponseBody.create(MediaType.get("text/plain"), message))
-                    .request(request)
-                    .message(message)
-                    .protocol(Protocol.HTTP_1_1)
-                    .build()
 
     private fun tryExtractAuthorizationCode(doc: Document): String? {
         return doc.selectFirst("code")?.text()

@@ -1,7 +1,9 @@
 package com.crskdev.photosurfer.data.remote.photo
 
+import com.crskdev.photosurfer.entities.ImageType
 import com.squareup.moshi.Json
 import okhttp3.Headers
+import java.util.*
 
 class PhotoJSON {
     lateinit var id: String
@@ -13,7 +15,7 @@ class PhotoJSON {
     var height: Int = 0
     @Json(name = "color")
     lateinit var colorString: String
-    lateinit var urls: Map<String, String>
+    lateinit var urls: EnumMap<ImageType, String>
     var description: String? = null
     lateinit var categories: List<String>
     var likes: Int = 0

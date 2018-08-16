@@ -80,7 +80,6 @@ class DownloadManager(
             }
         }
         progressListenerRegistrar.progressListener = progressListener
-
         photoDownloader.data(photo)?.let { externalPhotoGalleryDAO.save(photo, it) }
     }
 
@@ -109,6 +108,9 @@ class PhotoDownloaderImpl(private val photoAPI: PhotoAPI) : PhotoDownloader {
 
     override fun data(photo: Photo): Source? {
         val response = photoAPI.download(photo.id).apply { call = this }.execute()
+        if(!response.isSuccessful){
+            throw Exception(response.errorBody()?.string())
+        }
         return response.body()?.source()
     }
 

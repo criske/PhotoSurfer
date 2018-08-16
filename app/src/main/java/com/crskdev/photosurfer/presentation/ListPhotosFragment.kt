@@ -33,6 +33,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.util.SingleLiveEvent
@@ -175,7 +176,7 @@ class ListPhotosVH(private val glide: RequestManager,
         itemView.textId.text = photo.id
         itemView.textOrder.text = "#" + photo.extras?.toString()
         glide.asDrawable()
-                .load(photo.urls["thumb"])
+                .load(photo.urls[ImageType.SMALL])
                 .apply(RequestOptions()
                         .transforms(CenterCrop(), RoundedCorners(8)))
                 .addListener(object : RequestListener<Drawable> {

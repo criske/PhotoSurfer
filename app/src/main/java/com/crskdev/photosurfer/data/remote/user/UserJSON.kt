@@ -1,7 +1,8 @@
 package com.crskdev.photosurfer.data.remote.user
 
-import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
+import com.crskdev.photosurfer.entities.ImageType
 import com.squareup.moshi.Json
+import java.util.*
 
 class UserJSON {
     lateinit var id: String
@@ -14,20 +15,20 @@ class UserJSON {
     @Json(name = "last_name")
     lateinit var lastName: String
     @Json(name = "profile_image")
-    lateinit var profileImageLinks: Map<String, String>
+    lateinit var profileImageLinks: EnumMap<ImageType, String>
     @Json(name = "twitter_username")
     var twitterUserName: String? = null
     @Json(name = "portfolio_url")
     var portfolioUrl: String? = null
     var bio: String? = null
     var location: String? = null
-    @Json(name="total_likes")
+    @Json(name = "total_likes")
     var totalLikes: Int = 0
-    @Json(name="total_photos")
+    @Json(name = "total_photos")
     var totalPhotos: Int = 0
-    @Json(name="total_collections")
+    @Json(name = "total_collections")
     var totalCollections: Int = 0
-    @Json(name="followed_by_user")
+    @Json(name = "followed_by_user")
     var isFollowedByMe: Boolean = false
     var downloads: Int = 0
 }

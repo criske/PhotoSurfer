@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.presentation.user
 
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -13,14 +14,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.Target
 
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.util.SingleLiveEvent
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_user_profile_details.*
 import java.util.concurrent.Executor
 
@@ -53,17 +60,10 @@ class UserProfileDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        val userId = UserProfileDetailsFragmentArgs.fromBundle(arguments).id
+        val username = UserProfileDetailsFragmentArgs.fromBundle(arguments).id
 
         viewModel.userLiveData.observe(this, Observer {
-            Glide.with(this)
-                    .asDrawable()
-                    .load(it.profileImageLinks["large"])
-                    .apply(RequestOptions()
-                            .placeholder(R.drawable.ic_avatar_placeholder)
-                            .error(R.drawable.ic_avatar_placeholder)
-                            .circleCrop())
-                    .into(imgProfile)
+            displayAvatar(username, it.profileImageLinks[ImageType.LARGE]!!)
             textProfileFullName.text = it.firstName
             textProfileUsername.text = it.userName
             textProfileLocation.text = it.location ?: "?"
@@ -73,10 +73,38 @@ class UserProfileDetailsFragment : Fragment() {
             Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
         })
 
-        userId?.let {
-            viewModel.getUser(userId)
-        }
+        viewModel.getUser(username)
+    }
 
+    private fun displayAvatar(username: String, link: String) {
+        Glide.with(this)
+                .asBitmap()
+                .load(link)
+                .apply(RequestOptions()
+                        .placeholder(R.drawable.ic_avatar_placeholder)
+                        .error(R.drawable.ic_avatar_placeholder)
+                        .circleCrop())
+                .addListener(object : RequestListener<Bitmap> {
+                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?,
+                                              isFirstResource: Boolean): Boolean {
+                        view?.let { v ->
+                            Snackbar.make(v, e?.message
+                                    ?: "Unknown Exception", Snackbar.LENGTH_INDEFINITE)
+                                    .setAction("Retry") {
+                                        viewModel.getUser(username)
+                                    }
+                                    .show()
+                        }
+                        return true
+                    }
+
+                    override fun onResourceReady(resource: Bitmap?, model: Any?, target: Target<Bitmap>?,
+                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                        return false
+                    }
+
+                })
+                .into(imgProfile)
     }
 }
 

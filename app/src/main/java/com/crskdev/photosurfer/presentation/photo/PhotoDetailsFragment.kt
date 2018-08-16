@@ -29,6 +29,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
@@ -59,7 +60,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         }
     }
 
-    private val photo by lazy(LazyThreadSafetyMode.NONE) { PhotoDetailsFragmentArgs.fromBundle(arguments).photo }
+    private val photo by lazy(LazyThreadSafetyMode.NONE) { PhotoDetailsFragmentArgs.fromBundle(arguments).photo.deparcelize() }
     private val glide by lazy { Glide.with(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,7 +90,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onPermissionsGranted(permissions: List<String>) {
         uiState.pendingPermissionForDownloadPhotoId?.let {
-            viewModel.download(photo.deparcelize())
+            viewModel.download(photo)
         }
         uiState = uiState.copy(pendingPermissionForDownloadPhotoId = null)
     }
@@ -110,7 +111,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 uiState = uiState.copy(pendingPermissionForDownloadPhotoId = photo.id)
                 AppPermissions.requestStoragePermission(activity!!)
             } else
-                viewModel.download(photo.deparcelize())
+                viewModel.download(photo)
         }
 
         imgBtnDownloadCancel.setOnClickListener {
@@ -122,7 +123,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     private fun displayPhoto() {
         uiState = uiState.copy(hasDisplayingError = false)
         glide.asBitmap()
-                .load(photo.urls["full"])
+                .load(photo.urls[ImageType.FULL])
                 .apply(RequestOptions().centerCrop())
                 .addListener(object : RequestListener<Bitmap> {
                     override fun onResourceReady(resource: Bitmap?,
@@ -179,9 +180,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                         progressBarDownload.progress = it.percent
                         textDownloadProgress.text = "${it.percent}%"
                     }
-                    if ((!uiState.isDownloadShowing && it.isStaringValue)
-                            || it.isStaringValue
-                            || (!isAnimatingSlide && cardProgressDownload.y < 0)) {
+                    if (((uiState.isDownloadShowing && !it.isStaringValue) || it.isStaringValue) && !isAnimatingSlide) {
                         isAnimatingSlide = true
                         progSlideDownAnimation = cardProgressDownload.animate().translationY(50f.dpToPx(resources))
                                 .onEnded {

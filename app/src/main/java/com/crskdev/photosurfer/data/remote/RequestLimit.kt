@@ -10,16 +10,12 @@ import retrofit2.Call
  */
 class RequestLimit(private val max: Int, private val remaining: Int) {
 
-    class LimitException(message: String) : Throwable(message)
-
     val isLimitReached = remaining == 0
 
     companion object {
         fun createFromHeaders(headers: Headers): RequestLimit {
-            val max = headers["x-ratelimit-limit"]?.toInt()
-                    ?: throw Error("X-Ratelimit-Limit header not found")
-            val remaining = headers["x-ratelimit-remaining"]?.toInt()
-                    ?: throw Error("X-Ratelimit-Remaining header not found")
+            val max = headers["x-ratelimit-limit"]?.toInt() ?: Int.MAX_VALUE
+            val remaining = headers["x-ratelimit-remaining"]?.toInt() ?: max
             return RequestLimit(max, remaining)
         }
     }
@@ -30,15 +26,12 @@ class RequestLimit(private val max: Int, private val remaining: Int) {
 class RateLimitInterceptor : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val response = chain.proceed(chain.request())
-        return try {
-            val requestLimit: RequestLimit = RequestLimit.createFromHeaders(response.headers())
-            if (requestLimit.isLimitReached) {
-                throw RequestLimit.LimitException("Request rate per hour limit reached: $requestLimit")
-            } else {
-                response
-            }
-        } catch (ex: Exception) {
+        val request = chain.request()
+        val response = chain.proceed(request)
+        val requestLimit: RequestLimit = RequestLimit.createFromHeaders(response.headers())
+        return if (requestLimit.isLimitReached) {
+            errorResponse(request, 429, "Request rate per hour limit reached: $requestLimit")
+        } else {
             response
         }
     }

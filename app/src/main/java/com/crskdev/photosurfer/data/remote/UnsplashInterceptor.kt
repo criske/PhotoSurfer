@@ -14,18 +14,10 @@ internal class UnsplashInterceptor(private val tokenStorage: AuthTokenStorage,
             requestHas(req, HEADER_KEY_BYPASS) -> chain.proceed(req)
             requestHas(req, HEADER_KEY_AUTHORIZING) -> OAuth2Authorizer().authorize(chain, apiKeys)
             requestHas(req, HEADER_KEY_AUTH) -> tokenStorage.getToken()?.let { chain.proceed(appendOAuthToken(req, it.access)) }
-                    ?: unauthorizedResponse(req)
+                    ?: errorResponse(req, 401)
             else -> chain.proceed(appendClientIdKey(req))
         }
     }
-
-    private fun unauthorizedResponse(request: Request) =
-            Response.Builder().code(401)
-                    .body(ResponseBody.create(MediaType.get("text/plain"), ""))
-                    .request(request)
-                    .message("")
-                    .protocol(Protocol.HTTP_1_1)
-                    .build()
 
     private fun appendClientIdKey(req: Request): Request {
         val httpUrl = req

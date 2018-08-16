@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.remote
 
+import com.crskdev.photosurfer.data.remote.user.UserProfileImageLinkJsonAdapterFactory
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.HttpUrl
@@ -19,6 +20,7 @@ class RetrofitClient(val networkClient: NetworkClient) {
                     .build())
             .addConverterFactory(MoshiConverterFactory.create(
                     Moshi.Builder()
+                            .add(UserProfileImageLinkJsonAdapterFactory())
                             .add(KotlinJsonAdapterFactory())
                             .build())
                     .asLenient())
