@@ -6,7 +6,7 @@
     app:startDestination="@id/fragment_list_photos">
     <fragment
         android:id="@+id/fragment_list_photos"
-        android:name="com.crskdev.photosurfer.presentation.ListPhotosFragment"
+        android:name="com.crskdev.photosurfer.presentation.photo.ListPhotosFragment"
         android:label="Blank"
         tools:layout="@layout/fragment_list_photos">
         <action
@@ -36,7 +36,7 @@
         android:label="fragment_user_profile"
         tools:layout="@layout/fragment_user_profile">
         <argument
-            android:name="id"
+            android:name="username"
             app:argType="string" />
     </fragment>
 

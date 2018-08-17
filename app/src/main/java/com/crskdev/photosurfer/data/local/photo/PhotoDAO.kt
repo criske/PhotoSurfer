@@ -11,18 +11,32 @@ import androidx.room.*
 interface PhotoDAO {
 
     @Query("SELECT * FROM photos ORDER BY indexInResponse ASC")
-    fun getPhotos(): DataSource.Factory<Int, PhotoEntity>
+    fun getRandomPhotos(): DataSource.Factory<Int, PhotoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertPhotos(photos: List<PhotoEntity>)
+    fun insertRandomPhotos(photos: List<PhotoEntity>)
 
     @Query("DELETE FROM photos")
-    fun clear()
+    fun clearRandomPhotos()
 
     @Query("SELECT MAX(indexInResponse) + 1 FROM photos")
-    fun getNextIndex(): Int
+    fun getNextIndexRandomPhotos(): Int
 
     @Query("SELECT count(*) == 0 FROM photos")
-    fun isEmpty(): Boolean
+    fun isEmptyRandomPhotos(): Boolean
 
+    @Query("SELECT * FROM user_photos WHERE username=:userName ORDER BY indexInResponse ASC")
+    fun getUserPhotos(userName: String): DataSource.Factory<Int, UserPhotoEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertUserPhotos(photos: List<UserPhotoEntity>)
+
+    @Query("DELETE FROM user_photos WHERE username=:userName")
+    fun clearUserPhotos(userName: String)
+
+    @Query("SELECT MAX(indexInResponse) + 1 FROM user_photos WHERE  username=:userName")
+    fun getNextIndexUserPhotos(userName: String): Int
+
+    @Query("SELECT count(*) == 0 FROM user_photos WHERE username=:userName")
+    fun isEmptyUserPhotos(userName: String): Boolean
 }

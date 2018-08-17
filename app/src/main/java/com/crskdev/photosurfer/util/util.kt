@@ -1,11 +1,63 @@
 package com.crskdev.photosurfer.util
 
+import android.animation.Animator
+import android.content.res.Resources
+import android.util.TypedValue
+import android.view.ViewPropertyAnimator
+import androidx.annotation.FloatRange
+import androidx.core.graphics.ColorUtils
 import androidx.navigation.NavOptions
 import com.crskdev.photosurfer.R
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Created by Cristian Pela on 15.08.2018.
+ * Created by Cristian Pela on 05.08.2018.
  */
+fun AtomicInteger.safeSet(value: Int) {
+    do {
+        val lastValue = get()
+    } while (!compareAndSet(lastValue, value))
+}
+
+fun AtomicBoolean.safeSet(value: Boolean) {
+    do {
+        val lastValue = get()
+        println(lastValue)
+    } while (!compareAndSet(lastValue, value))
+}
+
+fun Int.setAlphaComponent(@FloatRange(from = 0.0, to = 1.0, fromInclusive = true, toInclusive = true) alpha: Float): Int =
+        ColorUtils.setAlphaComponent(this, (alpha * 255).toInt())
+
+inline fun ViewPropertyAnimator.onEnded(crossinline action: () -> Unit): ViewPropertyAnimator {
+    this.setListener(object : Animator.AnimatorListener {
+
+        override fun onAnimationRepeat(p0: Animator?) {
+
+        }
+
+        override fun onAnimationEnd(p0: Animator?) {
+            action()
+        }
+
+        override fun onAnimationCancel(p0: Animator?) {
+
+        }
+
+        override fun onAnimationStart(p0: Animator?) {
+
+        }
+
+    })
+    return this
+}
+
+
+
+fun Float.dpToPx(resources: Resources) =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this, resources.displayMetrics)
+
 fun defaultTransitionNavOptionsBuilder(): NavOptions.Builder = NavOptions.Builder()
         .setEnterAnim(R.anim.in_from_right)
         .setExitAnim(R.anim.out_to_left)

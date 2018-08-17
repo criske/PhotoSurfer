@@ -7,8 +7,6 @@ import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
 import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
-import com.crskdev.photosurfer.data.remote.auth.APIKeys
-import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
@@ -16,8 +14,7 @@ import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
-import com.crskdev.photosurfer.data.remote.auth.AuthAPI
-import com.crskdev.photosurfer.data.remote.auth.InMemoryAuthTokenStorage
+import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
@@ -76,8 +73,8 @@ object DependencyGraph {
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
         //NETWORK
-        //authTokenStorage = AuthTokenStorageImpl(preferences)
-        authTokenStorage = InMemoryAuthTokenStorage()
+        authTokenStorage = AuthTokenStorageImpl(preferences)
+        //authTokenStorage = InMemoryAuthTokenStorage()
         val retrofitClient = RetrofitClient(NetworkClient(
                 authTokenStorage,
                 APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY, BuildConfig.REDIRECT_URI),
@@ -98,7 +95,7 @@ object DependencyGraph {
                 TransactionRunnerImpl(db),
                 photoAPI,
                 db.photoDAO(),
-                downloadManager//TODO use real downloadManager in prod
+                downloadManager
         )
 
         //user and auth

@@ -15,6 +15,9 @@ import kotlinx.android.synthetic.main.fragment_user_profile.*
 
 class UserProfileFragment : Fragment() {
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -23,7 +26,10 @@ class UserProfileFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        setupChildGraphAndToolbar(view)
+    }
 
+    private fun setupChildGraphAndToolbar(view: View) {
         val navHostFragment = NavHostFragment.create(R.navigation.nav_user_profile_graph)
         childFragmentManager.beginTransaction()
                 .replace(R.id.nav_host_user_profile_container, navHostFragment)
@@ -62,3 +68,4 @@ class UserProfileFragment : Fragment() {
     private fun Bundle.copy() = Bundle().apply { putAll(this@copy) }
 }
 
+class UserDetailsViewModel()

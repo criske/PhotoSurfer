@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.local.photo
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -37,14 +38,15 @@ class PhotoEntity {
     var next: Int? = null
 }
 
-/*
-data class Photo(val id: String, val createdAt: Long, val updatedAt: Long,
-                 val width: Int, val height: Int, val colorString: String,
-                 val urls: Map<String, String>,
-                 val categories: List<String>,
-                 val likes: Int, val likedByMe: Boolean, val views: Int,
-                 val authorId: String,
-                 val authorUsername: String,
-                 val pagingData: PhotoPagingData? = null,
-                 val extras: Any? = null)
- */
+
+@Entity(tableName = "user_photos")
+class UserPhotoEntity {
+
+    @PrimaryKey(autoGenerate = true)
+    var _id: Long = 0L
+
+    lateinit var username: String
+
+    @Embedded
+    lateinit var photo: PhotoEntity
+}

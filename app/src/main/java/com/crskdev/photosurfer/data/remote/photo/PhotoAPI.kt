@@ -13,9 +13,12 @@ interface PhotoAPI {
     fun getRandom(): Call<PhotoJSON>
 
     @GET("photos")
-    fun getPhotos(@Query("page") page: Int = 1): Call<List<PhotoJSON>>
+    fun getRandomPhotos(@Query("page") page: Int = 1): Call<List<PhotoJSON>>
 
-    @GET("/photos/{id}/download")
+    @GET("users/{username}/photos")
+    fun getUserPhotos(@Path("username") username: String, @Query("page") page: Int = 1): Call<List<PhotoJSON>>
+
+    @GET("photos/{id}/download")
     @Streaming
     fun download(@Path("id") id: String): Call<ResponseBody>
 

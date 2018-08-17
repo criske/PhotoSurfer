@@ -1,51 +1,99 @@
 package com.crskdev.photosurfer.data.remote.auth
 
 import android.content.SharedPreferences
-import android.os.Parcelable
 import androidx.core.content.edit
-import kotlinx.android.parcel.Parcelize
+import com.crskdev.photosurfer.data.remote.auth.AuthToken.Companion.NONE
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.properties.Delegates
 
 interface AuthTokenStorage {
 
+    interface Listener {
+        fun onChange(new: AuthToken?)
+    }
+
     companion object {
         val NONE = object : AuthTokenStorage {
-            override fun getToken(): AuthToken? = null
+            override fun token(): AuthToken? = null
 
             override fun saveToken(token: AuthToken) = Unit
         }
     }
 
-    fun getToken(): AuthToken?
+    fun token(): AuthToken?
 
     fun saveToken(token: AuthToken)
 
-    fun hasToken(): Boolean = getToken() != null
+    fun hasToken(): Boolean = token() != null
+
+    fun clearToken() {}
+
+    fun addListener(authTokenListener: Listener) {}
+
+    fun removeListener(authTokenListener: Listener) {}
 
 }
 
-class InMemoryAuthTokenStorage : AuthTokenStorage {
+abstract class ObservableAuthTokenStorage : AuthTokenStorage {
 
-    private var token: AuthToken? = null
+    private val listeners = CopyOnWriteArrayList<AuthTokenStorage.Listener>()
 
-    override fun getToken(): AuthToken? = token
+    override fun addListener(authTokenListener: AuthTokenStorage.Listener) {
+        listeners.add(authTokenListener)
+        authTokenListener.onChange(token()) // emit on subscribe
+    }
+
+    override fun removeListener(authTokenListener: AuthTokenStorage.Listener) {
+        listeners.remove(authTokenListener)
+    }
+
+    protected fun notifyListeners(new: AuthToken?) {
+        listeners.forEach {
+            it.onChange(new)
+        }
+    }
+}
+
+class InMemoryAuthTokenStorage : ObservableAuthTokenStorage() {
+
+    private var token: AuthToken by Delegates.observable(NONE) { _, old, new ->
+        notifyListeners(new)
+    }
+
+    override fun token(): AuthToken? = if (token == NONE) null else token
 
     override fun saveToken(token: AuthToken) {
         this.token = token
     }
+
+    override fun clearToken() {
+        token = NONE
+    }
 }
 
-class AuthTokenStorageImpl(private val prefs: SharedPreferences) : AuthTokenStorage {
+class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAuthTokenStorage() {
+
 
     companion object {
         private const val KEY_AUTH_TOKEN = "KEY_AUTH_TOKEN"
         private const val DELIM = "\t"
     }
 
-    override fun getToken(): AuthToken? {
+    init {
+        val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
+            if (key == KEY_AUTH_TOKEN) {
+                notifyListeners(token())
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
+    }
+
+
+    override fun token(): AuthToken? {
         return prefs.getString(KEY_AUTH_TOKEN, null)?.split(DELIM)
-                ?.takeIf { it.size == 5 }
+                ?.takeIf { it.size == 6 }
                 ?.let {
-                    AuthToken(it[0], it[1], it[2], it[3], it[4].toLong())
+                    AuthToken(it[0], it[1], it[2], it[3], it[4].toLong(), it[5])
                 }
     }
 
@@ -61,8 +109,17 @@ class AuthTokenStorageImpl(private val prefs: SharedPreferences) : AuthTokenStor
                 append(token.scope)
                 append(DELIM)
                 append(token.createdAt)
+                append(DELIM)
+                append(token.username)
             })
         }
     }
 
+    override fun hasToken(): Boolean = token() != null
+
+    override fun clearToken() {
+        prefs.edit {
+            putString(KEY_AUTH_TOKEN, null)
+        }
+    }
 }

@@ -6,6 +6,6 @@ package com.crskdev.photosurfer.data.repository
 interface Repository {
     interface Callback<D> {
         fun onSuccess(data: D, extras: Any? = null) = Unit
-        fun onError(error: Throwable)
+        fun onError(error: Throwable, isAuthenticationError: Boolean = false)
     }
 }

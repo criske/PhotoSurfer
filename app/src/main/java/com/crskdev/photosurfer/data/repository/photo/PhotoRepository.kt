@@ -5,7 +5,7 @@ import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.photo.PhotoDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
-import com.crskdev.photosurfer.data.remote.RequestLimit
+import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
@@ -14,6 +14,7 @@ import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.toDbEntity
 import com.crskdev.photosurfer.entities.toPhoto
+import com.crskdev.photosurfer.entities.toUserPhotoDbEntity
 import retrofit2.Call
 import kotlin.math.roundToInt
 
@@ -22,17 +23,18 @@ import kotlin.math.roundToInt
  */
 interface PhotoRepository : Repository {
 
-    fun getPhotos(): DataSource.Factory<Int, Photo>
+    fun getPhotos(username: String?): DataSource.Factory<Int, Photo>
 
-    fun insertPhotos(page: Int, callback: Repository.Callback<Unit>? = null)
+    fun insertPhotos(username: String?, page: Int, callback: Repository.Callback<Unit>? = null)
 
-    fun refresh()
+    fun refresh(username: String? = null)
 
     fun cancel()
 
     fun download(photo: Photo, callback: Repository.Callback<DownloadProgress>? = null)
 
     fun isDownloaded(id: String): Boolean
+
 }
 
 class PhotoRepositoryImpl(
@@ -47,7 +49,7 @@ class PhotoRepositoryImpl(
 
     companion object {
 
-        private val EMPTY_ENTITY = PhotoEntity().apply {
+        private val EMPTY_PHOTO_ENTITY = PhotoEntity().apply {
             id = ""
             createdAt = ""
             updatedAt = ""
@@ -57,24 +59,49 @@ class PhotoRepositoryImpl(
             authorUsername = ""
 
         }
+
+        private fun emptyUserPhotoEntity(username: String) = UserPhotoEntity().apply {
+            this.username = username
+            this.photo = EMPTY_PHOTO_ENTITY
+        }
     }
 
-    override fun getPhotos(): DataSource.Factory<Int, Photo> = dao.getPhotos()
-            .mapByPage { page -> page.map { it.toPhoto() } }
+
+    override fun getPhotos(username: String?): DataSource.Factory<Int, Photo> =
+            if (username != null)
+                dao.getUserPhotos(username)
+                        .mapByPage { page -> page.map { it.photo.toPhoto() } }
+            else
+                dao.getRandomPhotos()
+                        .mapByPage { page -> page.map { it.toPhoto() } }
+
 
     //this must be called on the io thread
-    override fun insertPhotos(page: Int, callback: Repository.Callback<Unit>?) {
+    override fun insertPhotos(username: String?, page: Int, callback: Repository.Callback<Unit>?) {
         try {
-            val response = api.getPhotos(page).apply { cancelableApiCall = this }
-                    .execute()
+            val call = if (username == null) api.getRandomPhotos(page)
+                    .apply { cancelableApiCall = this }
+            else
+                api.getUserPhotos(username, page).apply { cancelableApiCall = this }
+
+            val response = call.execute()
             response?.apply {
                 val headers = headers()
                 val pagingData = PhotoPagingData.createFromHeaders(headers)
                 if (isSuccessful) {
                     body()?.map {
-                        it.toDbEntity(pagingData, dao.getNextIndex())
+                        @Suppress("IMPLICIT_CAST_TO_ANY")
+                        if (username != null) {
+                            it.toUserPhotoDbEntity(username, pagingData, dao.getNextIndexUserPhotos(username))
+                        } else {
+                            it.toDbEntity(pagingData, dao.getNextIndexRandomPhotos())
+                        }
                     }?.apply {
-                        dao.insertPhotos(this)
+                        if (username != null) {
+                            dao.insertUserPhotos(map { it as UserPhotoEntity })
+                        } else {
+                            dao.insertRandomPhotos(map { it as PhotoEntity })
+                        }
                         callback?.onSuccess(Unit)
                     }
                 } else {
@@ -84,9 +111,7 @@ class PhotoRepositoryImpl(
         } catch (ex: Exception) {
             callback?.onError(ex)
         }
-
     }
-
 
     override fun download(photo: Photo, callback: Repository.Callback<DownloadProgress>?) {
         try {
@@ -121,14 +146,24 @@ class PhotoRepositoryImpl(
 
     override fun isDownloaded(id: String): Boolean = downloadManager.isDownloaded(id)
 
-    override fun refresh() {
+    override fun refresh(username: String?) {
         transactional {
-            if (dao.isEmpty()) {
-                //force trigger the db InvalidationTracker.Observer
-                dao.insertPhotos(listOf(EMPTY_ENTITY))
-                dao.clear()
+            if (username == null) {
+                if (dao.isEmptyRandomPhotos()) {
+                    //force trigger the db InvalidationTracker.Observer
+                    dao.insertRandomPhotos(listOf(EMPTY_PHOTO_ENTITY))
+                    dao.clearRandomPhotos()
+                } else {
+                    dao.clearRandomPhotos()
+                }
             } else {
-                dao.clear()
+                if (dao.isEmptyUserPhotos(username)) {
+                    //force trigger the db InvalidationTracker.Observer
+                    dao.insertUserPhotos(listOf(emptyUserPhotoEntity(username)))
+                    dao.clearUserPhotos(username)
+                } else {
+                    dao.clearUserPhotos(username)
+                }
             }
 
         }

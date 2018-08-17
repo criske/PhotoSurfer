@@ -4,6 +4,7 @@ import android.media.Image
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
+import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
 import com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto
@@ -61,7 +62,6 @@ fun Photo.toDbEntity(nextIndex: Int): PhotoEntity =
             next = this@toDbEntity.pagingData?.next
             prev = this@toDbEntity.pagingData?.prev
             indexInResponse = nextIndex
-
         }
 
 fun PhotoJSON.toDbEntity(pagingData: PhotoPagingData, nextIndex: Int): PhotoEntity =
@@ -86,6 +86,14 @@ fun PhotoJSON.toDbEntity(pagingData: PhotoPagingData, nextIndex: Int): PhotoEnti
             indexInResponse = nextIndex
         }
 
+fun PhotoJSON.toUserPhotoDbEntity(userName: String, pagingData: PhotoPagingData, nextIndex: Int): UserPhotoEntity {
+    val entity = toDbEntity(pagingData, nextIndex)
+    return UserPhotoEntity().apply {
+        this.username = userName
+        this.photo = entity
+    }
+}
+
 fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
         createdAt, updatedAt,
         width, height,
@@ -103,3 +111,4 @@ fun ParcelizedPhoto.deparcelize(): Photo =
                 { a, c -> a.apply { put(ImageType.valueOf(c.key.toUpperCase()), c.value) } },
                 categories, likes, likedByMe, views, authorId, authorUsername,
                 PhotoPagingData(total ?: -1, curr ?: -1, prev, next))
+

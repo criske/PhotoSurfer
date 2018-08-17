@@ -13,7 +13,14 @@ internal class UnsplashInterceptor(private val tokenStorage: AuthTokenStorage,
         return when {
             requestHas(req, HEADER_KEY_BYPASS) -> chain.proceed(req)
             requestHas(req, HEADER_KEY_AUTHORIZING) -> OAuth2Authorizer().authorize(chain, apiKeys)
-            requestHas(req, HEADER_KEY_AUTH) -> tokenStorage.getToken()?.let { chain.proceed(appendOAuthToken(req, it.access)) }
+            requestHas(req, HEADER_KEY_AUTH) -> tokenStorage.token()
+                    ?.let {
+                        val response = chain.proceed(appendOAuthToken(req, it.access))
+                        if (response.code() == 401) {
+                            tokenStorage.clearToken()
+                        }
+                        response
+                    }
                     ?: errorResponse(req, 401)
             else -> chain.proceed(appendClientIdKey(req))
         }
@@ -26,7 +33,7 @@ internal class UnsplashInterceptor(private val tokenStorage: AuthTokenStorage,
                 .addQueryParameter("client_id", apiKeys.accessKey)
                 .build()
         return req.newBuilder().url(httpUrl).apply {
-            tokenStorage.getToken()?.let {
+            tokenStorage.token()?.let {
                 header("Authorization", "Bearer ${it.access}")
             }
         }.build()

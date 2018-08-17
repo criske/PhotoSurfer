@@ -1,4 +1,4 @@
-package com.crskdev.photosurfer.presentation
+package com.crskdev.photosurfer.presentation.photo
 
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -14,8 +14,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,34 +30,36 @@ import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
+import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
-import com.crskdev.photosurfer.util.SingleLiveEvent
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.item_list_photos.view.*
 import java.util.concurrent.Executor
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Created by Cristian Pela on 01.08.2018.
  */
 class ListPhotosFragment : Fragment() {
 
-    private lateinit var model: ListPhotosViewModel
+    private lateinit var viewModel: ListPhotosViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        model = ViewModelProviders.of(activity!!, object : ViewModelProvider.Factory {
+        viewModel = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 val graph = context!!.dependencyGraph()
                 @Suppress("UNCHECKED_CAST")
                 return ListPhotosViewModel(
                         graph.ioThreadExecutor,
                         graph.backgroundThreadExecutor,
+                        graph.userRepository,
                         graph.photoRepository
                 ) as T
             }
@@ -79,9 +79,7 @@ class ListPhotosFragment : Fragment() {
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.menu_item_account -> {
-                        authNavigatorMiddleware.navigate(
-                                findNavController(),
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(""))
+                        viewModel.obtainMe()
                     }
                 }
                 true
@@ -90,7 +88,7 @@ class ListPhotosFragment : Fragment() {
 
 
         val glide = Glide.with(this)
-        recyclerListPhotos.apply {
+        recyclerUserListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior() as CoordinatorLayout.Behavior<*>
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) { what, photo ->
@@ -98,14 +96,12 @@ class ListPhotosFragment : Fragment() {
                 when (what) {
                     ActionWhat.PHOTO_DETAIL -> {
                         navController.navigate(
-                                ListPhotosFragmentDirections
-                                        .actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()),
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()),
                                 defaultTransitionNavOptions())
                     }
                     ActionWhat.AUTHOR -> {
                         navController.navigate(
-                                ListPhotosFragmentDirections
-                                        .actionFragmentListPhotosToUserProfileFragment(photo.authorUsername),
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(photo.authorUsername),
                                 defaultTransitionNavOptions())
                     }
                 }
@@ -116,16 +112,23 @@ class ListPhotosFragment : Fragment() {
                 }
             })
         }
-        model.photosData.observe(this, Observer { it ->
+        viewModel.photosData.observe(this, Observer { it ->
             it?.let {
-                (recyclerListPhotos.adapter as ListPhotosAdapter).submitList(it)
+                (recyclerUserListPhotos.adapter as ListPhotosAdapter).submitList(it)
             }
         })
-        model.errorData.observe(this, Observer {
+        viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(context!!, it.message, Toast.LENGTH_SHORT).show()
         })
+
+        viewModel.meLiveData.observe(this, Observer {
+            authNavigatorMiddleware.navigate(
+                    toolbarListPhotos.findNavController(),
+                    ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(it))
+        })
+
         refreshListPhotos.setOnClickListener {
-            model.refresh()
+            viewModel.refresh()
         }
 
     }
@@ -208,60 +211,39 @@ class ListPhotosVH(private val glide: RequestManager,
 }
 
 class ListPhotosViewModel(private val ioExecutor: Executor,
-                          private val backgroundThreadExecutor: Executor,
-                          private val repository: PhotoRepository) : ViewModel() {
+                          backgroundThreadExecutor: Executor,
+                          private val userRepository: UserRepository,
+                          private val photoRepository: PhotoRepository) : ViewModel() {
 
-    val errorData = SingleLiveEvent<Throwable>()
+    val errorLiveData = SingleLiveEvent<Throwable>()
 
-    val photosData = PagedList.Config.Builder()
-            .setEnablePlaceholders(true)
-            .setPrefetchDistance(10)
-            .setPageSize(10)
-            .build()
-            .let {
-                LivePagedListBuilder<Int, Photo>(repository.getPhotos(), it)
-                        .setFetchExecutor(backgroundThreadExecutor)
-                        .setBoundaryCallback(object : PagedList.BoundaryCallback<Photo>() {
+    val meLiveData = SingleLiveEvent<String>()
 
-                            val isLoading = AtomicBoolean(false)
+    val photosData = photosPageListConfigLiveData(null, backgroundThreadExecutor, ioExecutor, photoRepository,
+            errorLiveData)
 
-                            override fun onItemAtFrontLoaded(itemAtFront: Photo) {
-                                tryLoadMore(itemAtFront.pagingData?.prev)
-                            }
+    fun obtainMe() {
+        ioExecutor.execute {
+            userRepository.meUsername(object : Repository.Callback<String> {
+                override fun onSuccess(data: String, extras: Any?) {
+                    meLiveData.postValue(data)
+                }
 
-                            override fun onItemAtEndLoaded(itemAtEnd: Photo) {
-                                tryLoadMore(itemAtEnd.pagingData?.next)
-                            }
-
-                            override fun onZeroItemsLoaded() {
-                                tryLoadMore(1)
-                            }
-
-                            fun tryLoadMore(page: Int?) {
-                                if (page != null && !isLoading.get()) {
-                                    ioExecutor.execute {
-                                        isLoading.compareAndSet(false, true)
-                                        repository.insertPhotos(page, object : Repository.Callback<Unit> {
-                                            override fun onError(error: Throwable) {
-                                                errorData.postValue(error)
-                                            }
-                                        })
-                                        isLoading.compareAndSet(true, false)
-                                    }
-                                }
-                            }
-                        })
-                        .build()
-            }
+                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                    errorLiveData.postValue(error)
+                }
+            })
+        }
+    }
 
     fun refresh() {
         ioExecutor.execute {
-            repository.refresh()
+            photoRepository.refresh()
         }
     }
 
     fun cancel() {
-        repository.cancel()
+        photoRepository.cancel()
     }
 
 }

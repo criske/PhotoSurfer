@@ -2,7 +2,7 @@ package com.crskdev.photosurfer.data.remote.download
 
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.safeSet
+import com.crskdev.photosurfer.util.safeSet
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
 import okio.Source
 import retrofit2.Call

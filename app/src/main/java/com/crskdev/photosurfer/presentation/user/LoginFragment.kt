@@ -16,7 +16,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
-import com.crskdev.photosurfer.util.SingleLiveEvent
+import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import kotlinx.android.synthetic.main.fragment_login.*
 import java.util.concurrent.Executor
 
@@ -72,7 +72,7 @@ class LoginViewModel(private val ioThreadExecutor: Executor,
                         loggedInLiveData.postValue(Unit)
                     }
 
-                    override fun onError(error: Throwable) {
+                    override fun onError(error: Throwable, isAuthenticationError: Boolean) {
                         errorLiveData.postValue(error)
                     }
                 })

@@ -4,9 +4,7 @@ package com.crskdev.photosurfer.presentation.photo
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.PorterDuff
-import android.os.Build
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,22 +22,24 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
-import com.crskdev.photosurfer.*
+import com.crskdev.photosurfer.AppPermissions
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
-import com.crskdev.photosurfer.util.SingleLiveEvent
+import com.crskdev.photosurfer.setStatusBarColor
+import com.crskdev.photosurfer.util.dpToPx
+import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
+import com.crskdev.photosurfer.util.livedata.filter
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_photo_details.*
 import kotlinx.android.synthetic.main.progress_layout.*
 import java.util.concurrent.Executor
-import kotlin.properties.Delegates
 
 class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
 
@@ -56,7 +56,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProviders.of(activity!!, object : ViewModelProvider.Factory {
+        viewModel = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 val dependencyGraph = context!!.dependencyGraph()
                 @Suppress("UNCHECKED_CAST")
@@ -276,7 +276,7 @@ class PhotoDetailViewModel(
                         }
                     }
 
-                    override fun onError(error: Throwable) {
+                    override fun onError(error: Throwable, isAuthenticationError: Boolean) {
                         errorLiveData.postValue(error)
                     }
                 })

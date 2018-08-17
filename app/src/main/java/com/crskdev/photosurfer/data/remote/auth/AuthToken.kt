@@ -6,7 +6,12 @@ data class AuthToken(val access: String,
                      val type: String,
                      val refresh: String,
                      val scope: String,
-                     val createdAt: Long)
+                     val createdAt: Long,
+                     val username: String){
+    companion object {
+        val NONE = AuthToken("", "","", "", 0L, "")
+    }
+}
 
 
 class AuthTokenJSON{
@@ -21,4 +26,4 @@ class AuthTokenJSON{
     var createdAt: Long = -1L
 }
 
-fun AuthTokenJSON.toAuthToken() = AuthToken(accessToken, tokenType, refreshToken, scope, createdAt)
+fun AuthTokenJSON.toAuthToken(username: String) = AuthToken(accessToken, tokenType, refreshToken, scope, createdAt, username)

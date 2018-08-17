@@ -16,7 +16,7 @@ class NetworkClientTest {
 
         var authToken: AuthToken? = null
 
-        override fun getToken(): AuthToken? = authToken
+        override fun token(): AuthToken? = authToken
 
         override fun saveToken(token: AuthToken) {
             authToken = token

@@ -6,13 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.crskdev.photosurfer.data.local.photo.PhotoDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
+import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
 
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
 @Database(
-        entities = [PhotoEntity::class],
-        version = 1,
+        entities = [PhotoEntity::class, UserPhotoEntity::class],
+        version = 2,
         exportSchema = false
 )
 abstract class PhotoSurferDB : RoomDatabase() {
