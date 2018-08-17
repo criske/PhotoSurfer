@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -68,7 +69,7 @@ class UserListPhotosFragment : Fragment() {
                 when (what) {
                     ActionWhat.PHOTO_DETAIL -> {
                         navController.navigate(
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()),
+                                R.id.fragment_photo_details, bundleOf("photo" to photo.parcelize()),
                                 defaultTransitionNavOptions())
                     }
 //                    ActionWhat.AUTHOR -> {

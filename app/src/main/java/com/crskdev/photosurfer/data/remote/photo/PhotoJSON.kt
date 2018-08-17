@@ -42,6 +42,9 @@ data class PhotoPagingData(val total: Int, val curr: Int, val prev: Int?, val ne
         fun createFromHeaders(headers: Headers): PhotoPagingData {
             val total = headers["x-total"]?.toInt()
                     ?: throw Error("Could not find x-total entry in header")
+            if (total == 0) {
+                return PhotoPagingData(0, 1, null, null)
+            }
             val (curr: Int, prev: Int?, next: Int?) = headers["link"]?.let {
                 val split = it.split(",")
                 val prev = split.firstOrNull { it.contains("prev") }

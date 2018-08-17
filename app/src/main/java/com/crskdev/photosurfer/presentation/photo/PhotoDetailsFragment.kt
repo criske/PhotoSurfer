@@ -43,10 +43,6 @@ import java.util.concurrent.Executor
 
 class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
 
-    companion object {
-        private const val KEY_UI_STATE = "com.crskdev.photosurfer.presentation.photo.PhotoDetailsFragment:UIState"
-    }
-
     private lateinit var viewModel: PhotoDetailViewModel
     private var progSlideDownAnimation: ViewPropertyAnimator? = null
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
