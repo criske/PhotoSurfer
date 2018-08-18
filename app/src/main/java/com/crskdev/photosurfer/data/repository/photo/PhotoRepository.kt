@@ -15,6 +15,9 @@ import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.toDbEntity
 import com.crskdev.photosurfer.entities.toPhoto
 import com.crskdev.photosurfer.entities.toUserPhotoDbEntity
+import com.crskdev.photosurfer.services.JobService
+import com.crskdev.photosurfer.services.WorkData
+import com.crskdev.photosurfer.services.WorkType
 import retrofit2.Call
 import kotlin.math.roundToInt
 
@@ -35,13 +38,16 @@ interface PhotoRepository : Repository {
 
     fun isDownloaded(id: String): Boolean
 
+    fun like(photo: Photo, callback: Repository.Callback<Boolean>)
+
 }
 
 class PhotoRepositoryImpl(
         private val transactional: TransactionRunner,
         private val api: PhotoAPI,
         private val dao: PhotoDAO,
-        private val downloadManager: DownloadManager
+        private val downloadManager: DownloadManager,
+        private val jobService: JobService
 ) : PhotoRepository {
 
     @Volatile
@@ -167,6 +173,15 @@ class PhotoRepositoryImpl(
             }
 
         }
+    }
+
+    override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
+        transactional {
+            dao.likeRandom(photo.id, photo.likedByMe)
+            dao.likeUserPhoto(photo.id, photo.likedByMe)
+        }
+        callback.onSuccess(photo.likedByMe)
+        jobService.schedule(WorkData(WorkType.LIKE, "id" to photo.id, "likedByMe" to photo.likedByMe))
     }
 
     @AnyThread

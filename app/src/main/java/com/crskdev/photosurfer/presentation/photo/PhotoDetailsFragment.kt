@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.presentation.photo
 
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -31,6 +32,7 @@ import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
+import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.setStatusBarColor
 import com.crskdev.photosurfer.util.dpToPx
@@ -47,7 +49,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     private var progSlideDownAnimation: ViewPropertyAnimator? = null
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
 
-    private val photo by lazy(LazyThreadSafetyMode.NONE) { PhotoDetailsFragmentArgs.fromBundle(arguments).photo.deparcelize() }
+    private lateinit var photo: Photo
     private val glide by lazy { Glide.with(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,9 +61,12 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 return PhotoDetailViewModel(
                         dependencyGraph.uiThreadExecutor,
                         dependencyGraph.backgroundThreadExecutor,
+                        dependencyGraph.ioThreadExecutor,
                         dependencyGraph.photoRepository) as T
             }
         }).get(PhotoDetailViewModel::class.java)
+        photo = PhotoDetailsFragmentArgs.fromBundle(arguments)
+                .photo.deparcelize()
     }
 
     override fun onDestroy() {
@@ -88,6 +93,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         subscribeToViewModel(view)
         displayPhoto()
+        setLikeButton(photo.likedByMe)
+
         fabDownload.setOnClickListener { v ->
             if (!AppPermissions.hasStoragePermission(v.context)) {
                 AppPermissions.requestStoragePermission(activity!!)
@@ -99,6 +106,18 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             viewModel.cancelDownload(photo.id)
         }
 
+        btnPhotoLike.setOnClickListener {
+            viewModel.like(photo.copy(likedByMe = !photo.likedByMe))
+        }
+    }
+
+    private fun setLikeButton(like: Boolean){
+        val color = if (like) {
+            ContextCompat.getColor(context!!, R.color.colorAccent)
+        } else {
+            Color.WHITE
+        }
+        btnPhotoLike.setColorFilter(color)
     }
 
     private fun displayPhoto() {
@@ -182,7 +201,17 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             val isVisible = it != photo.id
             progressBarLoading.isVisible = isVisible
             (fabDownload as View).isVisible = !isVisible
+            btnPhotoLike.isVisible = !isVisible
         })
+        viewModel.likeLiveData.observe(this, Observer { liked ->
+            setLikeButton(liked)
+            photo = photo.copy(likedByMe = liked)
+            arguments?.putParcelable("photo", photo.parcelize())
+        })
+        viewModel.needsAuthLiveData.observe(this, Observer {
+            view.context.dependencyGraph().authNavigatorMiddleware.navigateToLogin(activity!!)
+        })
+
     }
 
     fun setPalette(id: String?, bitmap: Bitmap?) {
@@ -207,6 +236,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 class PhotoDetailViewModel(
         private val uiExecutor: Executor,
         private val backgroundExecutor: Executor,
+        private val ioExecutor: Executor,
         private val photoRepository: PhotoRepository) : ViewModel() {
 
     companion object {
@@ -217,6 +247,10 @@ class PhotoDetailViewModel(
     val errorLiveData = SingleLiveEvent<Throwable>()
 
     val isDownloadedLiveData = SingleLiveEvent<Unit>()
+
+    val likeLiveData = MutableLiveData<Boolean>()
+
+    val needsAuthLiveData = SingleLiveEvent<Unit>()
 
     val paletteLiveData = MutableLiveData<Map<String, Palette>>().apply {
         value = emptyMap()
@@ -280,6 +314,25 @@ class PhotoDetailViewModel(
         }
 
     }
+
+    fun like(photo: Photo) {
+        ioExecutor.execute {
+            photoRepository.like(photo, object : Repository.Callback<Boolean> {
+                override fun onSuccess(data: Boolean, extras: Any?) {
+                    likeLiveData.postValue(data)
+                }
+
+                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                    if (isAuthenticationError) {
+                        errorLiveData.postValue(error)
+                    } else {
+                        needsAuthLiveData.postValue(Unit)
+                    }
+                }
+            })
+        }
+    }
+
 
     fun cancelDownload(id: String) {
         photoRepository.cancel()

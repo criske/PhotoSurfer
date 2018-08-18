@@ -79,7 +79,6 @@ class InMemoryAuthTokenStorage : ObservableAuthTokenStorage() {
 
 class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAuthTokenStorage() {
 
-//
 //    private inner class SharedPreferenceChangeListener : SharedPreferences.OnSharedPreferenceChangeListener {
 //        override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
 //            if (key == KEY_AUTH_TOKEN) {

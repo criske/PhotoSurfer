@@ -39,4 +39,17 @@ interface PhotoDAO {
 
     @Query("SELECT count(*) == 0 FROM user_photos WHERE username=:userName")
     fun isEmptyUserPhotos(userName: String): Boolean
+
+    @Query("UPDATE photos SET likedByMe=:like WHERE id=:id")
+    fun likeRandom(id: String, like: Boolean)
+
+    @Query("UPDATE user_photos SET likedByMe=:like WHERE id=:id")
+    fun likeUserPhoto(id: String, like: Boolean)
+
+    @Query("SELECT * FROM photos WHERE id=:id")
+    fun getPhoto(id: String): PhotoEntity
+
+    @Query("SELECT * FROM user_photos WHERE id=:id")
+    fun getUserPhoto(id: String): UserPhotoEntity
+
 }

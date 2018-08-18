@@ -1,11 +1,9 @@
 package com.crskdev.photosurfer.data.remote.photo
 
+import com.crskdev.photosurfer.data.remote.REQUIRE_AUTH
 import okhttp3.ResponseBody
 import retrofit2.Call
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
-import retrofit2.http.Streaming
+import retrofit2.http.*
 
 interface PhotoAPI {
 
@@ -21,5 +19,13 @@ interface PhotoAPI {
     @GET("photos/{id}/download")
     @Streaming
     fun download(@Path("id") id: String): Call<ResponseBody>
+
+    @POST("photos/{id}/like")
+    @Headers(REQUIRE_AUTH)
+    fun like(@Path("id") id: String):Call<ResponseBody>
+
+    @DELETE("photos/{id}/like")
+    @Headers(REQUIRE_AUTH)
+    fun unlike(@Path("id") id: String):Call<ResponseBody>
 
 }

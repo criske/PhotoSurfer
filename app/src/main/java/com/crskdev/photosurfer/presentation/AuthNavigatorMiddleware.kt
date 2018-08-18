@@ -2,9 +2,11 @@ package com.crskdev.photosurfer.presentation
 
 import android.os.Bundle
 import androidx.annotation.IdRes
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavDirections
 import androidx.navigation.NavOptions
+import androidx.navigation.Navigation
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
@@ -34,5 +36,11 @@ class AuthNavigatorMiddleware(private val authTokenStorage: AuthTokenStorage) {
 
     fun navigateToLogin(controller: NavController, options: NavOptions = defaultTransitionNavOptions()) =
             controller.navigate(R.id.action_global_login, null, options)
+
+    fun navigateToLogin(activity: FragmentActivity, options: NavOptions = defaultTransitionNavOptions()) {
+        val controller = Navigation.findNavController(activity, R.id.nav_host_fragment)
+        controller.navigate(R.id.action_global_login, null, options)
+    }
+
 
 }

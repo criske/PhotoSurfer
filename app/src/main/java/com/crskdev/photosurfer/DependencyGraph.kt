@@ -19,6 +19,8 @@ import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
+import com.crskdev.photosurfer.services.JobService
+import com.crskdev.photosurfer.services.JobServiceImpl
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -59,6 +61,10 @@ object DependencyGraph {
     lateinit var photoDownloader: PhotoDownloader
         private set
 
+    //APIs
+    lateinit var photoAPI: PhotoAPI
+        private set
+
     //repositories
     lateinit var photoRepository: PhotoRepository
         private set
@@ -91,7 +97,7 @@ object DependencyGraph {
         db = PhotoSurferDB.create(context, false)
 
         //photo
-        val photoAPI = retrofit.create(PhotoAPI::class.java)
+        photoAPI = retrofit.create(PhotoAPI::class.java)
         externalPhotoGalleryDAO = ExternalPhotoGalleryDAOImpl(context)
         photoDownloader = PhotoDownloaderImpl(photoAPI)
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
@@ -99,7 +105,8 @@ object DependencyGraph {
                 TransactionRunnerImpl(db),
                 photoAPI,
                 db.photoDAO(),
-                downloadManager
+                downloadManager,
+                JobServiceImpl.createDefault()
         )
 
         //user and auth

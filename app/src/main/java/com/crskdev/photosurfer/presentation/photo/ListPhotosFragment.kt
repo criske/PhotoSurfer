@@ -193,8 +193,6 @@ class ListPhotosVH(private val glide: RequestManager,
     fun bind(photo: Photo) {
         this.photo = photo
         itemView.textAuthor.text = photo.authorUsername
-        itemView.textId.text = photo.id
-        itemView.textOrder.text = "#" + photo.extras?.toString()
         glide.asDrawable()
                 .load(photo.urls[ImageType.SMALL])
                 .apply(RequestOptions()
@@ -217,8 +215,6 @@ class ListPhotosVH(private val glide: RequestManager,
         photo = null
         with(itemView) {
             textAuthor.text = null
-            textId.text = null
-            textOrder.text = null
             textError.text = null
             glide.clear(imagePhoto)
             imagePhoto.setImageDrawable(null)

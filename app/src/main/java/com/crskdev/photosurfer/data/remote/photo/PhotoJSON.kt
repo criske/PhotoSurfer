@@ -8,9 +8,9 @@ import java.util.*
 class PhotoJSON {
     lateinit var id: String
     @Json(name = "created_at")
-    lateinit var createdAt: String
+    var createdAt: String = ""
     @Json(name = "updated_at")
-    lateinit var updatedAt: String
+    var updatedAt: String = ""
     var width: Int = 0
     var height: Int = 0
     @Json(name = "color")
