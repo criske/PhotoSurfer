@@ -15,7 +15,7 @@ interface UserRepository : Repository {
 
     fun login(email: String, password: String, callback: Repository.Callback<Unit>)
 
-    fun logout(callback: Repository.Callback<Unit>)
+    fun logout(callback: Repository.Callback<Unit>? = null)
 
     fun me(callback: Repository.Callback<User>)
 
@@ -59,8 +59,9 @@ class UserRepositoryImpl(private val userAPI: UserAPI,
         }
     }
 
-    override fun logout(callback: Repository.Callback<Unit>) {
-
+    override fun logout(callback: Repository.Callback<Unit>?) {
+        authTokenStorage.clearToken()
+        callback?.onSuccess(Unit)
     }
 
     override fun me(callback: Repository.Callback<User>) {

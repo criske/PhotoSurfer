@@ -48,6 +48,8 @@ object DependencyGraph {
     //NETWORK
     lateinit var authTokenStorage: AuthTokenStorage
         private set
+    lateinit var observableAuthState: ObservableAuthState
+        private set
     lateinit var retrofit: Retrofit
         private set
     lateinit var progressListenerRegistrar: ProgressListenerRegistrar
@@ -73,7 +75,9 @@ object DependencyGraph {
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
         //NETWORK
-        authTokenStorage = AuthTokenStorageImpl(preferences)
+        authTokenStorage = AuthTokenStorageImpl(preferences).apply {
+            observableAuthState = this
+        }
         //authTokenStorage = InMemoryAuthTokenStorage()
         val retrofitClient = RetrofitClient(NetworkClient(
                 authTokenStorage,

@@ -28,6 +28,7 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.data.remote.auth.ObservableAuthState
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
@@ -36,6 +37,7 @@ import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
+import com.crskdev.photosurfer.presentation.AuthStateLiveData
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.google.android.material.appbar.AppBarLayout
@@ -60,7 +62,8 @@ class ListPhotosFragment : Fragment() {
                         graph.ioThreadExecutor,
                         graph.backgroundThreadExecutor,
                         graph.userRepository,
-                        graph.photoRepository
+                        graph.photoRepository,
+                        graph.observableAuthState
                 ) as T
             }
         }).get(ListPhotosViewModel::class.java)
@@ -74,12 +77,30 @@ class ListPhotosFragment : Fragment() {
 
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
 
+
+        viewModel.authStateLiveData.observe(this, Observer {
+            val isLoggedIn = it.isNotEmpty()
+            toolbarListPhotos.menu.clear()
+            if (isLoggedIn) {
+                toolbarListPhotos.inflateMenu(R.menu.menu_user_profile_me)
+            }
+            toolbarListPhotos.inflateMenu(R.menu.menu_list_photos)
+            val text = if (isLoggedIn) "Hello $it. Welcome back!" else "You are logged out"
+            Toast.makeText(view.context, text, Toast.LENGTH_SHORT).show()
+        })
+
+
         toolbarListPhotos.apply {
-            inflateMenu(R.menu.menu_list_photos)
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.menu_item_account -> {
-                        viewModel.obtainMe()
+                        authNavigatorMiddleware.navigate(
+                                toolbarListPhotos.findNavController(),
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(
+                                        viewModel.authStateLiveData.value ?: ""))
+                    }
+                    R.id.menu_action_logout -> {
+                        viewModel.logout()
                     }
                 }
                 true
@@ -121,11 +142,7 @@ class ListPhotosFragment : Fragment() {
             Toast.makeText(context!!, it.message, Toast.LENGTH_SHORT).show()
         })
 
-        viewModel.meLiveData.observe(this, Observer {
-            authNavigatorMiddleware.navigate(
-                    toolbarListPhotos.findNavController(),
-                    ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(it))
-        })
+
 
         refreshListPhotos.setOnClickListener {
             viewModel.refresh()
@@ -213,28 +230,15 @@ class ListPhotosVH(private val glide: RequestManager,
 class ListPhotosViewModel(private val ioExecutor: Executor,
                           backgroundThreadExecutor: Executor,
                           private val userRepository: UserRepository,
-                          private val photoRepository: PhotoRepository) : ViewModel() {
+                          private val photoRepository: PhotoRepository,
+                          observableAuthState: ObservableAuthState) : ViewModel() {
+
+    val authStateLiveData = AuthStateLiveData(observableAuthState)
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
-    val meLiveData = SingleLiveEvent<String>()
-
     val photosData = photosPageListConfigLiveData(null, backgroundThreadExecutor, ioExecutor, photoRepository,
             errorLiveData)
-
-    fun obtainMe() {
-        ioExecutor.execute {
-            userRepository.meUsername(object : Repository.Callback<String> {
-                override fun onSuccess(data: String, extras: Any?) {
-                    meLiveData.postValue(data)
-                }
-
-                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                    errorLiveData.postValue(error)
-                }
-            })
-        }
-    }
 
     fun refresh() {
         ioExecutor.execute {
@@ -244,6 +248,10 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
 
     fun cancel() {
         photoRepository.cancel()
+    }
+
+    fun logout() {
+        userRepository.logout()
     }
 
 }

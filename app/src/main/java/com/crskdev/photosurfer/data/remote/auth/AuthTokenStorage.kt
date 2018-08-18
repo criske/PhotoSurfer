@@ -8,10 +8,6 @@ import kotlin.properties.Delegates
 
 interface AuthTokenStorage {
 
-    interface Listener {
-        fun onChange(new: AuthToken?)
-    }
-
     companion object {
         val NONE = object : AuthTokenStorage {
             override fun token(): AuthToken? = null
@@ -28,26 +24,36 @@ interface AuthTokenStorage {
 
     fun clearToken() {}
 
-    fun addListener(authTokenListener: Listener) {}
-
-    fun removeListener(authTokenListener: Listener) {}
 
 }
 
-abstract class ObservableAuthTokenStorage : AuthTokenStorage {
+interface ObservableAuthState {
 
-    private val listeners = CopyOnWriteArrayList<AuthTokenStorage.Listener>()
-
-    override fun addListener(authTokenListener: AuthTokenStorage.Listener) {
-        listeners.add(authTokenListener)
-        authTokenListener.onChange(token()) // emit on subscribe
+    interface Listener {
+        fun onChange(new: AuthToken?)
     }
 
-    override fun removeListener(authTokenListener: AuthTokenStorage.Listener) {
-        listeners.remove(authTokenListener)
+    fun addListener(authStateListener: Listener) {}
+
+    fun removeListener(authStateListener: Listener) {}
+
+    fun notifyListeners(new: AuthToken?)
+}
+
+abstract class ObservableAuthTokenStorage : AuthTokenStorage, ObservableAuthState {
+
+    private val listeners = CopyOnWriteArrayList<ObservableAuthState.Listener>()
+
+    override fun addListener(authStateListener: ObservableAuthState.Listener) {
+        listeners.add(authStateListener)
+        authStateListener.onChange(token()) // emit on subscribe
     }
 
-    protected fun notifyListeners(new: AuthToken?) {
+    override fun removeListener(authStateListener: ObservableAuthState.Listener) {
+        listeners.remove(authStateListener)
+    }
+
+    override fun notifyListeners(new: AuthToken?) {
         listeners.forEach {
             it.onChange(new)
         }
@@ -73,6 +79,14 @@ class InMemoryAuthTokenStorage : ObservableAuthTokenStorage() {
 
 class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAuthTokenStorage() {
 
+//
+//    private inner class SharedPreferenceChangeListener : SharedPreferences.OnSharedPreferenceChangeListener {
+//        override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+//            if (key == KEY_AUTH_TOKEN) {
+//                notifyListeners(token())
+//            }
+//        }
+//    }
 
     companion object {
         private const val KEY_AUTH_TOKEN = "KEY_AUTH_TOKEN"
@@ -80,17 +94,18 @@ class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAut
     }
 
     init {
-        val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
-            if (key == KEY_AUTH_TOKEN) {
-                notifyListeners(token())
-            }
-        }
-        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
+
+        //NOTE: not using listener - is not called when remove key. looks lis android decides to remove listener
+        //even if using a non-anon class instance
+
+//        val prefsListener = SharedPreferenceChangeListener()
+//        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
     }
 
 
     override fun token(): AuthToken? {
-        return prefs.getString(KEY_AUTH_TOKEN, null)?.split(DELIM)
+        return prefs.getString(KEY_AUTH_TOKEN, "")
+                ?.split(DELIM)
                 ?.takeIf { it.size == 6 }
                 ?.let {
                     AuthToken(it[0], it[1], it[2], it[3], it[4].toLong(), it[5])
@@ -113,13 +128,15 @@ class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAut
                 append(token.username)
             })
         }
+        notifyListeners(token)
     }
 
     override fun hasToken(): Boolean = token() != null
 
     override fun clearToken() {
         prefs.edit {
-            putString(KEY_AUTH_TOKEN, null)
+            remove(KEY_AUTH_TOKEN)
         }
+        notifyListeners(null)
     }
 }

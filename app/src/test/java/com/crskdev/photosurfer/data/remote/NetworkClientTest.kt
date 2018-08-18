@@ -53,7 +53,7 @@ class NetworkClientTest {
         val authResponse = authAPI.authorize("cristypela05@gmail.com", "aa26041985").execute()
         assertTrue(authResponse.isSuccessful)
 
-        val token = authResponse.body()?.toAuthToken()!!
+        val token = authResponse.body()?.toAuthToken("foo")!!
         //testAuthTokenStorage.saveToken(token)
 
         val userAPI = retrofit.create(UserAPI::class.java)
