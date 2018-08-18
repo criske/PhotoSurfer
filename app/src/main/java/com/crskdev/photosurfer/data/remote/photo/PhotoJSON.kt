@@ -42,11 +42,8 @@ data class PhotoPagingData(val total: Int, val curr: Int, val prev: Int?, val ne
         fun createFromHeaders(headers: Headers): PhotoPagingData {
             val total = headers["x-total"]?.toInt()
                     ?: throw Error("Could not find x-total entry in header")
-            if (total == 0) {
-                return PhotoPagingData(0, 1, null, null)
-            }
-            val (curr: Int, prev: Int?, next: Int?) = headers["link"]?.let {
-                val split = it.split(",")
+            val (curr: Int, prev: Int?, next: Int?) = headers["link"]?.let { hv ->
+                val split = hv.split(",")
                 val prev = split.firstOrNull { it.contains("prev") }
                         ?.split(";")
                         ?.first()
@@ -62,7 +59,7 @@ data class PhotoPagingData(val total: Int, val curr: Int, val prev: Int?, val ne
                 val curr = next?.let { it - 1 } ?: prev?.let { it + 1 } ?: 1
                 Triple(curr, prev, next)
 
-            } ?: throw Error("Could not find link entry in header")
+            } ?: Triple(1, null, null)
             return PhotoPagingData(total, curr, prev, next)
         }
     }

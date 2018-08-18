@@ -24,4 +24,6 @@
         Velit sed ullamcorper morbi tincidunt ornare massa eget egestas purus.
         Sagittis nisl rhoncus mattis rhoncus urna. Diam phasellus vestibulum lorem sed.
         Aenean vel elit scelerisque mauris. Quis commodo odio aenean sed adipiscing diam donec adipiscing.</string>
+    <string name="logout">Logout</string>
+    <string name="edit">Edit</string>
 </resources>
