@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.entities
 import android.media.Image
 import android.os.Bundle
 import androidx.core.os.bundleOf
+import com.crskdev.photosurfer.data.local.photo.LikePhotoEntity
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
@@ -14,17 +15,8 @@ import java.util.*
  * Created by Cristian Pela on 09.08.2018.
  */
 
-private const val KV_DELIM = "@@"
-private const val ENTRY_DELIM = ";"
-
-fun PhotoJSON.toPhoto(photoPagingData: PhotoPagingData? = null): Photo =
-        Photo(id, createdAt, updatedAt,
-                width, height,
-                colorString, urls, categories,
-                likes, likedByMe,
-                views, author.id,
-                author.username,
-                photoPagingData)
+internal const val KV_DELIM = "@@"
+internal const val ENTRY_DELIM = ";"
 
 fun PhotoEntity.toPhoto(): Photo =
         Photo(id, createdAt, updatedAt,
@@ -42,57 +34,14 @@ fun PhotoEntity.toPhoto(): Photo =
                 indexInResponse + 1
         )
 
-fun Photo.toDbEntity(nextIndex: Int): PhotoEntity =
-        PhotoEntity().apply {
-            id = this@toDbEntity.id
-            createdAt = this@toDbEntity.createdAt
-            updatedAt = this@toDbEntity.updatedAt
-            width = this@toDbEntity.width
-            height = this@toDbEntity.height
-            colorString = this@toDbEntity.colorString
-            urls = this@toDbEntity.urls.entries.map { "${it.key}$KV_DELIM${it.value}" }.joinToString(ENTRY_DELIM)
-            categories = this@toDbEntity.categories.takeIf { it.isNotEmpty() }?.joinToString(ENTRY_DELIM)
-            likes = this@toDbEntity.likes
-            likedByMe = this@toDbEntity.likedByMe
-            views = this@toDbEntity.views
-            authorId = this@toDbEntity.authorId
-            authorUsername = this@toDbEntity.authorUsername
-            total = this@toDbEntity.pagingData?.total
-            curr = this@toDbEntity.pagingData?.curr
-            next = this@toDbEntity.pagingData?.next
-            prev = this@toDbEntity.pagingData?.prev
-            indexInResponse = nextIndex
-        }
-
 fun PhotoJSON.toDbEntity(pagingData: PhotoPagingData, nextIndex: Int): PhotoEntity =
-        PhotoEntity().apply {
-            id = this@toDbEntity.id
-            createdAt = this@toDbEntity.createdAt
-            updatedAt = this@toDbEntity.updatedAt
-            width = this@toDbEntity.width
-            height = this@toDbEntity.height
-            colorString = this@toDbEntity.colorString
-            urls = this@toDbEntity.urls.entries.map { "${it.key}$KV_DELIM${it.value}" }.joinToString(ENTRY_DELIM)
-            categories = this@toDbEntity.categories.takeIf { it.isNotEmpty() }?.joinToString(ENTRY_DELIM)
-            likes = this@toDbEntity.likes
-            likedByMe = this@toDbEntity.likedByMe
-            views = this@toDbEntity.views
-            authorId = this@toDbEntity.author.id
-            authorUsername = this@toDbEntity.author.username
-            total = pagingData.total
-            curr = pagingData.curr
-            next = pagingData.next
-            prev = pagingData.prev
-            indexInResponse = nextIndex
-        }
+        PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, PhotoEntity::class.java)
 
-fun PhotoJSON.toUserPhotoDbEntity(userName: String, pagingData: PhotoPagingData, nextIndex: Int): UserPhotoEntity {
-    val entity = toDbEntity(pagingData, nextIndex)
-    return UserPhotoEntity().apply {
-        this.username = userName
-        this.photo = entity
-    }
-}
+fun PhotoJSON.toUserPhotoDbEntity(pagingData: PhotoPagingData, nextIndex: Int): UserPhotoEntity =
+        PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, UserPhotoEntity::class.java)
+
+fun PhotoJSON.toLikePhotoDbEntity(pagingData: PhotoPagingData, nextIndex: Int): LikePhotoEntity =
+        PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, LikePhotoEntity::class.java)
 
 fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
         createdAt, updatedAt,

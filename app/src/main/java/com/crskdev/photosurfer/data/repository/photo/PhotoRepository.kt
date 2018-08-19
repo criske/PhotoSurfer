@@ -3,9 +3,7 @@ package com.crskdev.photosurfer.data.repository.photo
 import androidx.annotation.AnyThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.TransactionRunner
-import com.crskdev.photosurfer.data.local.photo.PhotoDAO
-import com.crskdev.photosurfer.data.local.photo.PhotoEntity
-import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
+import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
@@ -46,7 +44,9 @@ interface PhotoRepository : Repository {
 class PhotoRepositoryImpl(
         private val transactional: TransactionRunner,
         private val api: PhotoAPI,
-        private val dao: PhotoDAO,
+        private val daoPhotos: PhotoDAO,
+        private val daoLikes: PhotoLikeDAO,
+        private val daoUserPhotos: PhotoUserDAO,
         private val downloadManager: DownloadManager,
         private val jobService: JobService
 ) : PhotoRepository {
@@ -68,18 +68,23 @@ class PhotoRepositoryImpl(
         }
 
         private fun emptyUserPhotoEntity(username: String) = UserPhotoEntity().apply {
-            this.username = username
-            this.photo = EMPTY_PHOTO_ENTITY
+            id = ""
+            createdAt = ""
+            updatedAt = ""
+            colorString = ""
+            urls = ""
+            authorId = ""
+            authorUsername = ""
         }
     }
 
 
     override fun getPhotos(username: String?): DataSource.Factory<Int, Photo> =
             if (username != null)
-                dao.getUserPhotos(username)
-                        .mapByPage { page -> page.map { it.photo.toPhoto() } }
+                daoUserPhotos.getPhotos(username)
+                        .mapByPage { page -> page.map { it.toPhoto() } }
             else
-                dao.getPhotos()
+                daoPhotos.getPhotos()
                         .mapByPage { page -> page.map { it.toPhoto() } }
 
 
@@ -99,15 +104,15 @@ class PhotoRepositoryImpl(
                     body()?.map {
                         @Suppress("IMPLICIT_CAST_TO_ANY")
                         if (username != null) {
-                            it.toUserPhotoDbEntity(username, pagingData, dao.getNextIndexUserPhotos(username))
+                            it.toUserPhotoDbEntity(pagingData, daoUserPhotos.getNextIndex(username))
                         } else {
-                            it.toDbEntity(pagingData, dao.getNextIndexPhotos())
+                            it.toDbEntity(pagingData, daoPhotos.getNextIndex())
                         }
                     }?.apply {
                         if (username != null) {
-                            dao.insertUserPhotos(map { it as UserPhotoEntity })
+                            daoUserPhotos.insertPhotos(map { it as UserPhotoEntity })
                         } else {
-                            dao.insertPhotos(map { it as PhotoEntity })
+                            daoPhotos.insertPhotos(map { it as PhotoEntity })
                         }
                         callback?.onSuccess(Unit)
                     }
@@ -156,20 +161,20 @@ class PhotoRepositoryImpl(
     override fun refresh(username: String?) {
         transactional {
             if (username == null) {
-                if (dao.isEmptyPhotos()) {
+                if (daoPhotos.isEmptyPhotos()) {
                     //force trigger the db InvalidationTracker.Observer
-                    dao.insertPhotos(listOf(EMPTY_PHOTO_ENTITY))
-                    dao.clearPhotos()
+                    daoPhotos.insertPhotos(listOf(EMPTY_PHOTO_ENTITY))
+                    daoPhotos.clearPhotos()
                 } else {
-                    dao.clearPhotos()
+                    daoPhotos.clearPhotos()
                 }
             } else {
-                if (dao.isEmptyUserPhotos(username)) {
+                if (daoUserPhotos.isEmpty(username)) {
                     //force trigger the db InvalidationTracker.Observer
-                    dao.insertUserPhotos(listOf(emptyUserPhotoEntity(username)))
-                    dao.clearUserPhotos(username)
+                    daoUserPhotos.insertPhotos(listOf(emptyUserPhotoEntity(username)))
+                    daoUserPhotos.clear(username)
                 } else {
-                    dao.clearUserPhotos(username)
+                    daoUserPhotos.clear(username)
                 }
             }
 
@@ -178,8 +183,9 @@ class PhotoRepositoryImpl(
 
     override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
         transactional {
-            dao.like(photo.id, photo.likedByMe)
-            dao.likeUserPhoto(photo.id, photo.likedByMe)
+            daoPhotos.like(photo.id, photo.likedByMe)
+            daoUserPhotos.like(photo.id, photo.likedByMe)
+
         }
         callback.onSuccess(photo.likedByMe)
         jobService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))

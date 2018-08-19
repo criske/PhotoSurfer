@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
  * Created by Cristian Pela on 09.08.2018.
  */
 @Entity(tableName = "photos")
-class PhotoEntity {
+open class PhotoEntity {
     @PrimaryKey
     lateinit var id: String
     var indexInResponse: Int = -1
@@ -40,13 +40,7 @@ class PhotoEntity {
 
 
 @Entity(tableName = "user_photos")
-class UserPhotoEntity {
+class UserPhotoEntity: PhotoEntity()
 
-    @PrimaryKey(autoGenerate = true)
-    var _id: Long = 0L
-
-    lateinit var username: String
-
-    @Embedded
-    lateinit var photo: PhotoEntity
-}
+@Entity(tableName = "like_photos")
+class LikePhotoEntity: PhotoEntity()

@@ -20,39 +20,14 @@ interface PhotoDAO {
     fun clearPhotos()
 
     @Query("SELECT MAX(indexInResponse) + 1 FROM photos")
-    fun getNextIndexPhotos(): Int
+    fun getNextIndex(): Int
 
     @Query("SELECT count(*) == 0 FROM photos")
     fun isEmptyPhotos(): Boolean
 
-    @Query("SELECT * FROM user_photos WHERE username=:userName ORDER BY indexInResponse ASC")
-    fun getUserPhotos(userName: String): DataSource.Factory<Int, UserPhotoEntity>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertUserPhotos(photos: List<UserPhotoEntity>)
-
-    @Query("DELETE FROM user_photos WHERE username=:userName")
-    fun clearUserPhotos(userName: String)
-
-    @Query("SELECT MAX(indexInResponse) + 1 FROM user_photos WHERE  username=:userName")
-    fun getNextIndexUserPhotos(userName: String): Int
-
-    @Query("SELECT count(*) == 0 FROM user_photos WHERE username=:userName")
-    fun isEmptyUserPhotos(userName: String): Boolean
-
-    @Query("UPDATE photos SET likedByMe=:like WHERE id=:id")
-    fun like(id: String, like: Boolean)
-
-    @Query("UPDATE user_photos SET likedByMe=:like WHERE id=:id")
-    fun likeUserPhoto(id: String, like: Boolean)
-
     @Query("SELECT * FROM photos WHERE id=:id")
     fun getPhoto(id: String): PhotoEntity
 
-    @Query("SELECT * FROM user_photos WHERE id=:id")
-    fun getUserPhoto(id: String): UserPhotoEntity
-
-
-
-
+    @Query("UPDATE photos SET likedByMe=:like WHERE id=:id")
+    fun like(id: String, like: Boolean)
 }

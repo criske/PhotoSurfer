@@ -105,6 +105,8 @@ object DependencyGraph {
                 TransactionRunnerImpl(db),
                 photoAPI,
                 db.photoDAO(),
+                db.photoLikeDAO(),
+                db.photoUserDAO(),
                 downloadManager,
                 JobServiceImpl()
         )

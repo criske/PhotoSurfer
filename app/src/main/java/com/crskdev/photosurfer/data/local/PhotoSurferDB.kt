@@ -4,16 +4,14 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.crskdev.photosurfer.data.local.photo.PhotoDAO
-import com.crskdev.photosurfer.data.local.photo.PhotoEntity
-import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
+import com.crskdev.photosurfer.data.local.photo.*
 
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
 @Database(
-        entities = [PhotoEntity::class, UserPhotoEntity::class],
-        version = 2,
+        entities = [PhotoEntity::class, UserPhotoEntity::class, LikePhotoEntity::class],
+        version = 4,
         exportSchema = false
 )
 abstract class PhotoSurferDB : RoomDatabase() {
@@ -31,5 +29,7 @@ abstract class PhotoSurferDB : RoomDatabase() {
     }
 
     abstract fun photoDAO(): PhotoDAO
+    abstract fun photoUserDAO(): PhotoUserDAO
+    abstract fun photoLikeDAO(): PhotoLikeDAO
 }
 
