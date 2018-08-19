@@ -16,6 +16,7 @@ import com.crskdev.photosurfer.entities.toDbEntity
 import com.crskdev.photosurfer.entities.toPhoto
 import com.crskdev.photosurfer.entities.toUserPhotoDbEntity
 import com.crskdev.photosurfer.services.JobService
+import com.crskdev.photosurfer.services.Tag
 import com.crskdev.photosurfer.services.WorkData
 import com.crskdev.photosurfer.services.WorkType
 import retrofit2.Call
@@ -78,7 +79,7 @@ class PhotoRepositoryImpl(
                 dao.getUserPhotos(username)
                         .mapByPage { page -> page.map { it.photo.toPhoto() } }
             else
-                dao.getRandomPhotos()
+                dao.getPhotos()
                         .mapByPage { page -> page.map { it.toPhoto() } }
 
 
@@ -100,13 +101,13 @@ class PhotoRepositoryImpl(
                         if (username != null) {
                             it.toUserPhotoDbEntity(username, pagingData, dao.getNextIndexUserPhotos(username))
                         } else {
-                            it.toDbEntity(pagingData, dao.getNextIndexRandomPhotos())
+                            it.toDbEntity(pagingData, dao.getNextIndexPhotos())
                         }
                     }?.apply {
                         if (username != null) {
                             dao.insertUserPhotos(map { it as UserPhotoEntity })
                         } else {
-                            dao.insertRandomPhotos(map { it as PhotoEntity })
+                            dao.insertPhotos(map { it as PhotoEntity })
                         }
                         callback?.onSuccess(Unit)
                     }
@@ -155,12 +156,12 @@ class PhotoRepositoryImpl(
     override fun refresh(username: String?) {
         transactional {
             if (username == null) {
-                if (dao.isEmptyRandomPhotos()) {
+                if (dao.isEmptyPhotos()) {
                     //force trigger the db InvalidationTracker.Observer
-                    dao.insertRandomPhotos(listOf(EMPTY_PHOTO_ENTITY))
-                    dao.clearRandomPhotos()
+                    dao.insertPhotos(listOf(EMPTY_PHOTO_ENTITY))
+                    dao.clearPhotos()
                 } else {
-                    dao.clearRandomPhotos()
+                    dao.clearPhotos()
                 }
             } else {
                 if (dao.isEmptyUserPhotos(username)) {
@@ -177,11 +178,11 @@ class PhotoRepositoryImpl(
 
     override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
         transactional {
-            dao.likeRandom(photo.id, photo.likedByMe)
+            dao.like(photo.id, photo.likedByMe)
             dao.likeUserPhoto(photo.id, photo.likedByMe)
         }
         callback.onSuccess(photo.likedByMe)
-        jobService.schedule(WorkData(WorkType.LIKE, "id" to photo.id, "likedByMe" to photo.likedByMe))
+        jobService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))
     }
 
     @AnyThread

@@ -7,7 +7,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.*
 import com.crskdev.photosurfer.dependencyGraph
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 
@@ -18,23 +17,9 @@ interface JobService {
     fun schedule(workData: WorkData)
 }
 
-
-class JobServiceImpl(private val workerFactory: EnumMap<WorkType, Class<out Worker>>) : JobService {
-
-    companion object {
-        fun createDefault(): JobService {
-            val workers = EnumMap<WorkType, Class<out Worker>>(WorkType::class.java).apply {
-                put(WorkType.LIKE, LikeWorker::class.java)
-            }
-            return JobServiceImpl(workers)
-        }
-    }
+class JobServiceImpl : JobService {
 
     override fun schedule(workData: WorkData) {
-
-        if (!workerFactory.containsKey(workData.type)) {
-            throw Error("Worker not found for ${workData.type}")
-        }
 
         val dataBuilder = Data.Builder()
         workData.extras.forEach {
@@ -45,30 +30,38 @@ class JobServiceImpl(private val workerFactory: EnumMap<WorkType, Class<out Work
                 else -> throw Error("Format not supported yed")
             }
         }
-        val request = OneTimeWorkRequest.Builder(workerFactory[workData.type]!!)
+        val workerTag = workData.tag.toString()
+        val workManager = WorkManager.getInstance()
+        workManager.cancelAllWorkByTag(workerTag)
+        val request = OneTimeWorkRequest.Builder(workData.tag.type.workerClass)
                 .setInputData(dataBuilder.build())
+                .addTag(workerTag)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
                 .setConstraints(Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build())
                 .build()
-        WorkManager.getInstance().enqueue(request)
+        workManager.enqueue(request)
     }
-
 
 }
 
-class WorkData(val type: WorkType, vararg val extras: Pair<String, Any>)
+class WorkData(val tag: Tag, vararg val extras: Pair<String, Any>)
 
 
-enum class WorkType {
-    LIKE
+enum class WorkType(val workerClass: Class<out Worker>) {
+    LIKE(LikeWorker::class.java)
+}
+
+class Tag(val type: WorkType, val uniqueId: String) {
+    override fun toString(): String {
+        return "$type#$uniqueId"
+    }
 }
 
 abstract class TypedWorker : Worker() {
 
     abstract val type: WorkType
-
 
     protected fun sendNotification(message: String) {
         val context = applicationContext
@@ -133,6 +126,5 @@ class LikeWorker : TypedWorker() {
             Result.RETRY
         }
     }
-
 
 }

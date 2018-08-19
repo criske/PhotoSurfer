@@ -106,7 +106,7 @@ object DependencyGraph {
                 photoAPI,
                 db.photoDAO(),
                 downloadManager,
-                JobServiceImpl.createDefault()
+                JobServiceImpl()
         )
 
         //user and auth
