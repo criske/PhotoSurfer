@@ -21,6 +21,9 @@ interface PhotoUserDAO {
     @Query("DELETE FROM user_photos WHERE authorUsername=:userName")
     fun clear(userName: String)
 
+    @Query("DELETE FROM user_photos")
+    fun clear()
+
     @Query("SELECT MAX(indexInResponse) + 1 FROM user_photos WHERE  authorUsername=:userName")
     fun getNextIndex(userName: String): Int
 

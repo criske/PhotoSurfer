@@ -41,7 +41,7 @@ class UserListPhotosFragment : Fragment() {
                 return UserListPhotosViewModel(
                         UserListPhotosFragmentArgs.fromBundle(arguments).username,
                         graph.ioThreadExecutor,
-                        graph.backgroundThreadExecutor,
+                        graph.diskThreadExecutor,
                         graph.userRepository,
                         graph.photoRepository
                 ) as T

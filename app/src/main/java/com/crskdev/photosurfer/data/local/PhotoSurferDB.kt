@@ -5,13 +5,20 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.crskdev.photosurfer.data.local.photo.*
+import com.crskdev.photosurfer.data.local.track.StaleDataTackDAO
+import com.crskdev.photosurfer.data.local.track.StaleDataTrackEntity
 
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
 @Database(
-        entities = [PhotoEntity::class, UserPhotoEntity::class, LikePhotoEntity::class],
-        version = 4,
+        entities = [
+            PhotoEntity::class,
+            UserPhotoEntity::class,
+            LikePhotoEntity::class,
+            StaleDataTrackEntity::class
+        ],
+        version = 5,
         exportSchema = false
 )
 abstract class PhotoSurferDB : RoomDatabase() {
@@ -26,10 +33,19 @@ abstract class PhotoSurferDB : RoomDatabase() {
                     .fallbackToDestructiveMigration()
                     .build()
         }
+        fun createForTestEnvironment(context: Context):PhotoSurferDB{
+            return Room.inMemoryDatabaseBuilder(context, PhotoSurferDB::class.java)
+                    .fallbackToDestructiveMigration()
+                    .allowMainThreadQueries()
+                    .build()
+        }
     }
+
 
     abstract fun photoDAO(): PhotoDAO
     abstract fun photoUserDAO(): PhotoUserDAO
     abstract fun photoLikeDAO(): PhotoLikeDAO
+
+    abstract fun staleDataTrackDAO(): StaleDataTackDAO
 }
 

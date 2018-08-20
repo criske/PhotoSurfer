@@ -3,11 +3,12 @@ package com.crskdev.photosurfer.data.local.photo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.crskdev.photosurfer.data.local.Contract
 
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
-@Entity(tableName = "photos")
+@Entity(tableName = Contract.TABLE_PHOTOS)
 open class PhotoEntity {
     @PrimaryKey
     lateinit var id: String
@@ -39,8 +40,8 @@ open class PhotoEntity {
 }
 
 
-@Entity(tableName = "user_photos")
-class UserPhotoEntity: PhotoEntity()
+@Entity(tableName = Contract.TABLE_USER_PHOTOS)
+class UserPhotoEntity : PhotoEntity()
 
-@Entity(tableName = "like_photos")
-class LikePhotoEntity: PhotoEntity()
+@Entity(tableName = Contract.TABLE_LIKE_PHOTOS)
+class LikePhotoEntity : PhotoEntity()

@@ -73,7 +73,7 @@ fun FragmentActivity.setStatusBarColor(@ColorInt color: Int, alpha: Float = 1f) 
 //                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 //    }
     if (Build.VERSION.SDK_INT >= 21) {
-       // setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, false);
+        // setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, false);
         window.statusBarColor = color.setAlphaComponent(alpha)
     }
 }

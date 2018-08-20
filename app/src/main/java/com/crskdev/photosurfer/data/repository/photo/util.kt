@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 
 internal fun photosPageListConfigLiveData(userName: String?,
-                                          pagingBackgroundExecutor: Executor,
+                                          diskThreadExecutor: Executor,
                                           networkExecutor: Executor,
                                           photoRepository: PhotoRepository,
                                           errorLiveData: MutableLiveData<Throwable>) =
@@ -25,7 +25,7 @@ internal fun photosPageListConfigLiveData(userName: String?,
                 .build()
                 .let {
                     LivePagedListBuilder<Int, Photo>(photoRepository.getPhotos(userName), it)
-                            .setFetchExecutor(pagingBackgroundExecutor)
+                            .setFetchExecutor(diskThreadExecutor)
                             .setBoundaryCallback(object : PagedList.BoundaryCallback<Photo>() {
 
                                 val isLoading = AtomicBoolean(false)

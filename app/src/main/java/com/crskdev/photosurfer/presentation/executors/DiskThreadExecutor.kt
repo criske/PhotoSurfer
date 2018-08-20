@@ -3,8 +3,9 @@ package com.crskdev.photosurfer.presentation.executors
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
-internal class BackgroundThreadExecutor : Executor {
-    private val executorService = Executors.newSingleThreadExecutor()
+class DiskThreadExecutor : Executor {
+
+    private val executorService = Executors.newSingleThreadExecutor { r -> Thread(r, "PhotoSurfer - Disk Thread") }
 
     override fun execute(command: Runnable) {
         executorService.execute(command)

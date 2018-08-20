@@ -60,7 +60,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 @Suppress("UNCHECKED_CAST")
                 return PhotoDetailViewModel(
                         dependencyGraph.uiThreadExecutor,
-                        dependencyGraph.backgroundThreadExecutor,
+                        dependencyGraph.diskThreadExecutor,
                         dependencyGraph.ioThreadExecutor,
                         dependencyGraph.photoRepository) as T
             }

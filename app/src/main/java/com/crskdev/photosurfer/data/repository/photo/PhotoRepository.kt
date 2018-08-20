@@ -2,17 +2,16 @@ package com.crskdev.photosurfer.data.repository.photo
 
 import androidx.annotation.AnyThread
 import androidx.paging.DataSource
+import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.photo.*
+import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
 import com.crskdev.photosurfer.data.repository.Repository
-import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.entities.toDbEntity
-import com.crskdev.photosurfer.entities.toPhoto
-import com.crskdev.photosurfer.entities.toUserPhotoDbEntity
+import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.JobService
 import com.crskdev.photosurfer.services.Tag
 import com.crskdev.photosurfer.services.WorkData
@@ -39,10 +38,13 @@ interface PhotoRepository : Repository {
 
     fun like(photo: Photo, callback: Repository.Callback<Boolean>)
 
+    fun clearAll()
+
 }
 
 class PhotoRepositoryImpl(
         private val transactional: TransactionRunner,
+        private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val api: PhotoAPI,
         private val daoPhotos: PhotoDAO,
         private val daoLikes: PhotoLikeDAO,
@@ -79,23 +81,29 @@ class PhotoRepositoryImpl(
     }
 
 
-    override fun getPhotos(username: String?): DataSource.Factory<Int, Photo> =
-            if (username != null)
-                daoUserPhotos.getPhotos(username)
-                        .mapByPage { page -> page.map { it.toPhoto() } }
-            else
-                daoPhotos.getPhotos()
-                        .mapByPage { page -> page.map { it.toPhoto() } }
+    override fun getPhotos(username: String?): DataSource.Factory<Int, Photo> {
+        return if (username != null)
+            daoUserPhotos.getPhotos(username)
+                    .mapByPage { page ->
+                        staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_USER_PHOTOS)
+                        page.map { it.toPhoto() }
+                    }
+        else
+            daoPhotos.getPhotos()
+                    .mapByPage { page ->
+                        staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_PHOTOS)
+                        page.map { it.toPhoto() }
+                    }
+    }
 
 
     //this must be called on the io thread
     override fun insertPhotos(username: String?, page: Int, callback: Repository.Callback<Unit>?) {
         try {
-            val call = if (username == null) api.getRandomPhotos(page)
-                    .apply { cancelableApiCall = this }
+            val call = if (username == null)
+                api.getRandomPhotos(page).apply { cancelableApiCall = this }
             else
                 api.getUserPhotos(username, page).apply { cancelableApiCall = this }
-
             val response = call.execute()
             response?.apply {
                 val headers = headers()
@@ -161,12 +169,12 @@ class PhotoRepositoryImpl(
     override fun refresh(username: String?) {
         transactional {
             if (username == null) {
-                if (daoPhotos.isEmptyPhotos()) {
+                if (daoPhotos.isEmpty()) {
                     //force trigger the db InvalidationTracker.Observer
                     daoPhotos.insertPhotos(listOf(EMPTY_PHOTO_ENTITY))
-                    daoPhotos.clearPhotos()
+                    daoPhotos.clear()
                 } else {
-                    daoPhotos.clearPhotos()
+                    daoPhotos.clear()
                 }
             } else {
                 if (daoUserPhotos.isEmpty(username)) {
@@ -185,7 +193,13 @@ class PhotoRepositoryImpl(
         transactional {
             daoPhotos.like(photo.id, photo.likedByMe)
             daoUserPhotos.like(photo.id, photo.likedByMe)
-
+            if (!daoLikes.isEmpty()) { // we doing nothing unless there already fetched the likes from server
+                if (photo.likedByMe) {
+                    daoLikes.like(photo.toLikePhotoDbEntity(daoLikes.getNextIndex()))
+                } else {
+                    daoLikes.unlike(photo.toLikePhotoDbEntity(-1))
+                }
+            }
         }
         callback.onSuccess(photo.likedByMe)
         jobService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))
@@ -196,6 +210,14 @@ class PhotoRepositoryImpl(
         cancelableApiCall?.cancel()
         downloadManager.cancel()
     }
+
+    override fun clearAll() {
+        transactional {
+            daoPhotos.clear()
+            daoUserPhotos.clear()
+        }
+    }
+
 
 }
 

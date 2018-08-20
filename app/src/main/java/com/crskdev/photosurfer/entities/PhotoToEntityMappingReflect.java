@@ -53,6 +53,37 @@ final class PhotoToEntityMappingReflect {
         return null;
     }
 
+    static <T extends PhotoEntity> T toDbEntity(Photo photo, PhotoPagingData pagingData,
+                                                Integer nextIndex, Class<T> clazz) {
+        try {
+            T instance = clazz.newInstance();
+            setField(instance, photo.getId(), clazz, "id");
+            setField(instance, nextIndex, clazz, "indexInResponse");
+            setField(instance, photo.getCreatedAt(), clazz, "createdAt");
+            setField(instance, photo.getUpdatedAt(), clazz, "updatedAt");
+            setField(instance, photo.getWidth(), clazz, "width");
+            setField(instance, photo.getHeight(), clazz, "height");
+            setField(instance, photo.getColorString(), clazz, "colorString");
+            setField(instance, transformUrls(photo.getUrls()), clazz, "urls");
+            setField(instance, transformListToStr(photo.getCategories()), clazz, "categories");
+            setField(instance, photo.getLikes(), clazz, "likes");
+            setField(instance, photo.getLikedByMe(), clazz, "likedByMe");
+            setField(instance, photo.getViews(), clazz, "views");
+            setField(instance, photo.getAuthorId(), clazz, "authorId");
+            setField(instance, photo.getAuthorUsername(), clazz, "authorUsername");
+            if (pagingData != null) {
+                setField(instance, pagingData.getTotal(), clazz, "total");
+                setField(instance, pagingData.getCurr(), clazz, "curr");
+                setField(instance, pagingData.getPrev(), clazz, "prev");
+                setField(instance, pagingData.getNext(), clazz, "next");
+            }
+            return instance;
+        } catch (IllegalAccessException | InstantiationException | NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private static String transformListToStr(List<String> categories) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0, s = categories.size(); i < s; i++) {

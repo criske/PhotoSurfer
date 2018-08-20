@@ -43,6 +43,9 @@ fun PhotoJSON.toUserPhotoDbEntity(pagingData: PhotoPagingData, nextIndex: Int): 
 fun PhotoJSON.toLikePhotoDbEntity(pagingData: PhotoPagingData, nextIndex: Int): LikePhotoEntity =
         PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, LikePhotoEntity::class.java)
 
+fun Photo.toLikePhotoDbEntity(nextIndex: Int): LikePhotoEntity =
+        PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, LikePhotoEntity::class.java)
+
 fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
         createdAt, updatedAt,
         width, height,

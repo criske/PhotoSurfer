@@ -17,13 +17,13 @@ interface PhotoDAO {
     fun insertPhotos(photos: List<PhotoEntity>)
 
     @Query("DELETE FROM photos")
-    fun clearPhotos()
+    fun clear()
 
     @Query("SELECT MAX(indexInResponse) + 1 FROM photos")
     fun getNextIndex(): Int
 
     @Query("SELECT count(*) == 0 FROM photos")
-    fun isEmptyPhotos(): Boolean
+    fun isEmpty(): Boolean
 
     @Query("SELECT * FROM photos WHERE id=:id")
     fun getPhoto(id: String): PhotoEntity

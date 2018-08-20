@@ -9,17 +9,17 @@ import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.presentation.executors.BackgroundThreadExecutor
+import com.crskdev.photosurfer.presentation.executors.DiskThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
+import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
-import com.crskdev.photosurfer.services.JobService
 import com.crskdev.photosurfer.services.JobServiceImpl
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
@@ -37,11 +37,13 @@ object DependencyGraph {
 
     //EXECUTORS
     val uiThreadExecutor: Executor = UIThreadExecutor()
-    val backgroundThreadExecutor: Executor = BackgroundThreadExecutor()
+    val diskThreadExecutor: Executor = DiskThreadExecutor()
     val ioThreadExecutor: Executor = IOThreadExecutor()
 
     //DB
     lateinit var db: PhotoSurferDB
+        private set
+    lateinit var staleDataTrackSupervisor: StaleDataTrackSupervisor
         private set
 
     lateinit var externalPhotoGalleryDAO: ExternalPhotoGalleryDAO
@@ -95,6 +97,7 @@ object DependencyGraph {
 
         //db
         db = PhotoSurferDB.create(context, false)
+        staleDataTrackSupervisor = StaleDataTrackSupervisor.install(db)
 
         //photo
         photoAPI = retrofit.create(PhotoAPI::class.java)
@@ -103,6 +106,7 @@ object DependencyGraph {
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         photoRepository = PhotoRepositoryImpl(
                 TransactionRunnerImpl(db),
+                staleDataTrackSupervisor,
                 photoAPI,
                 db.photoDAO(),
                 db.photoLikeDAO(),

@@ -29,7 +29,6 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthState
-import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
 import com.crskdev.photosurfer.data.repository.user.UserRepository
@@ -60,7 +59,7 @@ class ListPhotosFragment : Fragment() {
                 @Suppress("UNCHECKED_CAST")
                 return ListPhotosViewModel(
                         graph.ioThreadExecutor,
-                        graph.backgroundThreadExecutor,
+                        graph.diskThreadExecutor,
                         graph.userRepository,
                         graph.photoRepository,
                         graph.observableAuthState
@@ -76,7 +75,6 @@ class ListPhotosFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
-
 
         viewModel.authStateLiveData.observe(this, Observer {
             val isLoggedIn = it.isNotEmpty()
@@ -141,8 +139,6 @@ class ListPhotosFragment : Fragment() {
         viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(context!!, it.message, Toast.LENGTH_SHORT).show()
         })
-
-
 
         refreshListPhotos.setOnClickListener {
             viewModel.refresh()
