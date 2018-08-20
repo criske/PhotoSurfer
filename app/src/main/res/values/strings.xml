@@ -26,4 +26,5 @@
         Aenean vel elit scelerisque mauris. Quis commodo odio aenean sed adipiscing diam donec adipiscing.</string>
     <string name="logout">Logout</string>
     <string name="edit">Edit</string>
+    <string name="likes">Likes</string>
 </resources>

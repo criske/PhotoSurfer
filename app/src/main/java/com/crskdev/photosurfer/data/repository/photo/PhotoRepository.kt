@@ -26,6 +26,8 @@ interface PhotoRepository : Repository {
 
     fun getPhotos(username: String?): DataSource.Factory<Int, Photo>
 
+    fun getLikedPhotos(): DataSource.Factory<Int, Photo>
+
     fun insertPhotos(username: String?, page: Int, callback: Repository.Callback<Unit>? = null)
 
     fun refresh(username: String? = null)
@@ -94,6 +96,14 @@ class PhotoRepositoryImpl(
                         staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_PHOTOS)
                         page.map { it.toPhoto() }
                     }
+    }
+
+    override fun getLikedPhotos(): DataSource.Factory<Int, Photo> {
+        return daoLikes.getPhotos()
+                .mapByPage { page ->
+                    staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_LIKE_PHOTOS)
+                    page.map { it.toPhoto() }
+                }
     }
 
 
@@ -193,13 +203,14 @@ class PhotoRepositoryImpl(
         transactional {
             daoPhotos.like(photo.id, photo.likedByMe)
             daoUserPhotos.like(photo.id, photo.likedByMe)
-            if (!daoLikes.isEmpty()) { // we doing nothing unless there already fetched the likes from server
+            //todo reenable condition
+           // if (!daoLikes.isEmpty()) { // we doing nothing unless there already fetched the likes from server
                 if (photo.likedByMe) {
                     daoLikes.like(photo.toLikePhotoDbEntity(daoLikes.getNextIndex()))
                 } else {
                     daoLikes.unlike(photo.toLikePhotoDbEntity(-1))
                 }
-            }
+            //}
         }
         callback.onSuccess(photo.likedByMe)
         jobService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))

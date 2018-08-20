@@ -110,7 +110,7 @@ class StaleDataTrackSupervisor private constructor(private val db: PhotoSurferDB
     }
 
     private fun isEmptyTable(table: String): Boolean {
-        val cursor = db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM $table")
+        val cursor = db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM $table")
         cursor.moveToFirst()
         val count = cursor.getInt(0)
         cursor.close()

@@ -28,6 +28,7 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthState
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
@@ -100,6 +101,9 @@ class ListPhotosFragment : Fragment() {
                     R.id.menu_action_logout -> {
                         viewModel.logout()
                     }
+                    R.id.menu_action_likes -> {
+                        viewModel.changePageListingType(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS)
+                    }
                 }
                 true
             }
@@ -131,7 +135,7 @@ class ListPhotosFragment : Fragment() {
                 }
             })
         }
-        viewModel.photosData.observe(this, Observer { it ->
+        viewModel.photosLiveData.observe(this, Observer { it ->
             it?.let {
                 (recyclerUserListPhotos.adapter as ListPhotosAdapter).submitList(it)
             }
@@ -220,7 +224,7 @@ class ListPhotosVH(private val glide: RequestManager,
 }
 
 class ListPhotosViewModel(private val ioExecutor: Executor,
-                          backgroundThreadExecutor: Executor,
+                          diskExecutor: Executor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
                           observableAuthState: ObservableAuthState) : ViewModel() {
@@ -229,7 +233,13 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
-    val photosData = photosPageListConfigLiveData(null, backgroundThreadExecutor, ioExecutor, photoRepository,
+    private val choosablePhotoDataSourceFactory: ChoosablePhotoDataSourceFactory =
+            ChoosablePhotoDataSourceFactory(photoRepository, ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS)
+
+    val photosLiveData = photosPageListConfigLiveData(null,
+            diskExecutor,
+            ioExecutor,
+            choosablePhotoDataSourceFactory,
             errorLiveData)
 
     fun refresh() {
@@ -244,6 +254,11 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
 
     fun logout() {
         userRepository.logout()
+    }
+
+    fun changePageListingType(type: ChoosablePhotoDataSourceFactory.Type) {
+        choosablePhotoDataSourceFactory.changeType(type)
+        photosLiveData.value?.dataSource?.invalidate()
     }
 
 }

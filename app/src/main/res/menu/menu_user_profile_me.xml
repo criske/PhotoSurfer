@@ -9,5 +9,10 @@
         android:id="@+id/menu_action_edit_profile"
         android:icon="@drawable/ic_edit_white_36dp"
         android:title="@string/edit"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/menu_action_likes"
+        android:icon="@drawable/ic_thumb_up_white_36dp"
+        android:title="@string/likes"
+        app:showAsAction="always" />
 </menu>
