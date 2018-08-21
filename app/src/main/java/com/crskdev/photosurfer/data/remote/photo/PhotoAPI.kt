@@ -13,6 +13,9 @@ interface PhotoAPI {
     @GET("photos")
     fun getRandomPhotos(@Query("page") page: Int = 1): Call<List<PhotoJSON>>
 
+    @GET("users/{username}/likes")
+    fun getLikedPhotos(@Path("username") username: String, @Query("page") page: Int = 1): Call<List<PhotoJSON>>
+
     @GET("users/{username}/photos")
     fun getUserPhotos(@Path("username") username: String, @Query("page") page: Int = 1): Call<List<PhotoJSON>>
 

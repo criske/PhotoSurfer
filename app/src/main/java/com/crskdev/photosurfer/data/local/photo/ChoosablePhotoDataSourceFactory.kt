@@ -15,7 +15,8 @@ class ChoosablePhotoDataSourceFactory(
         LIKED_PHOTOS, SEARCH_PHOTOS, RANDOM_PHOTOS
     }
 
-    private var currentType: Type = initialType
+    var currentType: Type = initialType
+        private set
 
     override fun create(): DataSource<Int, Photo> {
         return when (currentType) {

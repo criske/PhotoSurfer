@@ -28,7 +28,7 @@ interface PhotoRepository : Repository {
 
     fun getLikedPhotos(): DataSource.Factory<Int, Photo>
 
-    fun insertPhotos(username: String?, page: Int, callback: Repository.Callback<Unit>? = null)
+    fun insertPhotos(insertPhotoAction: InsertPhotoAction, page: Int, callback: Repository.Callback<Unit>? = null)
 
     fun refresh(username: String? = null)
 
@@ -42,6 +42,12 @@ interface PhotoRepository : Repository {
 
     fun clearAll()
 
+}
+
+data class InsertPhotoAction(val type: Type, val extra: Any? = null) {
+    enum class Type {
+        LIKE, RANDOM, USER
+    }
 }
 
 class PhotoRepositoryImpl(
@@ -108,29 +114,31 @@ class PhotoRepositoryImpl(
 
 
     //this must be called on the io thread
-    override fun insertPhotos(username: String?, page: Int, callback: Repository.Callback<Unit>?) {
+    override fun insertPhotos(insertPhotoAction: InsertPhotoAction, page: Int, callback: Repository.Callback<Unit>?) {
         try {
-            val call = if (username == null)
-                api.getRandomPhotos(page).apply { cancelableApiCall = this }
-            else
-                api.getUserPhotos(username, page).apply { cancelableApiCall = this }
+            val call = when (insertPhotoAction.type) {
+                InsertPhotoAction.Type.LIKE -> api.getLikedPhotos(insertPhotoAction.extra.toString(), page)
+                InsertPhotoAction.Type.RANDOM -> api.getRandomPhotos(page)
+                InsertPhotoAction.Type.USER -> api.getUserPhotos(insertPhotoAction.extra.toString(), page)
+            }.apply { cancelableApiCall = this }
+
             val response = call.execute()
             response?.apply {
                 val headers = headers()
                 val pagingData = PhotoPagingData.createFromHeaders(headers)
                 if (isSuccessful) {
                     body()?.map {
-                        @Suppress("IMPLICIT_CAST_TO_ANY")
-                        if (username != null) {
-                            it.toUserPhotoDbEntity(pagingData, daoUserPhotos.getNextIndex(username))
-                        } else {
-                            it.toDbEntity(pagingData, daoPhotos.getNextIndex())
+                        when (insertPhotoAction.type) {
+                            InsertPhotoAction.Type.LIKE -> it.toLikePhotoDbEntity(pagingData, daoLikes.getNextIndex())
+                            InsertPhotoAction.Type.RANDOM -> it.toDbEntity(pagingData, daoPhotos.getNextIndex())
+                            InsertPhotoAction.Type.USER -> it.toUserPhotoDbEntity(pagingData, daoUserPhotos
+                                    .getNextIndex(insertPhotoAction.extra.toString()))
                         }
                     }?.apply {
-                        if (username != null) {
-                            daoUserPhotos.insertPhotos(map { it as UserPhotoEntity })
-                        } else {
-                            daoPhotos.insertPhotos(map { it as PhotoEntity })
+                        when (insertPhotoAction.type) {
+                            InsertPhotoAction.Type.LIKE -> daoLikes.insertPhotos(map { it as LikePhotoEntity })
+                            InsertPhotoAction.Type.RANDOM -> daoPhotos.insertPhotos(this)
+                            InsertPhotoAction.Type.USER ->  daoUserPhotos.insertPhotos(map { it as UserPhotoEntity })
                         }
                         callback?.onSuccess(Unit)
                     }
@@ -203,14 +211,13 @@ class PhotoRepositoryImpl(
         transactional {
             daoPhotos.like(photo.id, photo.likedByMe)
             daoUserPhotos.like(photo.id, photo.likedByMe)
-            //todo reenable condition
-           // if (!daoLikes.isEmpty()) { // we doing nothing unless there already fetched the likes from server
+            if (!daoLikes.isEmpty()) { // we doing nothing unless there already fetched the likes from server
                 if (photo.likedByMe) {
                     daoLikes.like(photo.toLikePhotoDbEntity(daoLikes.getNextIndex()))
                 } else {
                     daoLikes.unlike(photo.toLikePhotoDbEntity(-1))
                 }
-            //}
+            }
         }
         callback.onSuccess(photo.likedByMe)
         jobService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))

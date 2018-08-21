@@ -9,10 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.*
 import androidx.navigation.findNavController
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -77,17 +74,6 @@ class ListPhotosFragment : Fragment() {
 
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
 
-        viewModel.authStateLiveData.observe(this, Observer {
-            val isLoggedIn = it.isNotEmpty()
-            toolbarListPhotos.menu.clear()
-            if (isLoggedIn) {
-                toolbarListPhotos.inflateMenu(R.menu.menu_user_profile_me)
-            }
-            toolbarListPhotos.inflateMenu(R.menu.menu_list_photos)
-            val text = if (isLoggedIn) "Hello $it. Welcome back!" else "You are logged out"
-            Toast.makeText(view.context, text, Toast.LENGTH_SHORT).show()
-        })
-
 
         toolbarListPhotos.apply {
             setOnMenuItemClickListener {
@@ -102,13 +88,15 @@ class ListPhotosFragment : Fragment() {
                         viewModel.logout()
                     }
                     R.id.menu_action_likes -> {
-                        viewModel.changePageListingType(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS)
+                        viewModel.changePageListingType(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS, it.title.toString())
+                    }
+                    R.id.menu_action_trending -> {
+                        viewModel.changePageListingType(ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS, it.title.toString())
                     }
                 }
                 true
             }
         }
-
 
         val glide = Glide.with(this)
         recyclerUserListPhotos.apply {
@@ -135,6 +123,22 @@ class ListPhotosFragment : Fragment() {
                 }
             })
         }
+
+        viewModel.authStateLiveData.observe(this, Observer {
+            val isLoggedIn = it.isNotEmpty()
+            toolbarListPhotos.menu.clear()
+            if (isLoggedIn) {
+                toolbarListPhotos.inflateMenu(R.menu.menu_user_profile_me)
+            }
+            toolbarListPhotos.inflateMenu(R.menu.menu_list_photos)
+            val subtitle = if (it.isNotEmpty()) "@$it" else ""
+            toolbarListPhotos.subtitle = subtitle
+        })
+
+        viewModel.toolbarSubtitleLiveData.observe(this, Observer {
+            toolbarListPhotos.subtitle = "$it"
+        })
+
         viewModel.photosLiveData.observe(this, Observer { it ->
             it?.let {
                 (recyclerUserListPhotos.adapter as ListPhotosAdapter).submitList(it)
@@ -143,6 +147,7 @@ class ListPhotosFragment : Fragment() {
         viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(context!!, it.message, Toast.LENGTH_SHORT).show()
         })
+
 
         refreshListPhotos.setOnClickListener {
             viewModel.refresh()
@@ -233,14 +238,18 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
+    val toolbarSubtitleLiveData = MutableLiveData<String>()
+
     private val choosablePhotoDataSourceFactory: ChoosablePhotoDataSourceFactory =
             ChoosablePhotoDataSourceFactory(photoRepository, ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS)
 
-    val photosLiveData = photosPageListConfigLiveData(null,
+    val photosLiveData = photosPageListConfigLiveData(
+            authStateLiveData,
             diskExecutor,
             ioExecutor,
             choosablePhotoDataSourceFactory,
-            errorLiveData)
+            errorLiveData
+    )
 
     fun refresh() {
         ioExecutor.execute {
@@ -256,9 +265,10 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
         userRepository.logout()
     }
 
-    fun changePageListingType(type: ChoosablePhotoDataSourceFactory.Type) {
+    fun changePageListingType(type: ChoosablePhotoDataSourceFactory.Type, selectedTitleName: String) {
         choosablePhotoDataSourceFactory.changeType(type)
         photosLiveData.value?.dataSource?.invalidate()
+        toolbarSubtitleLiveData.value = selectedTitleName
     }
 
 }
