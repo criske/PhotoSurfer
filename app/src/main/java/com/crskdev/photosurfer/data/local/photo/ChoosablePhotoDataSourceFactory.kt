@@ -9,25 +9,33 @@ import com.crskdev.photosurfer.entities.Photo
  */
 class ChoosablePhotoDataSourceFactory(
         val photoRepository: PhotoRepository,
-        initialType: Type) : DataSource.Factory<Int, Photo>() {
+        initialFilter: DataSourceFilter) : DataSource.Factory<Int, Photo>() {
 
     enum class Type {
         LIKED_PHOTOS, SEARCH_PHOTOS, RANDOM_PHOTOS
     }
 
-    var currentType: Type = initialType
+    var currentFilter: DataSourceFilter = initialFilter
         private set
 
     override fun create(): DataSource<Int, Photo> {
-        return when (currentType) {
+        return when (currentFilter.type) {
             Type.RANDOM_PHOTOS -> photoRepository.getPhotos(null).create()
             Type.LIKED_PHOTOS -> photoRepository.getLikedPhotos().create()
             else -> TODO()
         }
     }
 
-    fun changeType(type: Type) {
-        currentType = type
+    fun changeFilter(filter: DataSourceFilter) {
+        currentFilter = filter
     }
 
+}
+
+
+class DataSourceFilter(val type: ChoosablePhotoDataSourceFactory.Type, vararg extras: Any?){
+    companion object {
+        val RANDOM = DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS)
+        val LIKED_PHOTOS = DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS)
+    }
 }

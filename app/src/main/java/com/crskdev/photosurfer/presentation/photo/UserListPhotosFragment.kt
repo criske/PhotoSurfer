@@ -23,6 +23,7 @@ import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveDat
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.parcelize
+import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import kotlinx.android.synthetic.main.fragment_list_photos.*
@@ -63,7 +64,7 @@ class UserListPhotosFragment : Fragment() {
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) { what, photo ->
                 val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
                 when (what) {
-                    ActionWhat.PHOTO_DETAIL -> {
+                    ListPhotosAdapter.ActionWhat.PHOTO_DETAIL -> {
                         navController.navigate(
                                 R.id.fragment_photo_details, bundleOf("photo" to photo.parcelize()),
                                 defaultTransitionNavOptions())

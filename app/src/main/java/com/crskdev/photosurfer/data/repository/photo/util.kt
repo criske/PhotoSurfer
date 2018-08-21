@@ -34,7 +34,7 @@ internal fun photosPageListConfigLiveData(
     return createLiveData(choosablePhotoDataSourceFactory, diskThreadExecutor, networkExecutor,
             photoRepository, errorLiveData){
         val userName = userNameLiveData.value
-        when (choosablePhotoDataSourceFactory.currentType) {
+        when (choosablePhotoDataSourceFactory.currentFilter.type) {
             ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS -> InsertPhotoAction(InsertPhotoAction.Type.LIKE, userName)
             ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS -> TODO()
             ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS -> InsertPhotoAction(InsertPhotoAction.Type.RANDOM)

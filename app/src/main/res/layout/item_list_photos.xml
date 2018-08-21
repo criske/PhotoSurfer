@@ -16,7 +16,8 @@
         android:contentDescription="@null" />
 
     <TextView
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:background="?android:attr/selectableItemBackground"
         android:textColor="@android:color/white"
         android:layout_gravity="bottom|start"
         android:id="@+id/textAuthor"

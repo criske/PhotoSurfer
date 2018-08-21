@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Photo Surfer</string>
+    <string name="account">Cont</string>
+    <string name="password">Parola</string>
+    <string name="remember_credentials">Retine datele de autentificare</string>
+    <string name="login">Logare</string>
+    <string name="photos">Fotografii</string>
+    <string name="details">Detalii</string>
+    <string name="logout">Delogare</string>
+    <string name="edit">Editeaza</string>
+    <string name="likes">Placute</string>
+    <string name="trending">In Urcare</string>
+</resources>

@@ -2,15 +2,15 @@
     <string name="app_name">Photo Surfer</string>
 
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="hello_blank_fragment" translatable="false">Hello blank fragment</string>
     <string name="account">Account</string>
     <string name="password">Password</string>
-    <string name="e_mail">E-mail</string>
+    <string name="e_mail" translatable="false">E-mail</string>
     <string name="remember_credentials">Remember credentials?</string>
     <string name="login">Login</string>
     <string name="photos">Photos</string>
     <string name="details">Details</string>
-    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+    <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit,
         sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
         Orci phasellus egestas tellus rutrum tellus.
         Cursus turpis massa tincidunt dui ut ornare lectus.

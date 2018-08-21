@@ -1,45 +1,37 @@
 package com.crskdev.photosurfer.presentation.photo
 
 import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import androidx.navigation.findNavController
-import androidx.paging.PagedListAdapter
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
+import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthState
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
-import com.crskdev.photosurfer.entities.ImageType
-import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthStateLiveData
+import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
+import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.google.android.material.appbar.AppBarLayout
+import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
-import kotlinx.android.synthetic.main.item_list_photos.view.*
 import java.util.concurrent.Executor
 
 /**
@@ -47,15 +39,26 @@ import java.util.concurrent.Executor
  */
 class ListPhotosFragment : Fragment() {
 
+    companion object {
+        private const val KEY_CURRENT_FILTER = "KEY_CURRENT_FILTER"
+    }
+
     private lateinit var viewModel: ListPhotosViewModel
+
+    private lateinit var currentFilter: FilterVM
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        currentFilter = savedInstanceState
+                ?.getParcelable<ParcelableFilter>(KEY_CURRENT_FILTER)
+                ?.deparcelize()
+                ?: FilterVM(FilterVM.Type.TRENDING, R.string.trending)
         viewModel = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 val graph = context!!.dependencyGraph()
                 @Suppress("UNCHECKED_CAST")
                 return ListPhotosViewModel(
+                        currentFilter,
                         graph.ioThreadExecutor,
                         graph.diskThreadExecutor,
                         graph.userRepository,
@@ -66,6 +69,11 @@ class ListPhotosFragment : Fragment() {
         }).get(ListPhotosViewModel::class.java)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(KEY_CURRENT_FILTER, currentFilter.parcelize())
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_list_photos, container, false)
     }
@@ -73,7 +81,6 @@ class ListPhotosFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
-
 
         toolbarListPhotos.apply {
             setOnMenuItemClickListener {
@@ -88,10 +95,10 @@ class ListPhotosFragment : Fragment() {
                         viewModel.logout()
                     }
                     R.id.menu_action_likes -> {
-                        viewModel.changePageListingType(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS, it.title.toString())
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes))
                     }
                     R.id.menu_action_trending -> {
-                        viewModel.changePageListingType(ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS, it.title.toString())
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
                 }
                 true
@@ -131,12 +138,11 @@ class ListPhotosFragment : Fragment() {
                 toolbarListPhotos.inflateMenu(R.menu.menu_user_profile_me)
             }
             toolbarListPhotos.inflateMenu(R.menu.menu_list_photos)
-            val subtitle = if (it.isNotEmpty()) "@$it" else ""
-            toolbarListPhotos.subtitle = subtitle
         })
 
-        viewModel.toolbarSubtitleLiveData.observe(this, Observer {
-            toolbarListPhotos.subtitle = "$it"
+        viewModel.filterLiveData.observe(this, Observer {
+            toolbarListPhotos.setSubtitle(it.title)
+            currentFilter = it
         })
 
         viewModel.photosLiveData.observe(this, Observer { it ->
@@ -148,87 +154,29 @@ class ListPhotosFragment : Fragment() {
             Toast.makeText(context!!, it.message, Toast.LENGTH_SHORT).show()
         })
 
-
         refreshListPhotos.setOnClickListener {
             viewModel.refresh()
         }
 
     }
+
+    private fun FilterVM.parcelize(): ParcelableFilter = ParcelableFilter(type.ordinal, title, data)
+
+    private fun ParcelableFilter.deparcelize(): FilterVM = FilterVM(FilterVM.Type.values()[type], title, data)
 }
 
-class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
-                        private val glide: RequestManager,
-                        private val action: (ActionWhat, Photo) -> Unit) : PagedListAdapter<Photo, ListPhotosVH>(
-        object : DiffUtil.ItemCallback<Photo>() {
-            override fun areItemsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem.id == newItem.id
-            override fun areContentsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem == newItem
-        }) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListPhotosVH =
-            ListPhotosVH(glide, layoutInflater.inflate(R.layout.item_list_photos, parent, false), action)
-
-
-    override fun onBindViewHolder(viewHolder: ListPhotosVH, position: Int) {
-        getItem(position)
-                ?.let { viewHolder.bind(it) }
-                ?: viewHolder.clear()
-    }
-
-    override fun onViewRecycled(holder: ListPhotosVH) {
-        holder.clear()
+data class FilterVM(val type: FilterVM.Type, @StringRes val title: Int, val data: String? = null) {
+    enum class Type {
+        TRENDING, LIKES, SEARCH
     }
 }
 
-enum class ActionWhat {
-    PHOTO_DETAIL, AUTHOR
-}
+@Parcelize
+data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: String? = null) : Parcelable
 
-class ListPhotosVH(private val glide: RequestManager,
-                   view: View,
-                   private val action: (ActionWhat, Photo) -> Unit) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
-
-
-    private var photo: Photo? = null
-
-    init {
-        itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ActionWhat.PHOTO_DETAIL, it) } }
-        itemView.textAuthor.setOnClickListener { _ -> photo?.let { action(ActionWhat.AUTHOR, it) } }
-    }
-
-    fun bind(photo: Photo) {
-        this.photo = photo
-        itemView.textAuthor.text = photo.authorUsername
-        glide.asDrawable()
-                .load(photo.urls[ImageType.SMALL])
-                .apply(RequestOptions()
-                        .transforms(CenterCrop(), RoundedCorners(8)))
-                .addListener(object : RequestListener<Drawable> {
-                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?,
-                                              isFirstResource: Boolean): Boolean {
-                        itemView.textError.text = e?.message
-                        return true
-                    }
-
-                    override fun onResourceReady(resource: Drawable, model: Any, target: Target<Drawable>,
-                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean = false
-
-                })
-                .into(itemView.imagePhoto)
-    }
-
-    fun clear() {
-        photo = null
-        with(itemView) {
-            textAuthor.text = null
-            textError.text = null
-            glide.clear(imagePhoto)
-            imagePhoto.setImageDrawable(null)
-        }
-    }
-
-}
-
-class ListPhotosViewModel(private val ioExecutor: Executor,
+class ListPhotosViewModel(vmFilter: FilterVM,
+                          private val ioExecutor: Executor,
                           diskExecutor: Executor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
@@ -238,10 +186,12 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
-    val toolbarSubtitleLiveData = MutableLiveData<String>()
+    val filterLiveData = MutableLiveData<FilterVM>().apply {
+        value = vmFilter
+    }
 
     private val choosablePhotoDataSourceFactory: ChoosablePhotoDataSourceFactory =
-            ChoosablePhotoDataSourceFactory(photoRepository, ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS)
+            ChoosablePhotoDataSourceFactory(photoRepository, toDataSourceFilter(vmFilter))
 
     val photosLiveData = photosPageListConfigLiveData(
             authStateLiveData,
@@ -265,11 +215,19 @@ class ListPhotosViewModel(private val ioExecutor: Executor,
         userRepository.logout()
     }
 
-    fun changePageListingType(type: ChoosablePhotoDataSourceFactory.Type, selectedTitleName: String) {
-        choosablePhotoDataSourceFactory.changeType(type)
+    fun changePageListingType(vmFilter: FilterVM) {
+        val dataSourceFilter = toDataSourceFilter(vmFilter)
+        choosablePhotoDataSourceFactory.changeFilter(dataSourceFilter)
         photosLiveData.value?.dataSource?.invalidate()
-        toolbarSubtitleLiveData.value = selectedTitleName
+        filterLiveData.value = vmFilter
     }
+
+    private fun toDataSourceFilter(vmFilter: FilterVM): DataSourceFilter =
+            when (vmFilter.type) {
+                FilterVM.Type.TRENDING -> DataSourceFilter.RANDOM
+                FilterVM.Type.LIKES -> DataSourceFilter.LIKED_PHOTOS
+                FilterVM.Type.SEARCH -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS, vmFilter.data)
+            }
 
 }
 
