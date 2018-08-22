@@ -5,15 +5,18 @@ package com.crskdev.photosurfer.data.local.track
 import androidx.room.InvalidationTracker
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.PhotoSurferDB
+import com.crskdev.photosurfer.services.NetworkCheckService
 import java.util.concurrent.TimeUnit
 
 /**
  * Created by Cristian Pela on 20.08.2018.
  */
-class StaleDataTrackSupervisor private constructor(private val db: PhotoSurferDB,
-                                                   staleThreshold: Long,
-                                                   unit: TimeUnit,
-                                                   private val nowTimeProvider: NowTimeProvider) {
+class StaleDataTrackSupervisor private constructor(
+        private val networkCheckService: NetworkCheckService,
+        private val db: PhotoSurferDB,
+        staleThreshold: Long,
+        unit: TimeUnit,
+        private val nowTimeProvider: NowTimeProvider) {
 
     interface NowTimeProvider {
         companion object {
@@ -28,11 +31,12 @@ class StaleDataTrackSupervisor private constructor(private val db: PhotoSurferDB
     internal val staleThresholdMillis = unit.toMillis(staleThreshold)
 
     companion object {
-        fun install(db: PhotoSurferDB,
+        fun install(networkCheckService: NetworkCheckService,
+                    db: PhotoSurferDB,
                     staleThreshold: Long = 12,
                     unit: TimeUnit = TimeUnit.HOURS,
                     nowTimeProvider: NowTimeProvider = NowTimeProvider.DEFAULT): StaleDataTrackSupervisor =
-                StaleDataTrackSupervisor(db, staleThreshold, unit, nowTimeProvider)
+                StaleDataTrackSupervisor(networkCheckService, db, staleThreshold, unit, nowTimeProvider)
 
     }
 
@@ -46,11 +50,15 @@ class StaleDataTrackSupervisor private constructor(private val db: PhotoSurferDB
     }
 
     fun runStaleDataCheck() {
+        if (!networkCheckService.isNetworkAvailableAndOnline())
+            return
         val tables = dao.getTables()
         runStaleDataCheck(tables)
     }
 
     private fun runStaleDataCheck(tables: List<String>) {
+        if (!networkCheckService.isNetworkAvailableAndOnline())
+            return
         db.runInTransaction {
             tables.forEach {
                 internalRunStaleDataCheckForTable(it)
@@ -59,6 +67,8 @@ class StaleDataTrackSupervisor private constructor(private val db: PhotoSurferDB
     }
 
     fun runStaleDataCheckForTable(table: String) {
+        if (!networkCheckService.isNetworkAvailableAndOnline())
+            return
         if (db.inTransaction()) {
             internalRunStaleDataCheckForTable(table)
         } else {

@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.repository.user
 
+import com.crskdev.photosurfer.data.local.DaoManager
 import com.crskdev.photosurfer.data.remote.auth.AuthAPI
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.auth.toAuthToken
@@ -27,7 +28,8 @@ interface UserRepository : Repository {
 
 }
 
-class UserRepositoryImpl(private val userAPI: UserAPI,
+class UserRepositoryImpl(private val daoManager: DaoManager,
+                         private val userAPI: UserAPI,
                          private val authAPI: AuthAPI,
                          private val authTokenStorage: AuthTokenStorage) : UserRepository {
 
@@ -61,6 +63,7 @@ class UserRepositoryImpl(private val userAPI: UserAPI,
 
     override fun logout(callback: Repository.Callback<Unit>?) {
         authTokenStorage.clearToken()
+        daoManager.clearAll()
         callback?.onSuccess(Unit)
     }
 

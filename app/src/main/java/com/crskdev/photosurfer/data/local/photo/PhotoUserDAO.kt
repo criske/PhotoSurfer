@@ -5,12 +5,13 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.crskdev.photosurfer.data.local.DataAccessor
 
 /**
  * Created by Cristian Pela on 19.08.2018.
  */
 @Dao
-interface PhotoUserDAO {
+interface PhotoUserDAO : DataAccessor {
 
     @Query("SELECT * FROM user_photos WHERE authorUsername=:userName ORDER BY indexInResponse ASC")
     fun getPhotos(userName: String): DataSource.Factory<Int, UserPhotoEntity>

@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.data.repository.photo
 import androidx.annotation.AnyThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
+import com.crskdev.photosurfer.data.local.DaoManager
 import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
@@ -51,18 +52,12 @@ data class InsertPhotoAction(val type: Type, val extra: Any? = null) {
 }
 
 class PhotoRepositoryImpl(
-        private val transactional: TransactionRunner,
+        daoManager: DaoManager,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val api: PhotoAPI,
-        private val daoPhotos: PhotoDAO,
-        private val daoLikes: PhotoLikeDAO,
-        private val daoUserPhotos: PhotoUserDAO,
         private val downloadManager: DownloadManager,
         private val jobService: JobService
 ) : PhotoRepository {
-
-    @Volatile
-    private var cancelableApiCall: Call<*>? = null
 
     companion object {
 
@@ -86,7 +81,16 @@ class PhotoRepositoryImpl(
             authorId = ""
             authorUsername = ""
         }
+
     }
+
+    @Volatile
+    private var cancelableApiCall: Call<*>? = null
+
+    private val daoPhotos: PhotoDAO = daoManager.getDao(Contract.TABLE_PHOTOS)
+    private val daoLikes: PhotoLikeDAO = daoManager.getDao(Contract.TABLE_LIKE_PHOTOS)
+    private val daoUserPhotos: PhotoUserDAO = daoManager.getDao(Contract.TABLE_USER_PHOTOS)
+    private val transactional = daoManager.transactionRunner()
 
 
     override fun getPhotos(username: String?): DataSource.Factory<Int, Photo> {
@@ -138,7 +142,7 @@ class PhotoRepositoryImpl(
                         when (insertPhotoAction.type) {
                             InsertPhotoAction.Type.LIKE -> daoLikes.insertPhotos(map { it as LikePhotoEntity })
                             InsertPhotoAction.Type.RANDOM -> daoPhotos.insertPhotos(this)
-                            InsertPhotoAction.Type.USER ->  daoUserPhotos.insertPhotos(map { it as UserPhotoEntity })
+                            InsertPhotoAction.Type.USER -> daoUserPhotos.insertPhotos(map { it as UserPhotoEntity })
                         }
                         callback?.onSuccess(Unit)
                     }

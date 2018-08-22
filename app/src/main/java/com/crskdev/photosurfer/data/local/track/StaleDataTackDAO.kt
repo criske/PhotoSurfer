@@ -4,12 +4,13 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.crskdev.photosurfer.data.local.DataAccessor
 
 /**
  * Created by Cristian Pela on 20.08.2018.
  */
 @Dao
-interface StaleDataTackDAO {
+interface StaleDataTackDAO: DataAccessor {
 
     @Query("SELECT COUNT(*) FROM stale_data_track WHERE `table`=:table ")
     fun hasStaleDataTrack(table: String): Int

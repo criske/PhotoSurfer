@@ -8,6 +8,7 @@ import androidx.arch.core.executor.TaskExecutor
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.PhotoSurferDB
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
+import com.crskdev.photosurfer.services.NetworkCheckService
 import org.junit.After
 import org.junit.Test
 
@@ -51,7 +52,7 @@ class StaleDataTrackSupervisorTest {
     fun setup() {
         mockNowTimeProvider.now = System.currentTimeMillis()
         db = PhotoSurferDB.createForTestEnvironment(ctx)
-        tracker = StaleDataTrackSupervisor.install(db, nowTimeProvider = mockNowTimeProvider)
+        tracker = StaleDataTrackSupervisor.install(object : NetworkCheckService {}, db, nowTimeProvider = mockNowTimeProvider)
         dao = db.staleDataTrackDAO()
     }
 

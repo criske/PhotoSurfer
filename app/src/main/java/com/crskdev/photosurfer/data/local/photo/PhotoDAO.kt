@@ -2,13 +2,14 @@ package com.crskdev.photosurfer.data.local.photo
 
 import androidx.paging.DataSource
 import androidx.room.*
+import com.crskdev.photosurfer.data.local.DataAccessor
 
 
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
 @Dao
-interface PhotoDAO {
+interface PhotoDAO: DataAccessor {
 
     @Query("SELECT * FROM photos ORDER BY indexInResponse ASC")
     fun getPhotos(): DataSource.Factory<Int, PhotoEntity>

@@ -6,7 +6,7 @@ import androidx.lifecycle.MediatorLiveData
 /**
  * Created by Cristian Pela on 17.08.2018.
  */
-fun <T> LiveData<T>.filter(predicate: (T) -> Boolean): LiveData<T> =
+inline fun <T> LiveData<T>.filter(crossinline predicate: (T) -> Boolean): LiveData<T> =
         MediatorLiveData<T>().apply {
             addSource(this@filter) {
                 if (predicate(it)) {
@@ -14,6 +14,18 @@ fun <T> LiveData<T>.filter(predicate: (T) -> Boolean): LiveData<T> =
                 }
             }
         }
+
+fun <T> LiveData<T>.distinctUntilChanged(): LiveData<T> {
+    val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
+    var lastValue: T? = null
+    mutableLiveData.addSource(this) {
+        if (lastValue != it) {
+            mutableLiveData.value = it
+            lastValue = it
+        }
+    }
+    return mutableLiveData
+}
 
 fun <T> LiveData<T>.skip(count: Int): LiveData<T> {
     val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()

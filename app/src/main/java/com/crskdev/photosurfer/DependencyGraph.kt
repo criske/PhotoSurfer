@@ -1,8 +1,7 @@
 package com.crskdev.photosurfer
 
 import android.content.Context
-import com.crskdev.photosurfer.data.local.PhotoSurferDB
-import com.crskdev.photosurfer.data.local.TransactionRunnerImpl
+import com.crskdev.photosurfer.data.local.*
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
 import com.crskdev.photosurfer.data.remote.NetworkClient
@@ -21,6 +20,8 @@ import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import com.crskdev.photosurfer.services.JobServiceImpl
+import com.crskdev.photosurfer.services.NetworkCheckService
+import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -45,11 +46,16 @@ object DependencyGraph {
         private set
     lateinit var staleDataTrackSupervisor: StaleDataTrackSupervisor
         private set
+    lateinit var daoManager: DaoManager
+        private set
+
 
     lateinit var externalPhotoGalleryDAO: ExternalPhotoGalleryDAO
         private set
 
     //NETWORK
+    lateinit var networkCheckService: NetworkCheckService
+        private set
     lateinit var authTokenStorage: AuthTokenStorage
         private set
     lateinit var observableAuthState: ObservableAuthState
@@ -83,6 +89,7 @@ object DependencyGraph {
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
         //NETWORK
+        networkCheckService = NetworkCheckServiceImpl(context)
         authTokenStorage = AuthTokenStorageImpl(preferences).apply {
             observableAuthState = this
         }
@@ -97,7 +104,13 @@ object DependencyGraph {
 
         //db
         db = PhotoSurferDB.create(context, false)
-        staleDataTrackSupervisor = StaleDataTrackSupervisor.install(db)
+        staleDataTrackSupervisor = StaleDataTrackSupervisor.install(networkCheckService, db)
+        daoManager = DaoManager(DatabaseOpsImpl(db, TransactionRunnerImpl(db)),
+                mapOf(
+                        Contract.TABLE_PHOTOS to db.photoDAO(),
+                        Contract.TABLE_LIKE_PHOTOS to db.photoLikeDAO(),
+                        Contract.TABLE_USER_PHOTOS to db.photoUserDAO()
+                ))
 
         //photo
         photoAPI = retrofit.create(PhotoAPI::class.java)
@@ -105,12 +118,9 @@ object DependencyGraph {
         photoDownloader = PhotoDownloaderImpl(photoAPI)
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         photoRepository = PhotoRepositoryImpl(
-                TransactionRunnerImpl(db),
+                daoManager,
                 staleDataTrackSupervisor,
                 photoAPI,
-                db.photoDAO(),
-                db.photoLikeDAO(),
-                db.photoUserDAO(),
                 downloadManager,
                 JobServiceImpl()
         )
@@ -118,7 +128,7 @@ object DependencyGraph {
         //user and auth
         val userAPI = retrofit.create(UserAPI::class.java)
         val authAPI: AuthAPI = retrofit.create(AuthAPI::class.java)
-        userRepository = UserRepositoryImpl(userAPI, authAPI, authTokenStorage)
+        userRepository = UserRepositoryImpl(daoManager, userAPI, authAPI, authTokenStorage)
 
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 

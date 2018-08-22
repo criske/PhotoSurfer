@@ -29,6 +29,7 @@ import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
+import com.crskdev.photosurfer.util.livedata.distinctUntilChanged
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
@@ -136,6 +137,8 @@ class ListPhotosFragment : Fragment() {
             toolbarListPhotos.menu.clear()
             if (isLoggedIn) {
                 toolbarListPhotos.inflateMenu(R.menu.menu_user_profile_me)
+            }else{
+                viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
             }
             toolbarListPhotos.inflateMenu(R.menu.menu_list_photos)
         })
