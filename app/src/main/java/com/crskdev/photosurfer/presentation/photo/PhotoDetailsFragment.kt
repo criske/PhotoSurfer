@@ -111,7 +111,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         }
     }
 
-    private fun setLikeButton(like: Boolean){
+    private fun setLikeButton(like: Boolean) {
         val color = if (like) {
             ContextCompat.getColor(context!!, R.color.colorAccent)
         } else {
@@ -323,7 +323,7 @@ class PhotoDetailViewModel(
                 }
 
                 override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                    if (isAuthenticationError) {
+                    if (!isAuthenticationError) {
                         errorLiveData.postValue(error)
                     } else {
                         needsAuthLiveData.postValue(Unit)

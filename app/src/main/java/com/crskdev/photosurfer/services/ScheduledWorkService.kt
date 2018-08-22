@@ -13,11 +13,18 @@ import java.util.concurrent.TimeUnit
 /**
  * Created by Cristian Pela on 18.08.2018.
  */
-interface JobService {
+interface ScheduledWorkService {
+
     fun schedule(workData: WorkData)
+
+    fun clearScheduled(workerTag: Tag)
+
+    fun clearAllScheduled()
 }
 
-class JobServiceImpl : JobService {
+class ScheduledWorkServiceImpl : ScheduledWorkService {
+
+    private val workManager = WorkManager.getInstance()
 
     override fun schedule(workData: WorkData) {
 
@@ -31,7 +38,6 @@ class JobServiceImpl : JobService {
             }
         }
         val workerTag = workData.tag.toString()
-        val workManager = WorkManager.getInstance()
         workManager.cancelAllWorkByTag(workerTag)
         val request = OneTimeWorkRequest.Builder(workData.tag.type.workerClass)
                 .setInputData(dataBuilder.build())
@@ -44,6 +50,13 @@ class JobServiceImpl : JobService {
         workManager.enqueue(request)
     }
 
+    override fun clearScheduled(workerTag: Tag) {
+        workManager.cancelAllWorkByTag(workerTag.toString())
+    }
+
+    override fun clearAllScheduled() {
+        workManager.cancelAllWork()
+    }
 }
 
 class WorkData(val tag: Tag, vararg val extras: Pair<String, Any>)

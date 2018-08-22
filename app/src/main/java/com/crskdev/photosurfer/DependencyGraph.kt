@@ -19,9 +19,10 @@ import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
-import com.crskdev.photosurfer.services.JobServiceImpl
+import com.crskdev.photosurfer.services.ScheduledWorkServiceImpl
 import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
+import com.crskdev.photosurfer.services.ScheduledWorkService
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -68,6 +69,8 @@ object DependencyGraph {
         private set
     lateinit var photoDownloader: PhotoDownloader
         private set
+    lateinit var scheduledWorkService: ScheduledWorkService
+        private set
 
     //APIs
     lateinit var photoAPI: PhotoAPI
@@ -89,6 +92,7 @@ object DependencyGraph {
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
         //NETWORK
+        scheduledWorkService = ScheduledWorkServiceImpl()
         networkCheckService = NetworkCheckServiceImpl(context)
         authTokenStorage = AuthTokenStorageImpl(preferences).apply {
             observableAuthState = this
@@ -119,10 +123,11 @@ object DependencyGraph {
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         photoRepository = PhotoRepositoryImpl(
                 daoManager,
+                authTokenStorage,
                 staleDataTrackSupervisor,
                 photoAPI,
                 downloadManager,
-                JobServiceImpl()
+                scheduledWorkService
         )
 
         //user and auth

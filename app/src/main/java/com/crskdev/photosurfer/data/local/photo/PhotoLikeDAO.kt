@@ -10,7 +10,7 @@ import com.crskdev.photosurfer.data.local.DataAccessor
 @Dao
 interface PhotoLikeDAO:DataAccessor {
 
-    @Query("SELECT * FROM like_photos ORDER BY indexInResponse ASC")
+    @Query("SELECT * FROM like_photos ORDER BY indexInResponse DESC")
     fun getPhotos(): DataSource.Factory<Int, LikePhotoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

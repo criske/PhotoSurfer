@@ -4,16 +4,16 @@ import androidx.annotation.AnyThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
-import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
+import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
-import com.crskdev.photosurfer.services.JobService
+import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.Tag
 import com.crskdev.photosurfer.services.WorkData
 import com.crskdev.photosurfer.services.WorkType
@@ -53,10 +53,11 @@ data class InsertPhotoAction(val type: Type, val extra: Any? = null) {
 
 class PhotoRepositoryImpl(
         daoManager: DaoManager,
+        private val authTokenStorage: AuthTokenStorage,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val api: PhotoAPI,
         private val downloadManager: DownloadManager,
-        private val jobService: JobService
+        private val scheduledWorkService: ScheduledWorkService
 ) : PhotoRepository {
 
     companion object {
@@ -212,6 +213,10 @@ class PhotoRepositoryImpl(
     }
 
     override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
+        if(!authTokenStorage.hasToken()){
+            callback.onError(Error("You need to login"), true)
+            return
+        }
         transactional {
             daoPhotos.like(photo.id, photo.likedByMe)
             daoUserPhotos.like(photo.id, photo.likedByMe)
@@ -224,7 +229,7 @@ class PhotoRepositoryImpl(
             }
         }
         callback.onSuccess(photo.likedByMe)
-        jobService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))
+        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))
     }
 
     @AnyThread

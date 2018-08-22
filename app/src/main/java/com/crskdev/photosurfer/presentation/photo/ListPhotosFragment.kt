@@ -19,14 +19,17 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthState
+import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthStateLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
+import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.distinctUntilChanged
@@ -64,6 +67,7 @@ class ListPhotosFragment : Fragment() {
                         graph.diskThreadExecutor,
                         graph.userRepository,
                         graph.photoRepository,
+                        graph.scheduledWorkService,
                         graph.observableAuthState
                 ) as T
             }
@@ -123,6 +127,9 @@ class ListPhotosFragment : Fragment() {
                                 ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(photo.authorUsername),
                                 defaultTransitionNavOptions())
                     }
+                    ActionWhat.LIKE -> {
+                        viewModel.like(photo)
+                    }
                 }
             }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -137,7 +144,7 @@ class ListPhotosFragment : Fragment() {
             toolbarListPhotos.menu.clear()
             if (isLoggedIn) {
                 toolbarListPhotos.inflateMenu(R.menu.menu_user_profile_me)
-            }else{
+            } else {
                 viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
             }
             toolbarListPhotos.inflateMenu(R.menu.menu_list_photos)
@@ -153,8 +160,13 @@ class ListPhotosFragment : Fragment() {
                 (recyclerUserListPhotos.adapter as ListPhotosAdapter).submitList(it)
             }
         })
+
         viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(context!!, it.message, Toast.LENGTH_SHORT).show()
+        })
+
+        viewModel.needsAuthLiveData.observe(this, Observer {
+            authNavigatorMiddleware.navigateToLogin(activity!!)
         })
 
         refreshListPhotos.setOnClickListener {
@@ -180,12 +192,15 @@ data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: 
 
 class ListPhotosViewModel(vmFilter: FilterVM,
                           private val ioExecutor: Executor,
-                          diskExecutor: Executor,
+                          private val diskExecutor: Executor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
+                          private val scheduledWorkService: ScheduledWorkService,
                           observableAuthState: ObservableAuthState) : ViewModel() {
 
     val authStateLiveData = AuthStateLiveData(observableAuthState)
+
+    val needsAuthLiveData = SingleLiveEvent<Unit>()
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
@@ -215,7 +230,10 @@ class ListPhotosViewModel(vmFilter: FilterVM,
     }
 
     fun logout() {
-        userRepository.logout()
+        diskExecutor.execute {
+            scheduledWorkService.clearAllScheduled()
+            userRepository.logout()
+        }
     }
 
     fun changePageListingType(vmFilter: FilterVM) {
@@ -223,6 +241,21 @@ class ListPhotosViewModel(vmFilter: FilterVM,
         choosablePhotoDataSourceFactory.changeFilter(dataSourceFilter)
         photosLiveData.value?.dataSource?.invalidate()
         filterLiveData.value = vmFilter
+    }
+
+    fun like(photo: Photo) {
+        ioExecutor.execute {
+            photoRepository.like(photo, object : Repository.Callback<Boolean> {
+                override fun onSuccess(data: Boolean, extras: Any?) {}
+                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                    if (!isAuthenticationError) {
+                        errorLiveData.postValue(error)
+                    } else {
+                        needsAuthLiveData.postValue(Unit)
+                    }
+                }
+            })
+        }
     }
 
     private fun toDataSourceFilter(vmFilter: FilterVM): DataSourceFilter =

@@ -8,25 +8,25 @@
     <ImageView
         android:id="@+id/imagePhoto"
         android:layout_width="match_parent"
-        android:background="@color/colorLightGray"
-        android:layout_gravity="center"
         android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:background="@color/colorLightGray"
+        android:contentDescription="@null"
         android:scaleType="centerCrop"
-        tools:src="@drawable/ic_launcher_background"
-        android:contentDescription="@null" />
+        tools:src="@drawable/ic_launcher_background" />
 
     <TextView
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:background="?android:attr/selectableItemBackground"
-        android:textColor="@android:color/white"
-        android:layout_gravity="bottom|start"
         android:id="@+id/textAuthor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_gravity="bottom|start"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,11 +35,22 @@
 
     <TextView
         android:id="@+id/textError"
-        android:textColor="@android:color/holo_red_dark"
-        tools:text="Error!"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
+        android:textColor="@android:color/holo_red_dark"
+        tools:text="Error!" />
+
+    <ImageButton
+        android:id="@+id/imgLike"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:alpha="0.5"
+        android:background="?android:attr/selectableItemBackground"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_thumb_up_white_24dp" />
 
 </FrameLayout>

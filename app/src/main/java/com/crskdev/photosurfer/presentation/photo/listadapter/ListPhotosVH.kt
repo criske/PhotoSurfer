@@ -2,6 +2,7 @@ package com.crskdev.photosurfer.presentation.photo.listadapter
 
 import android.graphics.drawable.Drawable
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
@@ -11,6 +12,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
+import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import kotlinx.android.synthetic.main.item_list_photos.view.*
@@ -25,10 +27,14 @@ class ListPhotosVH(private val glide: RequestManager,
     init {
         itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it) } }
         itemView.textAuthor.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.AUTHOR, it) } }
+        itemView.imgLike.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it.copy(likedByMe = !it.likedByMe)) } }
     }
 
     fun bind(photo: Photo) {
         this.photo = photo
+        if (photo.likedByMe) {
+            itemView.imgLike.setColorFilter(ContextCompat.getColor(itemView.context, R.color.colorAccent))
+        }
         itemView.textAuthor.text = "@${photo.authorUsername}"
         glide.asDrawable()
                 .load(photo.urls[ImageType.SMALL])
@@ -53,6 +59,7 @@ class ListPhotosVH(private val glide: RequestManager,
         with(itemView) {
             textAuthor.text = null
             textError.text = null
+            imgLike.clearColorFilter()
             glide.clear(imagePhoto)
             imagePhoto.setImageDrawable(null)
         }
