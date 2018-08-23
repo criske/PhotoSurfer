@@ -102,7 +102,7 @@ class ListPhotosFragment : Fragment() {
                         viewModel.logout()
                     }
                     R.id.menu_action_likes -> {
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes))
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes, viewModel.authStateLiveData.value))
                     }
                     R.id.menu_action_trending -> {
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
@@ -214,7 +214,6 @@ class ListPhotosViewModel(vmFilter: FilterVM,
             ChoosablePhotoDataSourceFactory(photoRepository, toDataSourceFilter(vmFilter))
 
     val photosLiveData = photosPageListConfigLiveData(
-            authStateLiveData,
             diskExecutor,
             ioExecutor,
             choosablePhotoDataSourceFactory,
@@ -232,8 +231,8 @@ class ListPhotosViewModel(vmFilter: FilterVM,
     }
 
     fun logout() {
+        scheduledWorkService.clearAllScheduled()
         diskExecutor.execute {
-            scheduledWorkService.clearAllScheduled()
             userRepository.logout()
         }
     }
@@ -263,8 +262,8 @@ class ListPhotosViewModel(vmFilter: FilterVM,
     private fun toDataSourceFilter(vmFilter: FilterVM): DataSourceFilter =
             when (vmFilter.type) {
                 FilterVM.Type.TRENDING -> DataSourceFilter.RANDOM
-                FilterVM.Type.LIKES -> DataSourceFilter.LIKED_PHOTOS
-                FilterVM.Type.SEARCH -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS, vmFilter.data)
+                FilterVM.Type.LIKES -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS, vmFilter.data!!)
+                FilterVM.Type.SEARCH -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS, vmFilter.data!!)
             }
 
 }

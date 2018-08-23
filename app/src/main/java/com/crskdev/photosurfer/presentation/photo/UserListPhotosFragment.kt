@@ -17,8 +17,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
+import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
@@ -101,8 +104,13 @@ class UserListPhotosViewModel(userName: String,
 
     val meLiveData = SingleLiveEvent<String>()
 
-    val photosData = photosPageListConfigLiveData(userName, backgroundThreadExecutor, ioExecutor, photoRepository,
-            errorLiveData)
+    val photosData = photosPageListConfigLiveData(
+            backgroundThreadExecutor,
+            ioExecutor,
+            ChoosablePhotoDataSourceFactory(photoRepository,
+                    DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.USER_PHOTOS, userName)),
+            errorLiveData
+    )
 
     fun obtainMe() {
         ioExecutor.execute {

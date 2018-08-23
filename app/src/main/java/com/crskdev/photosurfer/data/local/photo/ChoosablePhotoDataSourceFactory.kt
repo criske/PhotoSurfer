@@ -2,6 +2,7 @@ package com.crskdev.photosurfer.data.local.photo
 
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
 import com.crskdev.photosurfer.entities.Photo
 
 /**
@@ -12,7 +13,7 @@ class ChoosablePhotoDataSourceFactory(
         initialFilter: DataSourceFilter) : DataSource.Factory<Int, Photo>() {
 
     enum class Type {
-        LIKED_PHOTOS, SEARCH_PHOTOS, RANDOM_PHOTOS
+        LIKED_PHOTOS, SEARCH_PHOTOS, TRENDING_PHOTOS, USER_PHOTOS
     }
 
     var currentFilter: DataSourceFilter = initialFilter
@@ -20,7 +21,8 @@ class ChoosablePhotoDataSourceFactory(
 
     override fun create(): DataSource<Int, Photo> {
         return when (currentFilter.type) {
-            Type.RANDOM_PHOTOS -> photoRepository.getPhotos(null).create()
+            Type.TRENDING_PHOTOS -> photoRepository.getPhotos(RepositoryAction.TRENDING).create()
+            Type.USER_PHOTOS -> photoRepository.getPhotos(RepositoryAction(RepositoryAction.Type.USER)).create()
             Type.LIKED_PHOTOS -> photoRepository.getLikedPhotos().create()
             else -> TODO()
         }
@@ -33,9 +35,8 @@ class ChoosablePhotoDataSourceFactory(
 }
 
 
-class DataSourceFilter(val type: ChoosablePhotoDataSourceFactory.Type, vararg extras: Any?){
+class DataSourceFilter(val type: ChoosablePhotoDataSourceFactory.Type, vararg val extras: Any) {
     companion object {
-        val RANDOM = DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.RANDOM_PHOTOS)
-        val LIKED_PHOTOS = DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS)
+        val RANDOM = DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.TRENDING_PHOTOS)
     }
 }
