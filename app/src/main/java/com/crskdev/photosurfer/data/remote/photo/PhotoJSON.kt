@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.remote.photo
 
+import com.crskdev.photosurfer.data.local.photo.SearchPhotoEntity
 import com.crskdev.photosurfer.entities.ImageType
 import com.squareup.moshi.Json
 import okhttp3.Headers
@@ -26,6 +27,10 @@ class PhotoJSON {
     lateinit var author: AuthorJSON
 }
 
+class SearchedPhotosJSON {
+    lateinit var results: List<PhotoJSON>
+}
+
 data class PhotoPagingData(val total: Int, val curr: Int, val prev: Int?, val next: Int?) {
     companion object {
         private fun extractQueryParams(link: String): Map<String, String> =
@@ -41,7 +46,7 @@ data class PhotoPagingData(val total: Int, val curr: Int, val prev: Int?, val ne
 
         fun createFromHeaders(headers: Headers): PhotoPagingData {
             val total = headers["x-total"]?.toInt()
-                    ?:0
+                    ?: 0
             val (curr: Int, prev: Int?, next: Int?) = headers["link"]?.let { hv ->
                 val split = hv.split(",")
                 val prev = split.firstOrNull { it.contains("prev") }

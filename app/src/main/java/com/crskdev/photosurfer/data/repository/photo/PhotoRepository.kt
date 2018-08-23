@@ -9,7 +9,9 @@ import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
+import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.data.remote.photo.SearchedPhotosJSON
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.ScheduledWorkService
@@ -42,14 +44,17 @@ interface PhotoRepository : Repository {
 
     fun clearAll()
 
+    fun clear(repositoryAction: RepositoryAction)
+
 }
 
 class RepositoryAction(val type: Type, vararg val extras: Any) {
     companion object {
         val TRENDING = RepositoryAction(Type.TRENDING)
     }
+
     enum class Type {
-        LIKE, TRENDING, USER, SEARCH
+        LIKE, TRENDING, USER_PHOTOS, SEARCH
     }
 }
 
@@ -70,8 +75,8 @@ class PhotoRepositoryImpl(
         val table = when (repositoryAction.type) {
             RepositoryAction.Type.LIKE -> Contract.TABLE_LIKE_PHOTOS
             RepositoryAction.Type.TRENDING -> Contract.TABLE_PHOTOS
-            RepositoryAction.Type.USER -> Contract.TABLE_USER_PHOTOS
-            RepositoryAction.Type.SEARCH -> TODO()
+            RepositoryAction.Type.USER_PHOTOS -> Contract.TABLE_USER_PHOTOS
+            RepositoryAction.Type.SEARCH -> Contract.TABLE_SEARCH_PHOTOS
         }
         return daoPhotoFacade.getPhotos(table).mapByPage { page ->
             staleDataTrackSupervisor.runStaleDataCheckForTable(table)
@@ -94,8 +99,8 @@ class PhotoRepositoryImpl(
             val call = when (repositoryAction.type) {
                 RepositoryAction.Type.LIKE -> api.getLikedPhotos(repositoryAction.extras[0].toString(), page)
                 RepositoryAction.Type.TRENDING -> api.getRandomPhotos(page)
-                RepositoryAction.Type.USER -> api.getUserPhotos(repositoryAction.extras[0].toString(), page)
-                RepositoryAction.Type.SEARCH -> TODO()
+                RepositoryAction.Type.USER_PHOTOS -> api.getUserPhotos(repositoryAction.extras[0].toString(), page)
+                RepositoryAction.Type.SEARCH -> api.getSearchedPhotos(repositoryAction.extras[0].toString(), page)
             }.apply { cancelableApiCall = this }
 
             val response = call.execute()
@@ -103,19 +108,24 @@ class PhotoRepositoryImpl(
                 val headers = headers()
                 val pagingData = PhotoPagingData.createFromHeaders(headers)
                 if (isSuccessful) {
-                    body()?.map {
+                    @Suppress("UNCHECKED_CAST")
+                    val body = body()?.let {
+                        if (repositoryAction.type == RepositoryAction.Type.SEARCH)
+                            (it as SearchedPhotosJSON).results else it as List<PhotoJSON>
+                    }
+                    body?.map {
                         when (repositoryAction.type) {
                             RepositoryAction.Type.LIKE -> it.toLikePhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_LIKE_PHOTOS))
                             RepositoryAction.Type.TRENDING -> it.toDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_PHOTOS))
-                            RepositoryAction.Type.USER -> it.toUserPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_USER_PHOTOS))
-                            RepositoryAction.Type.SEARCH -> TODO()
+                            RepositoryAction.Type.USER_PHOTOS -> it.toUserPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_USER_PHOTOS))
+                            RepositoryAction.Type.SEARCH -> it.toSearchPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_SEARCH_PHOTOS))
                         }
                     }?.apply {
                         when (repositoryAction.type) {
                             RepositoryAction.Type.LIKE -> daoPhotoFacade.insertPhotos(Contract.TABLE_LIKE_PHOTOS, this, page == 1)
                             RepositoryAction.Type.TRENDING -> daoPhotoFacade.insertPhotos(Contract.TABLE_PHOTOS, this, page == 1)
-                            RepositoryAction.Type.USER -> daoPhotoFacade.insertPhotos(Contract.TABLE_USER_PHOTOS, this, page == 1)
-                            RepositoryAction.Type.SEARCH -> TODO()
+                            RepositoryAction.Type.USER_PHOTOS -> daoPhotoFacade.insertPhotos(Contract.TABLE_USER_PHOTOS, this, page == 1)
+                            RepositoryAction.Type.SEARCH -> daoPhotoFacade.insertPhotos(Contract.TABLE_SEARCH_PHOTOS, this, page == 1)
                         }
                         callback?.onSuccess(Unit)
                     }
@@ -184,6 +194,16 @@ class PhotoRepositoryImpl(
 
     override fun clearAll() {
         daoPhotoFacade.clear()
+    }
+
+    override fun clear(repositoryAction: RepositoryAction) {
+        val table = when (repositoryAction.type) {
+            RepositoryAction.Type.LIKE -> Contract.TABLE_LIKE_PHOTOS
+            RepositoryAction.Type.TRENDING -> Contract.TABLE_PHOTOS
+            RepositoryAction.Type.USER_PHOTOS -> Contract.TABLE_USER_PHOTOS
+            RepositoryAction.Type.SEARCH -> Contract.TABLE_SEARCH_PHOTOS
+        }
+        daoPhotoFacade.clear(table)
     }
 
 

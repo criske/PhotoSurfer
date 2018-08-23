@@ -22,7 +22,7 @@ class ChoosablePhotoDataSourceFactory(
     override fun create(): DataSource<Int, Photo> {
         return when (currentFilter.type) {
             Type.TRENDING_PHOTOS -> photoRepository.getPhotos(RepositoryAction.TRENDING).create()
-            Type.USER_PHOTOS -> photoRepository.getPhotos(RepositoryAction(RepositoryAction.Type.USER)).create()
+            Type.USER_PHOTOS -> photoRepository.getPhotos(RepositoryAction(RepositoryAction.Type.USER_PHOTOS)).create()
             Type.LIKED_PHOTOS -> photoRepository.getLikedPhotos().create()
             else -> TODO()
         }

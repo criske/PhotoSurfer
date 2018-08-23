@@ -27,7 +27,7 @@ internal fun photosPageListConfigLiveData(
             ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS -> RepositoryAction(RepositoryAction.Type.LIKE)
             ChoosablePhotoDataSourceFactory.Type.TRENDING_PHOTOS -> RepositoryAction(RepositoryAction.Type.TRENDING)
             ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS -> TODO()
-            ChoosablePhotoDataSourceFactory.Type.USER_PHOTOS -> RepositoryAction(RepositoryAction.Type.USER,
+            ChoosablePhotoDataSourceFactory.Type.USER_PHOTOS -> RepositoryAction(RepositoryAction.Type.USER_PHOTOS,
                     *choosablePhotoDataSourceFactory.currentFilter.extras)
         }
     }

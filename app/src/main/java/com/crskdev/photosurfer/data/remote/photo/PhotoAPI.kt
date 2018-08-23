@@ -16,6 +16,9 @@ interface PhotoAPI {
     @GET("users/{username}/likes")
     fun getLikedPhotos(@Path("username") username: String, @Query("page") page: Int = 1): Call<List<PhotoJSON>>
 
+    @GET("/search/photos")
+    fun getSearchedPhotos(@Query("query") query: String, @Query("page") page: Int = 1): Call<SearchedPhotosJSON>
+
     @GET("users/{username}/photos")
     fun getUserPhotos(@Path("username") username: String, @Query("page") page: Int = 1): Call<List<PhotoJSON>>
 
@@ -25,10 +28,10 @@ interface PhotoAPI {
 
     @POST("photos/{id}/like")
     @Headers(REQUIRE_AUTH)
-    fun like(@Path("id") id: String):Call<ResponseBody>
+    fun like(@Path("id") id: String): Call<ResponseBody>
 
     @DELETE("photos/{id}/like")
     @Headers(REQUIRE_AUTH)
-    fun unlike(@Path("id") id: String):Call<ResponseBody>
+    fun unlike(@Path("id") id: String): Call<ResponseBody>
 
 }

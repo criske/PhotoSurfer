@@ -19,13 +19,14 @@ import com.bumptech.glide.Glide
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
-import com.crskdev.photosurfer.data.repository.Repository
+import com.crskdev.photosurfer.data.local.search.SearchTermTracker
+import com.crskdev.photosurfer.data.local.search.Term
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
-import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.parcelize
+import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
@@ -44,9 +45,9 @@ class UserListPhotosFragment : Fragment() {
                 @Suppress("UNCHECKED_CAST")
                 return UserListPhotosViewModel(
                         UserListPhotosFragmentArgs.fromBundle(arguments).username,
+                        graph.searchTermTracker,
                         graph.ioThreadExecutor,
                         graph.diskThreadExecutor,
-                        graph.userRepository,
                         graph.photoRepository
                 ) as T
             }
@@ -66,17 +67,13 @@ class UserListPhotosFragment : Fragment() {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) { what, photo ->
                 val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
+                @Suppress("NON_EXHAUSTIVE_WHEN")
                 when (what) {
                     ListPhotosAdapter.ActionWhat.PHOTO_DETAIL -> {
                         navController.navigate(
                                 R.id.fragment_photo_details, bundleOf("photo" to photo.parcelize()),
                                 defaultTransitionNavOptions())
                     }
-//                    ActionWhat.AUTHOR -> {
-//                        navController.navigate(
-//                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(photo.authorUsername),
-//                                defaultTransitionNavOptions())
-//                    }
                 }
             }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -95,36 +92,35 @@ class UserListPhotosFragment : Fragment() {
 }
 
 class UserListPhotosViewModel(userName: String,
+                              searchTermTracker: SearchTermTracker,
                               private val ioExecutor: Executor,
-                              backgroundThreadExecutor: Executor,
-                              private val userRepository: UserRepository,
+                              diskExecutor: Executor,
                               private val photoRepository: PhotoRepository) : ViewModel() {
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
-    val meLiveData = SingleLiveEvent<String>()
-
     val photosData = photosPageListConfigLiveData(
-            backgroundThreadExecutor,
+            diskExecutor,
             ioExecutor,
             ChoosablePhotoDataSourceFactory(photoRepository,
                     DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.USER_PHOTOS, userName)),
-            errorLiveData
-    )
+            errorLiveData)
 
-    fun obtainMe() {
-        ioExecutor.execute {
-            userRepository.meUsername(object : Repository.Callback<String> {
-                override fun onSuccess(data: String, extras: Any?) {
-                    meLiveData.postValue(data)
-                }
 
-                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                    errorLiveData.postValue(error)
+    private val searchTermTrackerLiveData = SearchTermTrackerLiveData(searchTermTracker)
+
+    init {
+        searchTermTrackerLiveData.observeForever {
+            //we have a new user in accessed so we clear the old uset photos table
+            if (it.first != it.second && it.second != null) {
+                diskExecutor.execute {
+                    photoRepository.clear(RepositoryAction(RepositoryAction.Type.USER_PHOTOS))
                 }
-            })
+            }
         }
+        searchTermTracker.setTerm(Term(SearchTermTracker.Type.USER_ACCESSED_TERM, userName))
     }
+
 
     fun refresh() {
         ioExecutor.execute {
@@ -135,5 +131,6 @@ class UserListPhotosViewModel(userName: String,
     fun cancel() {
         photoRepository.cancel()
     }
+
 
 }

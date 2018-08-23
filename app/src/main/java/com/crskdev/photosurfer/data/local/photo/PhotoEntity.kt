@@ -45,3 +45,7 @@ class UserPhotoEntity : PhotoEntity()
 
 @Entity(tableName = Contract.TABLE_LIKE_PHOTOS)
 class LikePhotoEntity : PhotoEntity()
+
+@Entity(tableName = Contract.TABLE_SEARCH_PHOTOS)
+class SearchPhotoEntity : PhotoEntity()
+

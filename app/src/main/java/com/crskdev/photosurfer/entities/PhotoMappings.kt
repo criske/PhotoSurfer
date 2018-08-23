@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.core.os.bundleOf
 import com.crskdev.photosurfer.data.local.photo.LikePhotoEntity
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
+import com.crskdev.photosurfer.data.local.photo.SearchPhotoEntity
 import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
@@ -42,6 +43,9 @@ fun PhotoJSON.toUserPhotoDbEntity(pagingData: PhotoPagingData, nextIndex: Int): 
 
 fun PhotoJSON.toLikePhotoDbEntity(pagingData: PhotoPagingData, nextIndex: Int): LikePhotoEntity =
         PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, LikePhotoEntity::class.java)
+
+fun PhotoJSON.toSearchPhotoDbEntity(pagingData: PhotoPagingData, nextIndex: Int): SearchPhotoEntity =
+        PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, SearchPhotoEntity::class.java)
 
 fun Photo.toLikePhotoDbEntity(nextIndex: Int): LikePhotoEntity =
         PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, LikePhotoEntity::class.java)

@@ -16,9 +16,10 @@ import com.crskdev.photosurfer.data.local.track.StaleDataTrackEntity
             PhotoEntity::class,
             UserPhotoEntity::class,
             LikePhotoEntity::class,
+            SearchPhotoEntity::class,
             StaleDataTrackEntity::class
         ],
-        version = 5,
+        version = 6,
         exportSchema = false
 )
 abstract class PhotoSurferDB : RoomDatabase() {
@@ -45,6 +46,7 @@ abstract class PhotoSurferDB : RoomDatabase() {
     abstract fun photoDAO(): PhotoDAO
     abstract fun photoUserDAO(): PhotoUserDAO
     abstract fun photoLikeDAO(): PhotoLikeDAO
+    abstract fun photoSearchDAO(): PhotoSearchDAO
 
     abstract fun staleDataTrackDAO(): StaleDataTackDAO
 }

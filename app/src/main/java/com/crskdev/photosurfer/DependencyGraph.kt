@@ -14,6 +14,8 @@ import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
+import com.crskdev.photosurfer.data.local.search.SearchTermTracker
+import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.user.UserAPI
@@ -82,6 +84,8 @@ object DependencyGraph {
         private set
     lateinit var userRepository: UserRepository
         private set
+    lateinit var searchTermTracker: SearchTermTracker
+        private set
 
     //nav
     lateinit var authNavigatorMiddleware: AuthNavigatorMiddleware
@@ -114,7 +118,8 @@ object DependencyGraph {
                 mapOf(
                         Contract.TABLE_PHOTOS to db.photoDAO(),
                         Contract.TABLE_LIKE_PHOTOS to db.photoLikeDAO(),
-                        Contract.TABLE_USER_PHOTOS to db.photoUserDAO()
+                        Contract.TABLE_USER_PHOTOS to db.photoUserDAO(),
+                        Contract.TABLE_SEARCH_PHOTOS to db.photoSearchDAO()
                 ))
 
         //photo
@@ -130,6 +135,9 @@ object DependencyGraph {
                 downloadManager,
                 scheduledWorkService
         )
+
+        //search
+        searchTermTracker = SearchTermTrackerImpl(preferences)
 
         //user and auth
         val userAPI = retrofit.create(UserAPI::class.java)
