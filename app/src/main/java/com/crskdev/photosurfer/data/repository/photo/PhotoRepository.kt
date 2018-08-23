@@ -3,8 +3,7 @@ package com.crskdev.photosurfer.data.repository.photo
 import androidx.annotation.AnyThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
-import com.crskdev.photosurfer.data.local.DaoManager
-import com.crskdev.photosurfer.data.local.photo.*
+import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
@@ -52,7 +51,7 @@ data class InsertPhotoAction(val type: Type, val extra: Any? = null) {
 }
 
 class PhotoRepositoryImpl(
-        daoManager: DaoManager,
+        private val daoPhotoFacade: PhotoDAOFacade,
         private val authTokenStorage: AuthTokenStorage,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val api: PhotoAPI,
@@ -60,57 +59,20 @@ class PhotoRepositoryImpl(
         private val scheduledWorkService: ScheduledWorkService
 ) : PhotoRepository {
 
-    companion object {
-
-        private val EMPTY_PHOTO_ENTITY = PhotoEntity().apply {
-            id = ""
-            createdAt = ""
-            updatedAt = ""
-            colorString = ""
-            urls = ""
-            authorId = ""
-            authorUsername = ""
-
-        }
-
-        private fun emptyUserPhotoEntity(username: String) = UserPhotoEntity().apply {
-            id = ""
-            createdAt = ""
-            updatedAt = ""
-            colorString = ""
-            urls = ""
-            authorId = ""
-            authorUsername = ""
-        }
-
-    }
 
     @Volatile
     private var cancelableApiCall: Call<*>? = null
 
-    private val daoPhotos: PhotoDAO = daoManager.getDao(Contract.TABLE_PHOTOS)
-    private val daoLikes: PhotoLikeDAO = daoManager.getDao(Contract.TABLE_LIKE_PHOTOS)
-    private val daoUserPhotos: PhotoUserDAO = daoManager.getDao(Contract.TABLE_USER_PHOTOS)
-    private val transactional = daoManager.transactionRunner()
-
-
     override fun getPhotos(username: String?): DataSource.Factory<Int, Photo> {
-        return if (username != null)
-            daoUserPhotos.getPhotos(username)
-                    .mapByPage { page ->
-                        staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_USER_PHOTOS)
-                        page.map { it.toPhoto() }
-                    }
-        else
-            daoPhotos.getPhotos()
-                    .mapByPage { page ->
-                        staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_PHOTOS)
-                        page.map { it.toPhoto() }
-                    }
+        val table = if (username == null) Contract.TABLE_PHOTOS else Contract.TABLE_USER_PHOTOS
+        return daoPhotoFacade.getPhotos(table).mapByPage { page ->
+            staleDataTrackSupervisor.runStaleDataCheckForTable(table)
+            page.map { it.toPhoto() }
+        }
     }
 
     override fun getLikedPhotos(): DataSource.Factory<Int, Photo> {
-        return daoLikes.getPhotos()
+        return daoPhotoFacade.getPhotos(Contract.TABLE_LIKE_PHOTOS)
                 .mapByPage { page ->
                     staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_LIKE_PHOTOS)
                     page.map { it.toPhoto() }
@@ -134,16 +96,15 @@ class PhotoRepositoryImpl(
                 if (isSuccessful) {
                     body()?.map {
                         when (insertPhotoAction.type) {
-                            InsertPhotoAction.Type.LIKE -> it.toLikePhotoDbEntity(pagingData, daoLikes.getNextIndex())
-                            InsertPhotoAction.Type.RANDOM -> it.toDbEntity(pagingData, daoPhotos.getNextIndex())
-                            InsertPhotoAction.Type.USER -> it.toUserPhotoDbEntity(pagingData, daoUserPhotos
-                                    .getNextIndex(insertPhotoAction.extra.toString()))
+                            InsertPhotoAction.Type.LIKE -> it.toLikePhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_LIKE_PHOTOS))
+                            InsertPhotoAction.Type.RANDOM -> it.toDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_PHOTOS))
+                            InsertPhotoAction.Type.USER -> it.toUserPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_USER_PHOTOS))
                         }
                     }?.apply {
                         when (insertPhotoAction.type) {
-                            InsertPhotoAction.Type.LIKE -> daoLikes.insertPhotos(map { it as LikePhotoEntity })
-                            InsertPhotoAction.Type.RANDOM -> daoPhotos.insertPhotos(this)
-                            InsertPhotoAction.Type.USER -> daoUserPhotos.insertPhotos(map { it as UserPhotoEntity })
+                            InsertPhotoAction.Type.LIKE -> daoPhotoFacade.insertPhotos(Contract.TABLE_LIKE_PHOTOS, this, page == 1)
+                            InsertPhotoAction.Type.RANDOM -> daoPhotoFacade.insertPhotos(Contract.TABLE_PHOTOS, this, page == 1)
+                            InsertPhotoAction.Type.USER -> daoPhotoFacade.insertPhotos(Contract.TABLE_USER_PHOTOS, this, page == 1)
                         }
                         callback?.onSuccess(Unit)
                     }
@@ -190,44 +151,16 @@ class PhotoRepositoryImpl(
     override fun isDownloaded(id: String): Boolean = downloadManager.isDownloaded(id)
 
     override fun refresh(username: String?) {
-        transactional {
-            if (username == null) {
-                if (daoPhotos.isEmpty()) {
-                    //force trigger the db InvalidationTracker.Observer
-                    daoPhotos.insertPhotos(listOf(EMPTY_PHOTO_ENTITY))
-                    daoPhotos.clear()
-                } else {
-                    daoPhotos.clear()
-                }
-            } else {
-                if (daoUserPhotos.isEmpty(username)) {
-                    //force trigger the db InvalidationTracker.Observer
-                    daoUserPhotos.insertPhotos(listOf(emptyUserPhotoEntity(username)))
-                    daoUserPhotos.clear(username)
-                } else {
-                    daoUserPhotos.clear(username)
-                }
-            }
-
-        }
+        val table = if (username == null) Contract.TABLE_PHOTOS else Contract.TABLE_USER_PHOTOS
+        daoPhotoFacade.refresh(table)
     }
 
     override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
-        if(!authTokenStorage.hasToken()){
+        if (!authTokenStorage.hasToken()) {
             callback.onError(Error("You need to login"), true)
             return
         }
-        transactional {
-            daoPhotos.like(photo.id, photo.likedByMe)
-            daoUserPhotos.like(photo.id, photo.likedByMe)
-            if (!daoLikes.isEmpty()) { // we doing nothing unless there already fetched the likes from server
-                if (photo.likedByMe) {
-                    daoLikes.like(photo.toLikePhotoDbEntity(daoLikes.getNextIndex()))
-                } else {
-                    daoLikes.unlike(photo.toLikePhotoDbEntity(-1))
-                }
-            }
-        }
+        daoPhotoFacade.like(photo.id, photo.likedByMe)
         callback.onSuccess(photo.likedByMe)
         scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))
     }
@@ -239,10 +172,7 @@ class PhotoRepositoryImpl(
     }
 
     override fun clearAll() {
-        transactional {
-            daoPhotos.clear()
-            daoUserPhotos.clear()
-        }
+        daoPhotoFacade.clear()
     }
 
 

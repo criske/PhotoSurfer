@@ -8,6 +8,7 @@ object Contract {
     const val TABLE_PHOTOS = "photos"
     const val TABLE_USER_PHOTOS = "user_photos"
     const val TABLE_LIKE_PHOTOS = "like_photos"
+    const val TABLE_SEARCH_PHOTOS = "search_photos"
 
     val TABLES = arrayOf(TABLE_PHOTOS, TABLE_USER_PHOTOS, TABLE_LIKE_PHOTOS)
 

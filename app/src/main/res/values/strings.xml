@@ -28,4 +28,5 @@
     <string name="edit">Edit</string>
     <string name="likes">Likes</string>
     <string name="trending">Trending</string>
+    <string name="search">Search...</string>
 </resources>

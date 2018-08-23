@@ -33,7 +33,7 @@ class ListPhotosVH(private val glide: RequestManager,
     fun bind(photo: Photo) {
         this.photo = photo
         if (photo.likedByMe) {
-            itemView.imgLike.setColorFilter(ContextCompat.getColor(itemView.context, R.color.colorAccent))
+            itemView.imgLike.setColorFilter(ContextCompat.getColor(itemView.context, R.color.colorLike))
         }
         itemView.textAuthor.text = "@${photo.authorUsername}"
         glide.asDrawable()

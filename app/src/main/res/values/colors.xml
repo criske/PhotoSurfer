@@ -9,4 +9,5 @@
     <color name="colorAccentLight">#fdf1ed</color>
     <color name="colorLightGray">#efebe9</color>
     <color name="colorTranslucentWhite">#f1ffffff</color>
+    <color name="colorLike">#e91e63</color>
 </resources>

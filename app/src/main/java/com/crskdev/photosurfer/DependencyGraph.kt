@@ -13,6 +13,7 @@ import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
 import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
+import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.user.UserAPI
@@ -122,7 +123,7 @@ object DependencyGraph {
         photoDownloader = PhotoDownloaderImpl(photoAPI)
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         photoRepository = PhotoRepositoryImpl(
-                daoManager,
+                PhotoDAOFacade(daoManager),
                 authTokenStorage,
                 staleDataTrackSupervisor,
                 photoAPI,

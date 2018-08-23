@@ -30,6 +30,7 @@ import com.crskdev.photosurfer.presentation.AuthStateLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
 import com.crskdev.photosurfer.services.ScheduledWorkService
+import com.crskdev.photosurfer.util.UnderToolbarBehavior
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.distinctUntilChanged
@@ -87,6 +88,7 @@ class ListPhotosFragment : Fragment() {
 
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
 
+        collapsingToolbarListPhotos.isTitleEnabled = false
         toolbarListPhotos.apply {
             setOnMenuItemClickListener {
                 when (it.itemId) {
@@ -112,7 +114,7 @@ class ListPhotosFragment : Fragment() {
 
         val glide = Glide.with(this)
         recyclerUserListPhotos.apply {
-            (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior() as CoordinatorLayout.Behavior<*>
+            (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) { what, photo ->
                 val navController = view.findNavController()

@@ -113,7 +113,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     private fun setLikeButton(like: Boolean) {
         val color = if (like) {
-            ContextCompat.getColor(context!!, R.color.colorAccent)
+            ContextCompat.getColor(context!!, R.color.colorLike)
         } else {
             Color.WHITE
         }

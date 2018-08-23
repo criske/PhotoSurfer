@@ -9,7 +9,7 @@ import com.crskdev.photosurfer.data.local.DataAccessor
  * Created by Cristian Pela on 09.08.2018.
  */
 @Dao
-interface PhotoDAO: DataAccessor {
+interface PhotoDAO : DataAccessor {
 
     @Query("SELECT * FROM photos ORDER BY indexInResponse ASC")
     fun getPhotos(): DataSource.Factory<Int, PhotoEntity>
@@ -27,8 +27,8 @@ interface PhotoDAO: DataAccessor {
     fun isEmpty(): Boolean
 
     @Query("SELECT * FROM photos WHERE id=:id")
-    fun getPhoto(id: String): PhotoEntity
+    fun getPhoto(id: String): PhotoEntity?
 
-    @Query("UPDATE photos SET likedByMe=:like WHERE id=:id")
-    fun like(id: String, like: Boolean)
+    @Update
+    fun like(photo: PhotoEntity)
 }
