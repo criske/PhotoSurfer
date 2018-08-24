@@ -28,8 +28,6 @@ interface PhotoRepository : Repository {
 
     fun getPhotos(repositoryAction: RepositoryAction): DataSource.Factory<Int, Photo>
 
-    fun getLikedPhotos(): DataSource.Factory<Int, Photo>
-
     fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>? = null)
 
     fun refresh(username: String? = null)
@@ -84,15 +82,6 @@ class PhotoRepositoryImpl(
         }
     }
 
-    override fun getLikedPhotos(): DataSource.Factory<Int, Photo> {
-        return daoPhotoFacade.getPhotos(Contract.TABLE_LIKE_PHOTOS)
-                .mapByPage { page ->
-                    staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_LIKE_PHOTOS)
-                    page.map { it.toPhoto() }
-                }
-    }
-
-
     //this must be called on the io thread
     override fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>?) {
         try {
@@ -134,6 +123,7 @@ class PhotoRepositoryImpl(
                 }
             }
         } catch (ex: Exception) {
+            ex.printStackTrace()
             callback?.onError(ex)
         }
     }
@@ -183,7 +173,8 @@ class PhotoRepositoryImpl(
         }
         daoPhotoFacade.like(photo.id, photo.likedByMe)
         callback.onSuccess(photo.likedByMe)
-        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id, "likedByMe" to photo.likedByMe))
+        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id,
+                "likedByMe" to photo.likedByMe))
     }
 
     @AnyThread

@@ -24,9 +24,11 @@ internal fun photosPageListConfigLiveData(
             photoRepository, errorLiveData) {
         //repository action provider
         when (choosablePhotoDataSourceFactory.currentFilter.type) {
-            ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS -> RepositoryAction(RepositoryAction.Type.LIKE)
+            ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS -> RepositoryAction(RepositoryAction.Type.LIKE,
+                    *choosablePhotoDataSourceFactory.currentFilter.extras)
             ChoosablePhotoDataSourceFactory.Type.TRENDING_PHOTOS -> RepositoryAction(RepositoryAction.Type.TRENDING)
-            ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS -> TODO()
+            ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS -> RepositoryAction(RepositoryAction.Type.SEARCH,
+                    *choosablePhotoDataSourceFactory.currentFilter.extras)
             ChoosablePhotoDataSourceFactory.Type.USER_PHOTOS -> RepositoryAction(RepositoryAction.Type.USER_PHOTOS,
                     *choosablePhotoDataSourceFactory.currentFilter.extras)
         }

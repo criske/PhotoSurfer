@@ -29,4 +29,5 @@
     <string name="likes">Likes</string>
     <string name="trending">Trending</string>
     <string name="search">Search...</string>
+    <string name="search_title">Search</string>
 </resources>

@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.appcompat.widget.SearchView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
@@ -18,22 +19,24 @@ import com.bumptech.glide.Glide
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
+import com.crskdev.photosurfer.data.local.search.SearchTermTracker
+import com.crskdev.photosurfer.data.local.search.Term
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthState
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthStateLiveData
+import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
 import com.crskdev.photosurfer.services.ScheduledWorkService
-import com.crskdev.photosurfer.util.UnderToolbarBehavior
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
-import com.crskdev.photosurfer.util.livedata.distinctUntilChanged
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
@@ -68,6 +71,7 @@ class ListPhotosFragment : Fragment() {
                         graph.diskThreadExecutor,
                         graph.userRepository,
                         graph.photoRepository,
+                        graph.searchTermTracker,
                         graph.scheduledWorkService,
                         graph.observableAuthState
                 ) as T
@@ -141,6 +145,16 @@ class ListPhotosFragment : Fragment() {
             })
         }
 
+        searchPhotosView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                viewModel.changePageListingType(FilterVM(FilterVM.Type.SEARCH, R.string.search_title, query?.trim()?.toLowerCase()))
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean = true
+
+        })
+
         viewModel.authStateLiveData.observe(this, Observer {
             val isLoggedIn = it.isNotEmpty()
             toolbarListPhotos.menu.clear()
@@ -153,7 +167,13 @@ class ListPhotosFragment : Fragment() {
         })
 
         viewModel.filterLiveData.observe(this, Observer {
-            toolbarListPhotos.setSubtitle(it.title)
+            val title = if (it.type == FilterVM.Type.SEARCH) {
+                val term = if (it.data?.isNotEmpty() == true) "#${it.data}" else ""
+                getString(it.title) + term
+            } else {
+                getString(it.title)
+            }
+            toolbarListPhotos.subtitle = title
             currentFilter = it
         })
 
@@ -197,8 +217,23 @@ class ListPhotosViewModel(vmFilter: FilterVM,
                           private val diskExecutor: Executor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
+                          private val searchTermTracker: SearchTermTracker,
                           private val scheduledWorkService: ScheduledWorkService,
                           observableAuthState: ObservableAuthState) : ViewModel() {
+
+
+    private val searchTermTrackerLiveData = SearchTermTrackerLiveData(searchTermTracker)
+
+    init {
+        searchTermTrackerLiveData.observeForever {
+            //we have a new user in accessed so we clear the old uset photos table
+            if (it.first != it.second && it.second != null) {
+                diskExecutor.execute {
+                    photoRepository.clear(RepositoryAction(RepositoryAction.Type.SEARCH))
+                }
+            }
+        }
+    }
 
     val authStateLiveData = AuthStateLiveData(observableAuthState)
 
@@ -238,10 +273,18 @@ class ListPhotosViewModel(vmFilter: FilterVM,
     }
 
     fun changePageListingType(vmFilter: FilterVM) {
+        var filter = vmFilter
+        if (vmFilter.type == FilterVM.Type.SEARCH) {
+            if (vmFilter.data != null)
+                searchTermTracker.setTerm(Term(SearchTermTracker.Type.PHOTO_TERM, vmFilter.data.trim()))
+            else
+                filter = vmFilter.copy(data = searchTermTracker.getTerm(SearchTermTracker.Type.PHOTO_TERM)?.data)
+        }
         val dataSourceFilter = toDataSourceFilter(vmFilter)
         choosablePhotoDataSourceFactory.changeFilter(dataSourceFilter)
         photosLiveData.value?.dataSource?.invalidate()
-        filterLiveData.value = vmFilter
+        filterLiveData.value = filter
+
     }
 
     fun like(photo: Photo) {
