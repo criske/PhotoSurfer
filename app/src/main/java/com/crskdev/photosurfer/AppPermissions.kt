@@ -8,7 +8,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import com.crskdev.photosurfer.presentation.photo.HasAppPermissionAwareness
+import com.crskdev.photosurfer.presentation.HasAppPermissionAwareness
 
 /**
  * Created by Cristian Pela on 07.08.2018.

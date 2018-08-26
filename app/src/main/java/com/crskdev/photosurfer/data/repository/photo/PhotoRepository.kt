@@ -10,7 +10,7 @@ import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
-import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.photo.SearchedPhotosJSON
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
@@ -95,7 +95,7 @@ class PhotoRepositoryImpl(
             val response = call.execute()
             response?.apply {
                 val headers = headers()
-                val pagingData = PhotoPagingData.createFromHeaders(headers)
+                val pagingData = PagingData.createFromHeaders(headers)
                 if (isSuccessful) {
                     @Suppress("UNCHECKED_CAST")
                     val body = body()?.let {

@@ -103,6 +103,7 @@ class ListPhotosFragment : Fragment() {
                                         viewModel.authStateLiveData.value ?: ""))
                     }
                     R.id.menu_action_logout -> {
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                         viewModel.logout()
                     }
                     R.id.menu_action_likes -> {
@@ -148,6 +149,7 @@ class ListPhotosFragment : Fragment() {
         searchPhotosView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 viewModel.changePageListingType(FilterVM(FilterVM.Type.SEARCH, R.string.search_title, query?.trim()?.toLowerCase()))
+                searchPhotosView.clearFocus()
                 return true
             }
 
@@ -159,16 +161,14 @@ class ListPhotosFragment : Fragment() {
             val isLoggedIn = it.isNotEmpty()
             toolbarListPhotos.menu.clear()
             if (isLoggedIn) {
-                toolbarListPhotos.inflateMenu(R.menu.menu_user_profile_me)
-            } else {
-                viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
+                toolbarListPhotos.inflateMenu(R.menu.menu_user_logged)
             }
             toolbarListPhotos.inflateMenu(R.menu.menu_list_photos)
         })
 
         viewModel.filterLiveData.observe(this, Observer {
             val title = if (it.type == FilterVM.Type.SEARCH) {
-                val term = if (it.data?.isNotEmpty() == true) "#${it.data}" else ""
+                val term = if (it.data?.isNotEmpty() == true) ": #${it.data}" else ""
                 getString(it.title) + term
             } else {
                 getString(it.title)
@@ -212,7 +212,7 @@ data class FilterVM(val type: FilterVM.Type, @StringRes val title: Int, val data
 @Parcelize
 data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: String? = null) : Parcelable
 
-class ListPhotosViewModel(vmFilter: FilterVM,
+class ListPhotosViewModel(initialFilterVM: FilterVM,
                           private val ioExecutor: Executor,
                           private val diskExecutor: Executor,
                           private val userRepository: UserRepository,
@@ -242,11 +242,11 @@ class ListPhotosViewModel(vmFilter: FilterVM,
     val errorLiveData = SingleLiveEvent<Throwable>()
 
     val filterLiveData = MutableLiveData<FilterVM>().apply {
-        value = vmFilter
+        value = initialFilterVM
     }
 
     private val choosablePhotoDataSourceFactory: ChoosablePhotoDataSourceFactory =
-            ChoosablePhotoDataSourceFactory(photoRepository, toDataSourceFilter(vmFilter))
+            ChoosablePhotoDataSourceFactory(photoRepository, toDataSourceFilter(initialFilterVM))
 
     val photosLiveData = photosPageListConfigLiveData(
             diskExecutor,
@@ -273,6 +273,7 @@ class ListPhotosViewModel(vmFilter: FilterVM,
     }
 
     fun changePageListingType(vmFilter: FilterVM) {
+        //todo cleanup
         var filter = vmFilter
         if (vmFilter.type == FilterVM.Type.SEARCH) {
             if (vmFilter.data != null)
@@ -280,7 +281,7 @@ class ListPhotosViewModel(vmFilter: FilterVM,
             else
                 filter = vmFilter.copy(data = searchTermTracker.getTerm(SearchTermTracker.Type.PHOTO_TERM)?.data)
         }
-        val dataSourceFilter = toDataSourceFilter(vmFilter)
+        val dataSourceFilter = toDataSourceFilter(filter)
         choosablePhotoDataSourceFactory.changeFilter(dataSourceFilter)
         photosLiveData.value?.dataSource?.invalidate()
         filterLiveData.value = filter

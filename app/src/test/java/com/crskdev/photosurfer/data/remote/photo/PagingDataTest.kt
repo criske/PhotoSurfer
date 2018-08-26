@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.remote.photo
 
+import com.crskdev.photosurfer.data.remote.PagingData
 import okhttp3.Headers
 import org.junit.Assert.*
 import org.junit.Test
@@ -7,7 +8,7 @@ import org.junit.Test
 /**
  * Created by Cristian Pela on 04.08.2018.
  */
-class PhotoPagingDataTest {
+class PagingDataTest {
 
     @Test
     fun shouldExtractFromHeader() {
@@ -19,7 +20,7 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=4>; rel=\"next\"")
                 .add("X-Total", "100")
                 .build()
-        assertEquals(PhotoPagingData(100, 3,2, 4), PhotoPagingData.createFromHeaders(headers))
+        assertEquals(PagingData(100, 3, 2, 4), PagingData.createFromHeaders(headers))
     }
 
     @Test
@@ -30,7 +31,7 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=346&foo=foo>; rel=\"last\",")
                 .add("X-Total", "100")
                 .build()
-        assertEquals(PhotoPagingData(100, 3, 2, null), PhotoPagingData.createFromHeaders(headers))
+        assertEquals(PagingData(100, 3, 2, null), PagingData.createFromHeaders(headers))
     }
 
     @Test
@@ -41,7 +42,7 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=4>; rel=\"next\"")
                 .add("X-Total", "100")
                 .build()
-        assertEquals(PhotoPagingData(100, 3,null, 4), PhotoPagingData.createFromHeaders(headers))
+        assertEquals(PagingData(100, 3, null, 4), PagingData.createFromHeaders(headers))
     }
 
     @Test(expected = Error::class)
@@ -51,6 +52,6 @@ class PhotoPagingDataTest {
                         "<https://api.unsplash.com/photos?page=346>; rel=\"last\"," +
                         "<https://api.unsplash.com/photos?page=4>; rel=\"next\"")
                 .build()
-        PhotoPagingData.createFromHeaders(headers)
+        PagingData.createFromHeaders(headers)
     }
 }

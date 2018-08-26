@@ -45,15 +45,24 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         btnLogin.setOnClickListener {
+            it.clearFocus()
+            enableAll(false)
             viewModel.login(txtEmailLogin.text.toString(), txtPasswordLogin.text.toString())
         }
         viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+            enableAll(true)
         })
         viewModel.loggedInLiveData.observe(this, Observer {
             Toast.makeText(context, "Successfully Logged In", Toast.LENGTH_SHORT).show()
             view.findNavController().popBackStack()
         })
+    }
+
+    private fun enableAll(enable: Boolean) {
+        btnLogin.isEnabled = enable
+        txtEmailLogin.isEnabled = enable
+        txtPasswordLogin.isEnabled = enable
     }
 }
 

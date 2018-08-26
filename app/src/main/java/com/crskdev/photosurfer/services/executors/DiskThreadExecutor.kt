@@ -1,4 +1,4 @@
-package com.crskdev.photosurfer.presentation.executors
+package com.crskdev.photosurfer.services.executors
 
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors

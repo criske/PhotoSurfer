@@ -2,7 +2,7 @@ package com.crskdev.photosurfer.entities;
 
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity;
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON;
-import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData;
+import com.crskdev.photosurfer.data.remote.PagingData;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ final class PhotoToEntityMappingReflect {
     private PhotoToEntityMappingReflect() {
     }
 
-    static <T extends PhotoEntity> T toDbEntity(PhotoJSON photo, PhotoPagingData pagingData,
+    static <T extends PhotoEntity> T toDbEntity(PhotoJSON photo, PagingData pagingData,
                                                 Integer nextIndex, Class<T> clazz) {
         try {
             T instance = clazz.newInstance();
@@ -53,7 +53,7 @@ final class PhotoToEntityMappingReflect {
         return null;
     }
 
-    static <T extends PhotoEntity> T toDbEntity(Photo photo, PhotoPagingData pagingData,
+    static <T extends PhotoEntity> T toDbEntity(Photo photo, PagingData pagingData,
                                                 Integer nextIndex, Class<T> clazz) {
         try {
             T instance = clazz.newInstance();
@@ -105,12 +105,19 @@ final class PhotoToEntityMappingReflect {
     }
 
     private static void setField(Object instance, Object value, Class<?> clazz, String name) throws NoSuchFieldException, IllegalAccessException {
-        Field field;
-        try {
-            field = clazz.getDeclaredField(name);
-        }catch (NoSuchFieldException ex){
-            field = clazz.getSuperclass().getDeclaredField(name);
+        Field field = null;
+        Class currentClazz = clazz;
+        while (field == null) {
+            try {
+                field = currentClazz.getDeclaredField(name);
+            } catch (NoSuchFieldException ex) {
+                currentClazz = clazz.getSuperclass();
+                if (currentClazz == null) {
+                    throw ex;
+                }
+            }
         }
+
         Boolean wasMadePublic = false;
         if (!field.isAccessible()) {
             field.setAccessible(true);

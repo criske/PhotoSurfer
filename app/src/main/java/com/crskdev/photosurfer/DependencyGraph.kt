@@ -8,9 +8,9 @@ import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.presentation.executors.DiskThreadExecutor
-import com.crskdev.photosurfer.presentation.executors.IOThreadExecutor
-import com.crskdev.photosurfer.presentation.executors.UIThreadExecutor
+import com.crskdev.photosurfer.services.executors.DiskThreadExecutor
+import com.crskdev.photosurfer.services.executors.IOThreadExecutor
+import com.crskdev.photosurfer.services.executors.UIThreadExecutor
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
@@ -119,7 +119,8 @@ object DependencyGraph {
                         Contract.TABLE_PHOTOS to db.photoDAO(),
                         Contract.TABLE_LIKE_PHOTOS to db.photoLikeDAO(),
                         Contract.TABLE_USER_PHOTOS to db.photoUserDAO(),
-                        Contract.TABLE_SEARCH_PHOTOS to db.photoSearchDAO()
+                        Contract.TABLE_SEARCH_PHOTOS to db.photoSearchDAO(),
+                        Contract.TABLE_USERS to db.userDAO()
                 ))
 
         //photo
@@ -142,7 +143,7 @@ object DependencyGraph {
         //user and auth
         val userAPI = retrofit.create(UserAPI::class.java)
         val authAPI: AuthAPI = retrofit.create(AuthAPI::class.java)
-        userRepository = UserRepositoryImpl(daoManager, userAPI, authAPI, authTokenStorage)
+        userRepository = UserRepositoryImpl(daoManager, staleDataTrackSupervisor, userAPI, authAPI, authTokenStorage)
 
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 

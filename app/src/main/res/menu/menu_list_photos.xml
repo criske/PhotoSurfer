@@ -6,6 +6,12 @@
         android:icon="@drawable/ic_person_white_24dp"
         android:title="@string/account"
         app:showAsAction="always"/>
+
+    <item android:id="@+id/menu_item_search_users"
+        android:orderInCategory="3"
+        android:title="@string/search_users"
+        app:showAsAction="never"/>
+
     <item
         android:orderInCategory="1"
         android:id="@+id/menu_action_trending"

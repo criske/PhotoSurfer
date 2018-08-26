@@ -1,12 +1,19 @@
 package com.crskdev.photosurfer.data.repository.user
 
+import androidx.paging.DataSource
+import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
+import com.crskdev.photosurfer.data.local.TransactionRunner
+import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
+import com.crskdev.photosurfer.data.local.user.UserDAO
+import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.auth.AuthAPI
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.auth.toAuthToken
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.User
+import com.crskdev.photosurfer.entities.toDbUserEntity
 import com.crskdev.photosurfer.entities.toUser
 
 /**
@@ -26,12 +33,63 @@ interface UserRepository : Repository {
 
     fun getUser(username: String, callback: Repository.Callback<User>)
 
+    fun getUsers(): DataSource.Factory<Int, User>
+
+    fun searchUsers(query: String, page: Int, callback: Repository.Callback<Unit>? = null)
+
+    fun follow(isFollowed: Boolean, callback: Repository.Callback<User>)
+
+    fun clear()
+
 }
 
 class UserRepositoryImpl(private val daoManager: DaoManager,
+                         private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
                          private val userAPI: UserAPI,
                          private val authAPI: AuthAPI,
                          private val authTokenStorage: AuthTokenStorage) : UserRepository {
+
+    private val userDAO: UserDAO = daoManager.getDao(Contract.TABLE_USERS)
+    private val transactional: TransactionRunner = daoManager.transactionRunner()
+
+    override fun clear() {
+        userDAO.clear()
+    }
+
+    override fun getUsers(): DataSource.Factory<Int, User> =
+            userDAO.getUsers().mapByPage { page ->
+                staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_USERS)
+                page.map { it.toUser() }
+            }
+
+
+    override fun searchUsers(query: String, page: Int, callback: Repository.Callback<Unit>?) {
+        try {
+            val response = userAPI.search(query, page).execute()
+            with(response) {
+                if (isSuccessful) {
+                    val pagingData = PagingData.createFromHeaders(headers())
+                    transactional {
+                        val nextIndex = userDAO.getNextIndex()
+                        val users = response.body()!!.results.map {
+                            it.toDbUserEntity(pagingData, nextIndex)
+                        }
+                        userDAO.insertUsers(users)
+                    }
+                    callback?.onSuccess(Unit)
+                } else {
+                    callback?.onError(Error("${code()}:${errorBody()?.string()}"), false)
+                }
+            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            callback?.onError(ex)
+        }
+    }
+
+    override fun follow(isFollowed: Boolean, callback: Repository.Callback<User>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     override fun login(email: String, password: String, callback: Repository.Callback<Unit>) {
         try {
@@ -112,5 +170,6 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
             callback.onError(ex)
         }
     }
+
 
 }

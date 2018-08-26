@@ -1,6 +1,6 @@
 package com.crskdev.photosurfer.entities
 
-import com.crskdev.photosurfer.data.remote.photo.PhotoPagingData
+import com.crskdev.photosurfer.data.remote.PagingData
 import java.util.*
 
 data class Photo(val id: String,
@@ -14,5 +14,5 @@ data class Photo(val id: String,
                  val views: Int,
                  val authorId: String,
                  val authorUsername: String,
-                 val pagingData: PhotoPagingData? = null,
-                 val extras: Any? = null)
+                 override val pagingData: PagingData? = null,
+                 val extras: Any? = null): BaseEntity()

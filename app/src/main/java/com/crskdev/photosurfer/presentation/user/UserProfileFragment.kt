@@ -9,14 +9,16 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import com.crskdev.photosurfer.R
-import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.defaultTransitionNavOptionsBuilder
 import kotlinx.android.synthetic.main.fragment_user_profile.*
 
 class UserProfileFragment : Fragment() {
 
+    private var created: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        created = savedInstanceState == null
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -26,7 +28,8 @@ class UserProfileFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupChildGraphAndToolbar(view)
+        if (created)
+            setupChildGraphAndToolbar(view)
     }
 
     private fun setupChildGraphAndToolbar(view: View) {

@@ -33,6 +33,7 @@ import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
 import com.crskdev.photosurfer.entities.parcelize
+import com.crskdev.photosurfer.presentation.HasAppPermissionAwareness
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.setStatusBarColor
 import com.crskdev.photosurfer.util.dpToPx

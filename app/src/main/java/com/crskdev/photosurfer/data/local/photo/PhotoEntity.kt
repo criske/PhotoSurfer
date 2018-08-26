@@ -1,18 +1,14 @@
 package com.crskdev.photosurfer.data.local.photo
 
-import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.PrimaryKey
+import com.crskdev.photosurfer.data.local.BaseDBEntity
 import com.crskdev.photosurfer.data.local.Contract
 
 /**
  * Created by Cristian Pela on 09.08.2018.
  */
 @Entity(tableName = Contract.TABLE_PHOTOS)
-open class PhotoEntity {
-    @PrimaryKey
-    lateinit var id: String
-    var indexInResponse: Int = -1
+open class PhotoEntity: BaseDBEntity() {
     lateinit var createdAt: String
     lateinit var updatedAt: String
     var width: Int = -1
@@ -23,7 +19,7 @@ open class PhotoEntity {
      */
     lateinit var urls: String
     /*
-        unwind values and concat them with ";"
+    unwind values and concat them with ";"
      */
     var categories: String? = null
     var likes: Int = 0
@@ -31,12 +27,6 @@ open class PhotoEntity {
     var views: Int = 0
     lateinit var authorId: String
     lateinit var authorUsername: String
-
-    //paging data
-    var total: Int? = null
-    var curr: Int? = null
-    var prev: Int? = null
-    var next: Int? = null
 }
 
 

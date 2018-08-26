@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.remote.user
 
+import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.entities.ImageType
 import com.squareup.moshi.Json
 import java.util.*
@@ -18,6 +19,8 @@ class UserJSON {
     lateinit var profileImageLinks: EnumMap<ImageType, String>
     @Json(name = "twitter_username")
     var twitterUserName: String? = null
+    @Json(name = "instagram_username")
+    var instagramUsername: String? = null
     @Json(name = "portfolio_url")
     var portfolioUrl: String? = null
     var bio: String? = null
@@ -37,4 +40,8 @@ class UserJSON {
     @Json(name = "total_likes")
     var likes: Int = 0
     var downloads: Int = 0
+}
+
+class SearchUsersJSON{
+    lateinit var results: List<UserJSON>
 }

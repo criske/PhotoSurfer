@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.entities
 
+import com.crskdev.photosurfer.data.remote.PagingData
 import java.util.*
 
 /**
@@ -13,6 +14,7 @@ data class User(
         val lastName: String,
         val profileImageLinks: EnumMap<ImageType, String>,
         val twitterUserName: String? = null,
+        val instagramUserName: String? = null,
         val portfolioUrl: String? = null,
         val bio: String? = null,
         val location: String? = null,
@@ -23,6 +25,7 @@ data class User(
         val followers: Int = 0,
         val following: Int = 0,
         val likes: Int = 0,
-        val downloads: Int = 0
-)
+        val downloads: Int = 0,
+        override val pagingData: PagingData? = null
+): BaseEntity()
 

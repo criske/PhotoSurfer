@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.local.track.StaleDataTackDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackEntity
+import com.crskdev.photosurfer.data.local.user.UserDAO
 
 /**
  * Created by Cristian Pela on 09.08.2018.
@@ -47,6 +48,8 @@ abstract class PhotoSurferDB : RoomDatabase() {
     abstract fun photoUserDAO(): PhotoUserDAO
     abstract fun photoLikeDAO(): PhotoLikeDAO
     abstract fun photoSearchDAO(): PhotoSearchDAO
+
+    abstract fun userDAO(): UserDAO
 
     abstract fun staleDataTrackDAO(): StaleDataTackDAO
 }
