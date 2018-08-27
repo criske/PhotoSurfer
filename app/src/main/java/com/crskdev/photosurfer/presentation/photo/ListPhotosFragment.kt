@@ -112,6 +112,10 @@ class ListPhotosFragment : Fragment() {
                     R.id.menu_action_trending -> {
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
+                    R.id.menu_item_search_users ->{
+                        toolbarListPhotos.findNavController().navigate(R.id.fragment_search_users, null,
+                                defaultTransitionNavOptions())
+                    }
                 }
                 true
             }

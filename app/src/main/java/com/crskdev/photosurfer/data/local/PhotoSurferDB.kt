@@ -8,6 +8,7 @@ import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.local.track.StaleDataTackDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackEntity
 import com.crskdev.photosurfer.data.local.user.UserDAO
+import com.crskdev.photosurfer.data.local.user.UserEntity
 
 /**
  * Created by Cristian Pela on 09.08.2018.
@@ -18,9 +19,10 @@ import com.crskdev.photosurfer.data.local.user.UserDAO
             UserPhotoEntity::class,
             LikePhotoEntity::class,
             SearchPhotoEntity::class,
+            UserEntity::class,
             StaleDataTrackEntity::class
         ],
-        version = 6,
+        version = 7,
         exportSchema = false
 )
 abstract class PhotoSurferDB : RoomDatabase() {

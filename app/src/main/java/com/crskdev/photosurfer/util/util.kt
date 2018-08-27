@@ -7,6 +7,7 @@ import android.view.ViewPropertyAnimator
 import androidx.annotation.FloatRange
 import androidx.core.graphics.ColorUtils
 import androidx.navigation.NavOptions
+import androidx.recyclerview.widget.GridLayoutManager
 import com.crskdev.photosurfer.R
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -54,9 +55,11 @@ inline fun ViewPropertyAnimator.onEnded(crossinline action: () -> Unit): ViewPro
 }
 
 
-
-fun Float.dpToPx(resources: Resources) =
+fun Float.dpToPx(resources: Resources): Float =
         TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this, resources.displayMetrics)
+
+fun Int.dpToPx(resources: Resources): Float =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.toFloat(), resources.displayMetrics)
 
 fun defaultTransitionNavOptionsBuilder(): NavOptions.Builder = NavOptions.Builder()
         .setEnterAnim(R.anim.in_from_right)
@@ -65,3 +68,13 @@ fun defaultTransitionNavOptionsBuilder(): NavOptions.Builder = NavOptions.Builde
         .setPopExitAnim(R.anim.out_to_right)
 
 fun defaultTransitionNavOptions() = defaultTransitionNavOptionsBuilder().build()
+
+fun GridLayoutManager.setSpanCountByScreenWidth(resources: Resources, itemWidthDp: Int, spacingDp: Int = 0) {
+    kotlin.assert(itemWidthDp > 0) {
+        "Item Width must bigger than 0. Provided : $itemWidthDp"
+    }
+    val screenWidth = resources.displayMetrics.widthPixels
+    val spacingGrid = if (spacingDp > 0) 2 * spacingDp.dpToPx(resources).toInt() else 0
+    val spanCount = screenWidth / (itemWidthDp.dpToPx(resources) + spacingGrid)
+    setSpanCount(Math.round(spanCount))
+}

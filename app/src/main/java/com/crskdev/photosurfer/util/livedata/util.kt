@@ -1,7 +1,9 @@
 package com.crskdev.photosurfer.util.livedata
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.*
+import kotlin.reflect.KClass
 
 /**
  * Created by Cristian Pela on 17.08.2018.
@@ -40,3 +42,19 @@ fun <T> LiveData<T>.skip(count: Int): LiveData<T> {
 }
 
 fun <T> LiveData<T>.skipFirst(): LiveData<T> = skip(1)
+
+inline fun <reified V : ViewModel> viewModelFromProvider(activity: FragmentActivity, crossinline provider: () -> V): V =
+        ViewModelProviders.of(activity, object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return provider() as T
+            }
+        }).get(V::class.java)
+
+inline fun <reified V : ViewModel> viewModelFromProvider(fragment: Fragment, crossinline provider: () -> V): V =
+        ViewModelProviders.of(fragment, object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return provider() as T
+            }
+        }).get(V::class.java)

@@ -34,7 +34,7 @@ class SearchTermTrackerImpl(private val prefs: SharedPreferences) : SearchTermTr
     override fun setTerm(term: Term) {
         val old = getTerm(term.type)
         prefs.edit {
-            putString(term.type.toString(), term.data)
+            putString(term.type.toString(), term.data.toLowerCase())
         }
         notifyListeners(old, term)
 

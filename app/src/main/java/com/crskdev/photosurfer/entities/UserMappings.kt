@@ -31,6 +31,7 @@ fun UserJSON.toDbUserEntity(pagingData: PagingData, nextIndex: Int): UserEntity 
     this.lastUpdated = this@toDbUserEntity.lastUpdated
     this.firstName = this@toDbUserEntity.firstName
     this.lastName = this@toDbUserEntity.lastName
+    this.userName = this@toDbUserEntity.userName
     this.profileImageLinks = transformMapUrls(this@toDbUserEntity.profileImageLinks)
     this.twitterUserName = this@toDbUserEntity.twitterUserName
     this.instagramUsername = this@toDbUserEntity.instagramUsername
