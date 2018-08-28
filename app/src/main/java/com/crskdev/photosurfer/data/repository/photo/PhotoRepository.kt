@@ -1,10 +1,12 @@
 package com.crskdev.photosurfer.data.repository.photo
 
 import androidx.annotation.AnyThread
+import androidx.annotation.MainThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
+import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
@@ -60,14 +62,11 @@ class PhotoRepositoryImpl(
         private val daoPhotoFacade: PhotoDAOFacade,
         private val authTokenStorage: AuthTokenStorage,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
+        private val apiCallDispatcher: APICallDispatcher,
         private val api: PhotoAPI,
         private val downloadManager: DownloadManager,
         private val scheduledWorkService: ScheduledWorkService
 ) : PhotoRepository {
-
-
-    @Volatile
-    private var cancelableApiCall: Call<*>? = null
 
     override fun getPhotos(repositoryAction: RepositoryAction): DataSource.Factory<Int, Photo> {
         val table = when (repositoryAction.type) {
@@ -85,15 +84,19 @@ class PhotoRepositoryImpl(
     //this must be called on the io thread
     override fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>?) {
         try {
-            val call = when (repositoryAction.type) {
-                RepositoryAction.Type.LIKE -> api.getLikedPhotos(repositoryAction.extras[0].toString(), page)
-                RepositoryAction.Type.TRENDING -> api.getRandomPhotos(page)
-                RepositoryAction.Type.USER_PHOTOS -> api.getUserPhotos(repositoryAction.extras[0].toString(), page)
-                RepositoryAction.Type.SEARCH -> api.getSearchedPhotos(repositoryAction.extras[0].toString(), page)
-            }.apply { cancelableApiCall = this }
-
-            val response = call.execute()
-            response?.apply {
+            val response = if (repositoryAction.type == RepositoryAction.Type.SEARCH) {
+                apiCallDispatcher { api.getSearchedPhotos(repositoryAction.extras[0].toString(), page) }
+            } else {
+                apiCallDispatcher {
+                    when (repositoryAction.type) {
+                        RepositoryAction.Type.LIKE -> api.getLikedPhotos(repositoryAction.extras[0].toString(), page)
+                        RepositoryAction.Type.TRENDING -> api.getRandomPhotos(page)
+                        RepositoryAction.Type.USER_PHOTOS -> api.getUserPhotos(repositoryAction.extras[0].toString(), page)
+                        RepositoryAction.Type.SEARCH -> throw Error()
+                    }
+                }
+            }
+            response.apply {
                 val headers = headers()
                 val pagingData = PagingData.createFromHeaders(headers)
                 if (isSuccessful) {
@@ -177,9 +180,9 @@ class PhotoRepositoryImpl(
                 "likedByMe" to photo.likedByMe))
     }
 
-    @AnyThread
+    @MainThread
     override fun cancel() {
-        cancelableApiCall?.cancel()
+        apiCallDispatcher.cancel()
         downloadManager.cancel()
     }
 

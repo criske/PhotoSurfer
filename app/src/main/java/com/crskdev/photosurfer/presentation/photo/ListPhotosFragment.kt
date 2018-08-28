@@ -21,7 +21,7 @@ import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
 import com.crskdev.photosurfer.data.local.search.Term
-import com.crskdev.photosurfer.data.remote.auth.ObservableAuthState
+import com.crskdev.photosurfer.data.remote.auth.AuthToken
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
@@ -30,13 +30,15 @@ import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
-import com.crskdev.photosurfer.presentation.AuthStateLiveData
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
 import com.crskdev.photosurfer.services.ScheduledWorkService
+import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
+import com.crskdev.photosurfer.util.livedata.filter
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
@@ -73,7 +75,7 @@ class ListPhotosFragment : Fragment() {
                         graph.photoRepository,
                         graph.searchTermTracker,
                         graph.scheduledWorkService,
-                        graph.observableAuthState
+                        graph.listenableAuthState
                 ) as T
             }
         }).get(ListPhotosViewModel::class.java)
@@ -112,7 +114,7 @@ class ListPhotosFragment : Fragment() {
                     R.id.menu_action_trending -> {
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
-                    R.id.menu_item_search_users ->{
+                    R.id.menu_item_search_users -> {
                         toolbarListPhotos.findNavController().navigate(R.id.fragment_search_users, null,
                                 defaultTransitionNavOptions())
                     }
@@ -223,10 +225,11 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
                           private val photoRepository: PhotoRepository,
                           private val searchTermTracker: SearchTermTracker,
                           private val scheduledWorkService: ScheduledWorkService,
-                          observableAuthState: ObservableAuthState) : ViewModel() {
+                          listenableAuthState: Listenable<AuthToken>) : ViewModel() {
 
 
     private val searchTermTrackerLiveData = SearchTermTrackerLiveData(searchTermTracker)
+            .filter { it.second != null && it.second?.type == SearchTermTracker.Type.PHOTO_TERM }
 
     init {
         searchTermTrackerLiveData.observeForever {
@@ -239,7 +242,9 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
         }
     }
 
-    val authStateLiveData = AuthStateLiveData(observableAuthState)
+    val authStateLiveData = Transformations.map(ListenableLiveData(listenableAuthState)) {
+        it.username
+    }!!
 
     val needsAuthLiveData = SingleLiveEvent<Unit>()
 

@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.util.livedata
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
+import androidx.paging.PagedList
 import kotlin.reflect.KClass
 
 /**
@@ -58,3 +59,8 @@ inline fun <reified V : ViewModel> viewModelFromProvider(fragment: Fragment, cro
                 return provider() as T
             }
         }).get(V::class.java)
+
+fun PagedList.Config.Builder.defaultConfig() = this
+        .setEnablePlaceholders(true)
+        .setPrefetchDistance(10)
+        .setPageSize(10)

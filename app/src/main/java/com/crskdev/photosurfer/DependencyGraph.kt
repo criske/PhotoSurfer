@@ -17,6 +17,7 @@ import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
 import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
+import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.user.UserRepository
@@ -26,6 +27,9 @@ import com.crskdev.photosurfer.services.ScheduledWorkServiceImpl
 import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
 import com.crskdev.photosurfer.services.ScheduledWorkService
+import com.crskdev.photosurfer.util.AndroidThreadCallChecker
+import com.crskdev.photosurfer.util.Listenable
+import com.crskdev.photosurfer.util.ThreadCallChecker
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -58,11 +62,13 @@ object DependencyGraph {
         private set
 
     //NETWORK
+    lateinit var apiCallDispatcher: APICallDispatcher
+        private set
     lateinit var networkCheckService: NetworkCheckService
         private set
     lateinit var authTokenStorage: AuthTokenStorage
         private set
-    lateinit var observableAuthState: ObservableAuthState
+    lateinit var listenableAuthState: Listenable<AuthToken>
         private set
     lateinit var retrofit: Retrofit
         private set
@@ -91,16 +97,25 @@ object DependencyGraph {
     lateinit var authNavigatorMiddleware: AuthNavigatorMiddleware
         private set
 
+    //util
+    lateinit var threadCallChecker: ThreadCallChecker
+        private set
+
+
     fun init(context: Context) {
         if (isInit) return
 
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
+        //util
+        threadCallChecker = AndroidThreadCallChecker()
+
         //NETWORK
+        apiCallDispatcher = APICallDispatcher(threadCallChecker)
         scheduledWorkService = ScheduledWorkServiceImpl()
         networkCheckService = NetworkCheckServiceImpl(context)
         authTokenStorage = AuthTokenStorageImpl(preferences).apply {
-            observableAuthState = this
+            listenableAuthState = this
         }
         //authTokenStorage = InMemoryAuthTokenStorage()
         val retrofitClient = RetrofitClient(NetworkClient(
@@ -126,12 +141,13 @@ object DependencyGraph {
         //photo
         photoAPI = retrofit.create(PhotoAPI::class.java)
         externalPhotoGalleryDAO = ExternalPhotoGalleryDAOImpl(context)
-        photoDownloader = PhotoDownloaderImpl(photoAPI)
+        photoDownloader = PhotoDownloaderImpl(apiCallDispatcher, photoAPI)
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         photoRepository = PhotoRepositoryImpl(
                 PhotoDAOFacade(daoManager),
                 authTokenStorage,
                 staleDataTrackSupervisor,
+                apiCallDispatcher,
                 photoAPI,
                 downloadManager,
                 scheduledWorkService
@@ -143,7 +159,8 @@ object DependencyGraph {
         //user and auth
         val userAPI = retrofit.create(UserAPI::class.java)
         val authAPI: AuthAPI = retrofit.create(AuthAPI::class.java)
-        userRepository = UserRepositoryImpl(daoManager, staleDataTrackSupervisor, userAPI, authAPI, authTokenStorage)
+        userRepository = UserRepositoryImpl(daoManager, staleDataTrackSupervisor, apiCallDispatcher,
+                userAPI, authAPI, authTokenStorage)
 
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 

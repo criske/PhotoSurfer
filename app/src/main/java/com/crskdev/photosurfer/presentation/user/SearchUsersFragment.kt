@@ -7,10 +7,10 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
-import androidx.core.view.MenuItemCompat.SHOW_AS_ACTION_ALWAYS
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
@@ -30,11 +30,8 @@ import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
-import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
-import com.crskdev.photosurfer.util.livedata.filter
-import com.crskdev.photosurfer.util.livedata.skipFirst
-import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
-import com.crskdev.photosurfer.util.setSpanCountByScreenWidth
+import com.crskdev.photosurfer.util.dpToPx
+import com.crskdev.photosurfer.util.livedata.*
 import kotlinx.android.synthetic.main.fragment_search_users.*
 import java.util.concurrent.Executor
 
@@ -66,12 +63,16 @@ class SearchUsersFragment : Fragment() {
         val searchView = SearchView(ContextThemeWrapper(view.context,
                 R.style.ThemeOverlay_AppCompat_Dark_ActionBar))
                 .apply {
+                    maxWidth = Int.MAX_VALUE
                     setIconifiedByDefault(false)
-                    setOnQueryTextListener(object: SearchView.OnQueryTextListener{
+                    val sv = this
+                    setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                         override fun onQueryTextSubmit(query: String): Boolean {
                             viewModel.search(query)
+                            sv.clearFocus()
                             return true
                         }
+
                         override fun onQueryTextChange(newText: String): Boolean = false
                     })
                 }
@@ -81,6 +82,7 @@ class SearchUsersFragment : Fragment() {
                 actionView = searchView
                 icon = ContextCompat.getDrawable(context, R.drawable.ic_search_white_24dp)
                 setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW.or(MenuItem.SHOW_AS_ACTION_ALWAYS))
+                expandActionView()
             }
             setNavigationOnClickListener {
                 findNavController().popBackStack()
@@ -91,17 +93,32 @@ class SearchUsersFragment : Fragment() {
                     Glide.with(this@SearchUsersFragment)) {
                 //todo do action show user
             }
-            layoutManager = GridLayoutManager(context, 1).apply {
-                setSpanCountByScreenWidth(resources, 150, 2)
+            post {
+                // call next frame after recycler is measured
+                val cellWidth = 150.dpToPx(resources).toInt()
+                val spans = width / cellWidth
+                val spacing = ((width - cellWidth * spans) / spans) / 2
+                layoutManager = GridLayoutManager(context, spans)
+                addItemDecoration(object : RecyclerView.ItemDecoration() {
+                    override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+                        val position = parent.getChildAdapterPosition(view)
+                        val column = position % spans
+                        outRect.left = if (column == 0) spacing else spacing / 2
+                        outRect.right = if (column == spans - 1) spacing else spacing / 2
+                        if (position < spans) {
+                            outRect.top = spacing
+                        }
+                        outRect.bottom = spacing
+                    }
+                })
             }
-            addItemDecoration(object : RecyclerView.ItemDecoration() {
-                override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
-                    outRect.set(2, 2, 2, 2)
-                }
-            })
+            Unit
         }
         viewModel.usersLiveData.observe(this, Observer {
             (recyclerSearchUsers.adapter as SearchUsersAdapter).submitList(it)
+        })
+        viewModel.errorLiveData.observe(this, Observer {
+            Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
         })
     }
 }
@@ -115,7 +132,7 @@ class SearchUsersViewModel(
     private val searchTermTrackerLiveData = SearchTermTrackerLiveData(searchTermTracker)
             .filter { it.second != null && it.second?.type == SearchTermTracker.Type.USER_TERM }
 
-    private val errorLiveData = SingleLiveEvent<Throwable>()
+    val errorLiveData = SingleLiveEvent<Throwable>()
 
     init {
         searchTermTrackerLiveData
@@ -128,11 +145,7 @@ class SearchUsersViewModel(
                 }
     }
 
-    private val pageListConfig = PagedList.Config.Builder()
-            .setEnablePlaceholders(true)
-            .setPrefetchDistance(10)
-            .setPageSize(10)
-            .build()
+    private val pageListConfig = PagedList.Config.Builder().defaultConfig().build()
 
     val usersLiveData = Transformations
             .switchMap(searchTermTrackerLiveData) {

@@ -38,7 +38,6 @@ class ScheduledWorkServiceImpl : ScheduledWorkService {
             }
         }
         val workerTag = workData.tag.toString()
-        workManager.cancelAllWorkByTag(workerTag)
         val request = OneTimeWorkRequest.Builder(workData.tag.type.workerClass)
                 .setInputData(dataBuilder.build())
                 .addTag(workerTag)
@@ -47,7 +46,7 @@ class ScheduledWorkServiceImpl : ScheduledWorkService {
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build())
                 .build()
-        workManager.enqueue(request)
+        workManager.beginUniqueWork(workerTag, ExistingWorkPolicy.REPLACE, request).enqueue()
     }
 
     override fun clearScheduled(workerTag: Tag) {
@@ -76,7 +75,7 @@ abstract class TypedWorker : Worker() {
 
     abstract val type: WorkType
 
-    protected fun sendNotification(message: String) {
+    protected fun sendPlatformNotification(message: String) {
         val context = applicationContext
         val channelID = "PhotoSurfer-Job-Service-Notification"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -107,7 +106,9 @@ class LikeWorker : TypedWorker() {
     override val type: WorkType = WorkType.LIKE
 
     override fun doWork(): Result {
-        val api = applicationContext.dependencyGraph().photoAPI
+        val graph = applicationContext.dependencyGraph()
+        val api = graph.photoAPI
+        val apiCallDispatcher = graph.apiCallDispatcher
 
         val id = inputData.getString("id")
         val liked: Boolean = inputData.getBoolean("likedByMe", false)
@@ -115,27 +116,31 @@ class LikeWorker : TypedWorker() {
         if (id == null)
             return Result.FAILURE
 
-        val call = if (liked) api.like(id) else api.unlike(id)
         return try {
-            val response = call.execute()
+            val response = apiCallDispatcher {
+                if (liked)
+                    api.like(id)
+                else
+                    api.unlike(id)
+            }
             val code = response.code()
             when (code) {
                 201, 200 -> {
-                    sendNotification("Scheduled photo like for id: $id successful")
+                    sendPlatformNotification("Scheduled photo like for id: $id successful")
                     Result.SUCCESS
                 }
                 401 -> {
-                    sendNotification("Scheduled photo like for id: $id failed. Need login")
+                    sendPlatformNotification("Scheduled photo like for id: $id failed. Need login")
                     Result.RETRY
                 }
                 429 -> {
-                    sendNotification("Scheduled photo like for id: $id failed. Request limit reached")
+                    sendPlatformNotification("Scheduled photo like for id: $id failed. Request limit reached")
                     Result.RETRY
                 }
                 else -> Result.RETRY
             }
         } catch (ex: Exception) {
-            sendNotification("Scheduled photo like for id: $id failed. No network. Will retry later")
+            sendPlatformNotification("Scheduled photo like for id: $id failed. No network. Will retry later")
             Result.RETRY
         }
     }

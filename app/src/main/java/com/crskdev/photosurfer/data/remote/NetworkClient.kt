@@ -3,6 +3,7 @@
 package com.crskdev.photosurfer.data.remote
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.remote.auth.APIKeys
@@ -11,6 +12,7 @@ import com.crskdev.photosurfer.data.remote.download.DownloadInterceptor
 import com.crskdev.photosurfer.data.remote.download.ProgressListener
 import com.squareup.moshi.Moshi
 import okhttp3.*
+import okhttp3.logging.HttpLoggingInterceptor
 import java.net.CookieManager
 import java.net.CookiePolicy
 import java.util.concurrent.TimeUnit
@@ -37,9 +39,15 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
     internal val client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(false)
             .addInterceptor(UnsplashInterceptor(tokenStorage, apiKeys))
             .addInterceptor(RateLimitInterceptor())
             .addInterceptor(downloadInterceptor)
+            .addInterceptor(HttpLoggingInterceptor{
+                Log.d("NetworkClient", it)
+            })
             .build()
 
     internal val caller: Caller = Caller(BASE_HOST_API).apply {

@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.data.remote.auth
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.crskdev.photosurfer.data.remote.auth.AuthToken.Companion.NONE
+import com.crskdev.photosurfer.util.Listenable
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
@@ -27,42 +28,17 @@ interface AuthTokenStorage {
 
 }
 
-interface ObservableAuthState {
+abstract class ObservableAuthTokenStorage : AuthTokenStorage, Listenable<AuthToken>() {
 
-    interface Listener {
-        fun onChange(new: AuthToken?)
-    }
-
-    fun addListener(authStateListener: Listener) {}
-
-    fun removeListener(authStateListener: Listener) {}
-
-    fun notifyListeners(new: AuthToken?)
-}
-
-abstract class ObservableAuthTokenStorage : AuthTokenStorage, ObservableAuthState {
-
-    private val listeners = CopyOnWriteArrayList<ObservableAuthState.Listener>()
-
-    override fun addListener(authStateListener: ObservableAuthState.Listener) {
-        listeners.add(authStateListener)
-        authStateListener.onChange(token()) // emit on subscribe
-    }
-
-    override fun removeListener(authStateListener: ObservableAuthState.Listener) {
-        listeners.remove(authStateListener)
-    }
-
-    override fun notifyListeners(new: AuthToken?) {
-        listeners.forEach {
-            it.onChange(new)
-        }
+    override fun addListener(listener: Listener<AuthToken>) {
+        super.addListener(listener)
+        listener.onNotified(token()?: NONE) // emit on subscribe
     }
 }
 
 class InMemoryAuthTokenStorage : ObservableAuthTokenStorage() {
 
-    private var token: AuthToken by Delegates.observable(NONE) { _, old, new ->
+    private var token: AuthToken by Delegates.observable(NONE) { _, _, new ->
         notifyListeners(new)
     }
 
@@ -136,6 +112,6 @@ class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAut
         prefs.edit {
             remove(KEY_AUTH_TOKEN)
         }
-        notifyListeners(null)
+        notifyListeners(NONE)
     }
 }

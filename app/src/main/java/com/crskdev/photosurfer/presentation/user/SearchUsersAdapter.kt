@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -45,6 +46,7 @@ class SearchUsersVH(view: View,
                     private val action: (User) -> Unit) : RecyclerView.ViewHolder(view) {
 
     private val imageListUser: ImageView = view.findViewById(R.id.imageListUser)!!
+    private val textListUser: TextView = view.findViewById(R.id.textListUser)!!
 
     private lateinit var user: User
 
@@ -54,8 +56,9 @@ class SearchUsersVH(view: View,
 
     fun bind(user: User) {
         this.user = user
+        textListUser.text = "${user.firstName} ${user.lastName} (@${user.userName})"
         glide.asDrawable()
-                .load(user.profileImageLinks[ImageType.MEDIUM])
+                .load(user.profileImageLinks[ImageType.LARGE])
                 .apply(RequestOptions()
                         .error(R.drawable.ic_avatar_placeholder)
                         .placeholder(R.drawable.ic_avatar_placeholder)

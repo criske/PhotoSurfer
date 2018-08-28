@@ -111,7 +111,7 @@ final class PhotoToEntityMappingReflect {
             try {
                 field = currentClazz.getDeclaredField(name);
             } catch (NoSuchFieldException ex) {
-                currentClazz = clazz.getSuperclass();
+                currentClazz = currentClazz.getSuperclass();
                 if (currentClazz == null) {
                     throw ex;
                 }

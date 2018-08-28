@@ -4,6 +4,7 @@ import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.util.safeSet
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
+import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import okio.Source
 import retrofit2.Call
 import java.util.concurrent.atomic.AtomicBoolean
@@ -100,22 +101,20 @@ interface PhotoDownloader {
 
 }
 
-class PhotoDownloaderImpl(private val photoAPI: PhotoAPI) : PhotoDownloader {
-
-
-    @Volatile
-    private var call: Call<*>? = null
+class PhotoDownloaderImpl(
+        private val apiCallDispatcher: APICallDispatcher,
+        private val photoAPI: PhotoAPI) : PhotoDownloader {
 
     override fun data(photo: Photo): Source? {
-        val response = photoAPI.download(photo.id).apply { call = this }.execute()
-        if(!response.isSuccessful){
+        val response = apiCallDispatcher { photoAPI.download(photo.id) }
+        if (!response.isSuccessful) {
             throw Exception(response.errorBody()?.string())
         }
         return response.body()?.source()
     }
 
     override fun cancel() {
-        call?.takeIf { !it.isCanceled || !it.isExecuted }?.cancel()
+        apiCallDispatcher.cancel()
     }
 
 }

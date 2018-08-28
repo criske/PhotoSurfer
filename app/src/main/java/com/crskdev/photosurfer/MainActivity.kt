@@ -3,12 +3,20 @@ package com.crskdev.photosurfer
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
+import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
+import com.crskdev.photosurfer.util.Listenable
+import com.crskdev.photosurfer.util.livedata.ListenableLiveData
+import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.setAlphaComponent
 
 
@@ -17,6 +25,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val viewModel = viewModelFromProvider(this) {
+            MainActivityViewModel(dependencyGraph().apiCallDispatcher)
+        }
+        viewModel.apiCallStateLiveData.observe(this, Observer {
+            Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
+        })
     }
 
     override fun onSupportNavigateUp() = findNavController(R.id.nav_host_fragment).navigateUp()
@@ -40,6 +54,13 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
+class MainActivityViewModel(listenableApiCallState: Listenable<APICallDispatcher.State>) : ViewModel() {
+
+    val apiCallStateLiveData: LiveData<APICallDispatcher.State> = ListenableLiveData(listenableApiCallState)
+
+}
+
 
 fun FragmentActivity.findTopFragment(): Fragment? {
     val navHostFragment = this.supportFragmentManager.fragments[0] // nav host fragment

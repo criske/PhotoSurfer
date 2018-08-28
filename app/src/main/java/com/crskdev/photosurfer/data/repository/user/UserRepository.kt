@@ -6,6 +6,7 @@ import com.crskdev.photosurfer.data.local.DaoManager
 import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.local.user.UserDAO
+import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.auth.AuthAPI
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
@@ -45,6 +46,7 @@ interface UserRepository : Repository {
 
 class UserRepositoryImpl(private val daoManager: DaoManager,
                          private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
+                         private val apiCallDispatcher: APICallDispatcher,
                          private val userAPI: UserAPI,
                          private val authAPI: AuthAPI,
                          private val authTokenStorage: AuthTokenStorage) : UserRepository {
@@ -65,7 +67,7 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
 
     override fun searchUsers(query: String, page: Int, callback: Repository.Callback<Unit>?) {
         try {
-            val response = userAPI.search(query, page).execute()
+            val response = apiCallDispatcher { userAPI.search(query, page) }
             with(response) {
                 if (isSuccessful) {
                     val pagingData = PagingData.createFromHeaders(headers())
@@ -93,7 +95,7 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
 
     override fun login(email: String, password: String, callback: Repository.Callback<Unit>) {
         try {
-            val authResponse = authAPI.authorize(email, password).execute()
+            val authResponse = apiCallDispatcher { authAPI.authorize(email, password) }
             with(authResponse) {
                 if (isSuccessful) {
                     //TODO USE DIFFERENT FLOW - MAYBE CREATE A TABLE FOR LOGGED USER instead of saving user name in authtoken storage
@@ -127,7 +129,7 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
 
     override fun me(callback: Repository.Callback<User>) {
         try {
-            val userResponse = userAPI.getMe().execute()
+            val userResponse = apiCallDispatcher { userAPI.getMe() }
             with(userResponse) {
                 if (isSuccessful) {
                     val user = userResponse.body()!!.toUser()
@@ -157,7 +159,7 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
 
     override fun getUser(username: String, callback: Repository.Callback<User>) {
         try {
-            val userResponse = userAPI.getUser(username).execute()
+            val userResponse = apiCallDispatcher { userAPI.getUser(username) }
             with(userResponse) {
                 if (isSuccessful) {
                     val user = userResponse.body()!!.toUser()
