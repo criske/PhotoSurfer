@@ -29,7 +29,9 @@ class MainActivity : AppCompatActivity() {
             MainActivityViewModel(dependencyGraph().apiCallDispatcher)
         }
         viewModel.apiCallStateLiveData.observe(this, Observer {
-            Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
+            if (!(savedInstanceState != null && it == APICallDispatcher.State.EXECUTED)) {
+                Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
+            }
         })
     }
 
@@ -58,7 +60,7 @@ class MainActivity : AppCompatActivity() {
 class MainActivityViewModel(listenableApiCallState: Listenable<APICallDispatcher.State>) : ViewModel() {
 
     val apiCallStateLiveData: LiveData<APICallDispatcher.State> = ListenableLiveData(listenableApiCallState)
-
+            .toNonSingleLiveData()
 }
 
 
