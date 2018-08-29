@@ -16,6 +16,8 @@ import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.entities.toDbUserEntity
 import com.crskdev.photosurfer.entities.toUser
+import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.util.runOn
 
 /**
  * Created by Cristian Pela on 14.08.2018.
@@ -44,18 +46,25 @@ interface UserRepository : Repository {
 
 }
 
-class UserRepositoryImpl(private val daoManager: DaoManager,
+class UserRepositoryImpl(executorsManager: ExecutorsManager,
+                         private val daoManager: DaoManager,
                          private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
                          private val apiCallDispatcher: APICallDispatcher,
                          private val userAPI: UserAPI,
                          private val authAPI: AuthAPI,
                          private val authTokenStorage: AuthTokenStorage) : UserRepository {
 
+    private val uiExecutor = executorsManager.types[ExecutorsManager.Type.UI]!!
+    private val ioExecutor = executorsManager.types[ExecutorsManager.Type.NETWORK]!!
+    private val diskExecutor = executorsManager.types[ExecutorsManager.Type.DISK]!!
+
     private val userDAO: UserDAO = daoManager.getDao(Contract.TABLE_USERS)
     private val transactional: TransactionRunner = daoManager.transactionRunner()
 
     override fun clear() {
-        userDAO.clear()
+        diskExecutor.execute {
+            userDAO.clear()
+        }
     }
 
     override fun getUsers(): DataSource.Factory<Int, User> =
@@ -66,26 +75,37 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
 
 
     override fun searchUsers(query: String, page: Int, callback: Repository.Callback<Unit>?) {
-        try {
-            val response = apiCallDispatcher { userAPI.search(query, page) }
-            with(response) {
-                if (isSuccessful) {
-                    val pagingData = PagingData.createFromHeaders(headers())
-                    transactional {
-                        val nextIndex = userDAO.getNextIndex()
-                        val users = response.body()!!.results.map {
-                            it.toDbUserEntity(pagingData, nextIndex)
+        uiExecutor.execute {
+            apiCallDispatcher.cancel()
+        }
+        ioExecutor.execute {
+            try {
+                val response = apiCallDispatcher { userAPI.search(query, page) }
+                with(response) {
+                    if (isSuccessful) {
+                        val pagingData = PagingData.createFromHeaders(headers())
+                        diskExecutor.execute {
+                            transactional {
+                                val nextIndex = userDAO.getNextIndex()
+                                val users = response.body()!!.results.map {
+                                    it.toDbUserEntity(pagingData, nextIndex)
+                                }
+                                userDAO.insertUsers(users)
+                            }
+                            callback?.runOn(uiExecutor) {
+                                onSuccess(Unit)
+                            }
                         }
-                        userDAO.insertUsers(users)
+                    } else {
+                        callback?.runOn(uiExecutor) {
+                            onError(Error("${code()}:${errorBody()?.string()}"), false)
+                        }
                     }
-                    callback?.onSuccess(Unit)
-                } else {
-                    callback?.onError(Error("${code()}:${errorBody()?.string()}"), false)
                 }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                callback?.runOn(uiExecutor) { onError(ex) }
             }
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-            callback?.onError(ex)
         }
     }
 
@@ -94,53 +114,67 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
     }
 
     override fun login(email: String, password: String, callback: Repository.Callback<Unit>) {
-        try {
-            val authResponse = apiCallDispatcher { authAPI.authorize(email, password) }
-            with(authResponse) {
-                if (isSuccessful) {
-                    //TODO USE DIFFERENT FLOW - MAYBE CREATE A TABLE FOR LOGGED USER instead of saving user name in authtoken storage
-                    val authTokenJSON = authResponse.body()!!
-                    authTokenStorage.saveToken(authTokenJSON.toAuthToken(""))
-                    val meResponse = userAPI.getMe().execute()
-                    if (meResponse.isSuccessful) {
-                        val me = meResponse.body()?.toUser()!!
-                        authTokenStorage.token()?.copy(username = me.userName)?.let { authTokenStorage.saveToken(it) }
-                        callback.onSuccess(Unit)
+        apiCallDispatcher.runOn(uiExecutor) { cancel() }
+        ioExecutor.execute {
+            try {
+                val authResponse = apiCallDispatcher { authAPI.authorize(email, password) }
+                with(authResponse) {
+                    if (isSuccessful) {
+                        //TODO USE DIFFERENT FLOW - MAYBE CREATE A TABLE FOR LOGGED USER instead of saving user name in authtoken storage
+                        diskExecutor.execute {
+                            val authTokenJSON = authResponse.body()!!
+                            authTokenStorage.saveToken(authTokenJSON.toAuthToken(""))
+                            val meResponse = userAPI.getMe().execute()
+                            if (meResponse.isSuccessful) {
+                                val me = meResponse.body()?.toUser()!!
+                                authTokenStorage.runOn(diskExecutor) {
+                                    token()?.copy(username = me.userName)?.let { authTokenStorage.saveToken(it) }
+                                    callback.runOn(uiExecutor) { onSuccess(Unit) }
+                                }
+                            } else {
+                                authTokenStorage.runOn(diskExecutor) { clearToken() }//rollback
+                                callback.runOn(uiExecutor) { onError(Error("${code()}:${errorBody()?.string()}")) }
+                            }
+                        }
                     } else {
-                        authTokenStorage.clearToken() // rollback
-                        callback.onError(Error("${code()}:${errorBody()?.string()}"))
+                        val isAuthenticationError = code() == 401
+                        callback.runOn(uiExecutor) { onError(Error("${code()}:${errorBody()?.string()}"), isAuthenticationError) }
                     }
-                } else {
-                    val isAuthenticationError = code() == 401
-                    callback.onError(Error("${code()}:${errorBody()?.string()}"), isAuthenticationError)
                 }
+            } catch (ex: Exception) {
+                authTokenStorage.runOn(diskExecutor) { clearToken() }//rollback
+                callback.runOn(uiExecutor) { onError(ex) }
             }
-        } catch (ex: Exception) {
-            authTokenStorage.clearToken()//rollback
-            callback.onError(ex)
         }
+
     }
 
     override fun logout(callback: Repository.Callback<Unit>?) {
-        authTokenStorage.clearToken()
-        daoManager.clearAll()
-        callback?.onSuccess(Unit)
+        diskExecutor.execute {
+            authTokenStorage.clearToken()
+            daoManager.clearAll()
+            callback?.runOn(uiExecutor) { onSuccess(Unit) }
+        }
+
     }
 
     override fun me(callback: Repository.Callback<User>) {
-        try {
-            val userResponse = apiCallDispatcher { userAPI.getMe() }
-            with(userResponse) {
-                if (isSuccessful) {
-                    val user = userResponse.body()!!.toUser()
-                    callback.onSuccess(user)
-                } else {
-                    val isAuthenticationError = code() == 401
-                    callback.onError(Error("${code()}:${errorBody()?.string()}"), isAuthenticationError)
+        apiCallDispatcher.runOn(ioExecutor) { cancel() }
+        uiExecutor.execute {
+            try {
+                val userResponse = apiCallDispatcher { userAPI.getMe() }
+                with(userResponse) {
+                    if (isSuccessful) {
+                        val user = userResponse.body()!!.toUser()
+                        callback.runOn(uiExecutor) { onSuccess(user) }
+                    } else {
+                        val isAuthenticationError = code() == 401
+                        callback.runOn(uiExecutor) { onError(Error("${code()}:${errorBody()?.string()}"), isAuthenticationError) }
+                    }
                 }
+            } catch (ex: Exception) {
+                callback.onError(ex)
             }
-        } catch (ex: Exception) {
-            callback.onError(ex)
         }
     }
 
@@ -158,19 +192,23 @@ class UserRepositoryImpl(private val daoManager: DaoManager,
     }
 
     override fun getUser(username: String, callback: Repository.Callback<User>) {
-        try {
-            val userResponse = apiCallDispatcher { userAPI.getUser(username) }
-            with(userResponse) {
-                if (isSuccessful) {
-                    val user = userResponse.body()!!.toUser()
-                    callback.onSuccess(user)
-                } else {
-                    callback.onError(Error("${code()}:${errorBody()?.string()}"))
+        apiCallDispatcher.runOn(uiExecutor) { cancel() }
+        ioExecutor.execute {
+            try {
+                val userResponse = apiCallDispatcher { userAPI.getUser(username) }
+                with(userResponse) {
+                    if (isSuccessful) {
+                        val user = userResponse.body()!!.toUser()
+                        callback.runOn(uiExecutor) { onSuccess(user) }
+                    } else {
+                        callback.runOn(uiExecutor) { onError(Error("${code()}:${errorBody()?.string()}")) }
+                    }
                 }
+            } catch (ex: Exception) {
+                callback.runOn(uiExecutor) { onError(ex) }
             }
-        } catch (ex: Exception) {
-            callback.onError(ex)
         }
+
     }
 
 

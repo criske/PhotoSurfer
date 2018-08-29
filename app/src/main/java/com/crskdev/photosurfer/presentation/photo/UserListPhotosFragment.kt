@@ -46,7 +46,6 @@ class UserListPhotosFragment : Fragment() {
                 return UserListPhotosViewModel(
                         UserListPhotosFragmentArgs.fromBundle(arguments).username,
                         graph.searchTermTracker,
-                        graph.ioThreadExecutor,
                         graph.diskThreadExecutor,
                         graph.photoRepository
                 ) as T
@@ -93,7 +92,6 @@ class UserListPhotosFragment : Fragment() {
 
 class UserListPhotosViewModel(userName: String,
                               searchTermTracker: SearchTermTracker,
-                              private val ioExecutor: Executor,
                               diskExecutor: Executor,
                               private val photoRepository: PhotoRepository) : ViewModel() {
 
@@ -101,7 +99,6 @@ class UserListPhotosViewModel(userName: String,
 
     val photosData = photosPageListConfigLiveData(
             diskExecutor,
-            ioExecutor,
             ChoosablePhotoDataSourceFactory(photoRepository,
                     DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.USER_PHOTOS, userName)),
             errorLiveData)
@@ -123,9 +120,7 @@ class UserListPhotosViewModel(userName: String,
 
 
     fun refresh() {
-        ioExecutor.execute {
-            photoRepository.refresh()
-        }
+        photoRepository.refresh()
     }
 
     fun cancel() {

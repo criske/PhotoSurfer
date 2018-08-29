@@ -45,7 +45,6 @@ class SearchUsersFragment : Fragment() {
         viewModel = viewModelFromProvider(this) {
             val graph = context!!.dependencyGraph()
             SearchUsersViewModel(
-                    graph.ioThreadExecutor,
                     graph.diskThreadExecutor,
                     graph.userRepository,
                     graph.searchTermTracker
@@ -124,7 +123,6 @@ class SearchUsersFragment : Fragment() {
 }
 
 class SearchUsersViewModel(
-        private val ioExecutor: Executor,
         private val diskExecutor: Executor,
         private val userRepository: UserRepository,
         private val searchTermTracker: SearchTermTracker) : ViewModel() {
@@ -152,10 +150,10 @@ class SearchUsersViewModel(
                 val term = it.second!!
                 LivePagedListBuilder<Int, User>(userRepository.getUsers(), pageListConfig)
                         .setFetchExecutor(diskExecutor)
-                        .setBoundaryCallback(GenericBoundaryCallback<User>(ioExecutor) { page ->
+                        .setBoundaryCallback(GenericBoundaryCallback<User>{ page ->
                             userRepository.searchUsers(term.data, page, object : Repository.Callback<Unit> {
                                 override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                                    errorLiveData.postValue(error)
+                                    errorLiveData.value = error
                                 }
                             })
                         })

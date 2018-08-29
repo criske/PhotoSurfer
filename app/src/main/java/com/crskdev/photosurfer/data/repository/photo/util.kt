@@ -17,11 +17,10 @@ import java.util.concurrent.Executor
  */
 internal fun photosPageListConfigLiveData(
         diskThreadExecutor: Executor,
-        networkExecutor: Executor,
         choosablePhotoDataSourceFactory: ChoosablePhotoDataSourceFactory,
         errorLiveData: MutableLiveData<Throwable>): LiveData<PagedList<Photo>> {
     val photoRepository = choosablePhotoDataSourceFactory.photoRepository
-    return createLiveData(choosablePhotoDataSourceFactory, diskThreadExecutor, networkExecutor,
+    return createLiveData(choosablePhotoDataSourceFactory, diskThreadExecutor,
             photoRepository, errorLiveData) {
         //repository action provider
         when (choosablePhotoDataSourceFactory.currentFilter.type) {
@@ -38,7 +37,6 @@ internal fun photosPageListConfigLiveData(
 
 private fun createLiveData(dataSourceFactory: DataSource.Factory<Int, Photo>,
                            diskExecutor: Executor,
-                           ioExecutor: Executor,
                            photoRepository: PhotoRepository,
                            errorLiveData: MutableLiveData<Throwable>,
                            repositoryActionProvider: () -> RepositoryAction): LiveData<PagedList<Photo>> =
@@ -48,7 +46,7 @@ private fun createLiveData(dataSourceFactory: DataSource.Factory<Int, Photo>,
                 .let {
                     LivePagedListBuilder<Int, Photo>(dataSourceFactory, it)
                             .setFetchExecutor(diskExecutor)
-                            .setBoundaryCallback(GenericBoundaryCallback<Photo>(ioExecutor) { page ->
+                            .setBoundaryCallback(GenericBoundaryCallback<Photo> { page ->
                                 photoRepository.insertPhotos(repositoryActionProvider(), page, object : Repository.Callback<Unit> {
                                     override fun onError(error: Throwable, isAuthenticationError: Boolean) {
                                         errorLiveData.postValue(error)

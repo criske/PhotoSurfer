@@ -1,4 +1,4 @@
-package com.crskdev.photosurfer.util
+package com.crskdev.photosurfer.services.executors
 
 import android.os.Looper
 

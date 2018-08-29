@@ -27,14 +27,16 @@ import com.crskdev.photosurfer.services.ScheduledWorkServiceImpl
 import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
 import com.crskdev.photosurfer.services.ScheduledWorkService
-import com.crskdev.photosurfer.util.AndroidThreadCallChecker
+import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.services.executors.AndroidThreadCallChecker
 import com.crskdev.photosurfer.util.Listenable
-import com.crskdev.photosurfer.util.ThreadCallChecker
+import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
+import java.util.*
 
 
 /**
@@ -45,9 +47,17 @@ object DependencyGraph {
     internal var isInit: Boolean = false
 
     //EXECUTORS
-    val uiThreadExecutor: Executor = UIThreadExecutor()
+    //util
+    val threadCallChecker: ThreadCallChecker = AndroidThreadCallChecker()
+    val uiThreadExecutor: Executor = UIThreadExecutor(threadCallChecker)
     val diskThreadExecutor: Executor = DiskThreadExecutor()
     val ioThreadExecutor: Executor = IOThreadExecutor()
+    val executorManager: ExecutorsManager = ExecutorsManager(
+            EnumMap<ExecutorsManager.Type, Executor>(ExecutorsManager.Type::class.java).apply {
+                put(ExecutorsManager.Type.DISK, diskThreadExecutor)
+                put(ExecutorsManager.Type.NETWORK, ioThreadExecutor)
+                put(ExecutorsManager.Type.UI, uiThreadExecutor)
+            })
 
     //DB
     lateinit var db: PhotoSurferDB
@@ -97,18 +107,11 @@ object DependencyGraph {
     lateinit var authNavigatorMiddleware: AuthNavigatorMiddleware
         private set
 
-    //util
-    lateinit var threadCallChecker: ThreadCallChecker
-        private set
-
 
     fun init(context: Context) {
         if (isInit) return
 
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
-
-        //util
-        threadCallChecker = AndroidThreadCallChecker()
 
         //NETWORK
         apiCallDispatcher = APICallDispatcher(threadCallChecker)
@@ -144,6 +147,7 @@ object DependencyGraph {
         photoDownloader = PhotoDownloaderImpl(apiCallDispatcher, photoAPI)
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         photoRepository = PhotoRepositoryImpl(
+                executorManager,
                 PhotoDAOFacade(daoManager),
                 authTokenStorage,
                 staleDataTrackSupervisor,
@@ -159,8 +163,14 @@ object DependencyGraph {
         //user and auth
         val userAPI = retrofit.create(UserAPI::class.java)
         val authAPI: AuthAPI = retrofit.create(AuthAPI::class.java)
-        userRepository = UserRepositoryImpl(daoManager, staleDataTrackSupervisor, apiCallDispatcher,
-                userAPI, authAPI, authTokenStorage)
+        userRepository = UserRepositoryImpl(
+                executorManager,
+                daoManager,
+                staleDataTrackSupervisor,
+                apiCallDispatcher,
+                userAPI,
+                authAPI,
+                authTokenStorage)
 
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 

@@ -45,7 +45,7 @@ class UserProfileDetailsFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 val dependencies = context!!.dependencyGraph()
                 @Suppress("UNCHECKED_CAST")
-                return UserProfileDetailsViewModel(dependencies.ioThreadExecutor, dependencies.userRepository) as T
+                return UserProfileDetailsViewModel(dependencies.userRepository) as T
             }
 
         }).get(UserProfileDetailsViewModel::class.java)
@@ -118,7 +118,6 @@ class UserProfileDetailsFragment : Fragment() {
 }
 
 class UserProfileDetailsViewModel(
-        private val ioThreadExecutor: Executor,
         private val userRepository: UserRepository
 ) : ViewModel() {
 
@@ -127,21 +126,19 @@ class UserProfileDetailsViewModel(
     val errorLiveData = SingleLiveEvent<Throwable>()
 
     fun getUser(id: String) {
-        ioThreadExecutor.execute {
-            val cb = object : Repository.Callback<User> {
-                override fun onSuccess(data: User, extras: Any?) {
-                    userLiveData.postValue(data)
-                }
+        val cb = object : Repository.Callback<User> {
+            override fun onSuccess(data: User, extras: Any?) {
+                userLiveData.value = data
+            }
 
-                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                    errorLiveData.postValue(error)
-                }
+            override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                errorLiveData.value = error
             }
-            if (id.isEmpty()) {
-                userRepository.me(cb)
-            } else {
-                userRepository.getUser(id, cb)
-            }
+        }
+        if (id.isEmpty()) {
+            userRepository.me(cb)
+        } else {
+            userRepository.getUser(id, cb)
         }
     }
 

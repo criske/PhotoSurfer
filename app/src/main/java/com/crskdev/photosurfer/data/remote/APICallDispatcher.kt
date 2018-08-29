@@ -1,7 +1,7 @@
 package com.crskdev.photosurfer.data.remote
 
 import com.crskdev.photosurfer.util.Listenable
-import com.crskdev.photosurfer.util.ThreadCallChecker
+import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import retrofit2.Call
 import retrofit2.Response
 
@@ -12,7 +12,7 @@ class APICallDispatcher(@PublishedApi internal val threadCallChecker: ThreadCall
     : Listenable<APICallDispatcher.State>() {
 
     enum class State {
-        EXECUTING, EXECUTED, CANCELED,
+        EXECUTING, EXECUTED, CANCELED, ERROR
     }
 
     @Volatile
@@ -23,8 +23,12 @@ class APICallDispatcher(@PublishedApi internal val threadCallChecker: ThreadCall
         threadCallChecker.assertOnBackgroundThread()
         publishedAPInotifyListeners(State.EXECUTING)
         synchronized(this) {
-            currentCall?.cancel()
-            currentCall = apiCall()
+            try {
+                currentCall = apiCall()
+            } catch (ex: Exception) {
+                publishedAPInotifyListeners(State.ERROR)
+                throw ex
+            }
         }
         @Suppress("UNCHECKED_CAST")
         val response = currentCall!!.execute() as Response<T>

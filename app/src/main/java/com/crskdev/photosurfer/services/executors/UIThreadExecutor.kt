@@ -4,11 +4,15 @@ import android.os.Handler
 import android.os.Looper
 import java.util.concurrent.Executor
 
-class UIThreadExecutor : Executor {
+class UIThreadExecutor(private val threadCallChecker: ThreadCallChecker) : Executor {
 
     private val mHandler = Handler(Looper.getMainLooper())
 
     override fun execute(command: Runnable) {
-        mHandler.post(command)
+        if (threadCallChecker.isOnMainThread()) {
+            command.run()
+        } else {
+            mHandler.post(command)
+        }
     }
 }

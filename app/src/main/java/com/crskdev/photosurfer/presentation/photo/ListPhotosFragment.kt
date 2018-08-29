@@ -69,7 +69,6 @@ class ListPhotosFragment : Fragment() {
                 @Suppress("UNCHECKED_CAST")
                 return ListPhotosViewModel(
                         currentFilter,
-                        graph.ioThreadExecutor,
                         graph.diskThreadExecutor,
                         graph.userRepository,
                         graph.photoRepository,
@@ -174,7 +173,7 @@ class ListPhotosFragment : Fragment() {
 
         viewModel.filterLiveData.observe(this, Observer {
             val title = if (it.type == FilterVM.Type.SEARCH) {
-                val term = if (it.data?.isNotEmpty() == true) ": #${it.data}" else ""
+                val term = if (it.data?.isNotEmpty() == true) " #${it.data}" else ""
                 getString(it.title) + term
             } else {
                 getString(it.title)
@@ -219,7 +218,6 @@ data class FilterVM(val type: FilterVM.Type, @StringRes val title: Int, val data
 data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: String? = null) : Parcelable
 
 class ListPhotosViewModel(initialFilterVM: FilterVM,
-                          private val ioExecutor: Executor,
                           private val diskExecutor: Executor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
@@ -259,15 +257,12 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
 
     val photosLiveData = photosPageListConfigLiveData(
             diskExecutor,
-            ioExecutor,
             choosablePhotoDataSourceFactory,
             errorLiveData
     )
 
     fun refresh() {
-        ioExecutor.execute {
             photoRepository.refresh()
-        }
     }
 
     fun cancel() {
@@ -298,18 +293,16 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
     }
 
     fun like(photo: Photo) {
-        ioExecutor.execute {
-            photoRepository.like(photo, object : Repository.Callback<Boolean> {
-                override fun onSuccess(data: Boolean, extras: Any?) {}
-                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                    if (!isAuthenticationError) {
-                        errorLiveData.postValue(error)
-                    } else {
-                        needsAuthLiveData.postValue(Unit)
-                    }
+        photoRepository.like(photo, object : Repository.Callback<Boolean> {
+            override fun onSuccess(data: Boolean, extras: Any?) {}
+            override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                if (!isAuthenticationError) {
+                    errorLiveData.value = error
+                } else {
+                    needsAuthLiveData.value = Unit
                 }
-            })
-        }
+            }
+        })
     }
 
     private fun toDataSourceFilter(vmFilter: FilterVM): DataSourceFilter =

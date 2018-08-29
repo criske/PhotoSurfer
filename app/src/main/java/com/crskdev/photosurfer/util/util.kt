@@ -7,8 +7,8 @@ import android.view.ViewPropertyAnimator
 import androidx.annotation.FloatRange
 import androidx.core.graphics.ColorUtils
 import androidx.navigation.NavOptions
-import androidx.recyclerview.widget.GridLayoutManager
 import com.crskdev.photosurfer.R
+import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -77,4 +77,11 @@ fun getSpanCountByScreenWidth(resources: Resources, itemWidthDp: Int, spacingDp:
     val spacingGrid = if (spacingDp > 0) 2 * spacingDp.dpToPx(resources).toInt() else 0
     val spanCount = screenWidth / (itemWidthDp.dpToPx(resources) + spacingGrid)
     return Math.round(spanCount)
+}
+
+
+inline fun <T> T.runOn(executor: Executor, crossinline block: T.() -> Unit) {
+    executor.execute {
+        this@runOn.block()
+    }
 }

@@ -29,6 +29,6 @@
     <string name="likes">Likes</string>
     <string name="trending">Trending</string>
     <string name="search">Search…</string>
-    <string name="search_title">Search</string>
+    <string name="search_title">&#8981;</string>
     <string name="search_users">Search users…</string>
 </resources>

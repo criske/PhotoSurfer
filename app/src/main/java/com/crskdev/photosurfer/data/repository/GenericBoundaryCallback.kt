@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Created by Cristian Pela on 26.08.2018.
  */
 class GenericBoundaryCallback<E : BaseEntity>(
-        private val ioExecutor: Executor,
         private val onLoadMore: (Int) -> Unit) : PagedList.BoundaryCallback<E>() {
 
     private val isLoading = AtomicBoolean(false)
@@ -28,11 +27,9 @@ class GenericBoundaryCallback<E : BaseEntity>(
 
     private fun tryLoadMore(page: Int?) {
         if (page != null && !isLoading.get()) {
-            ioExecutor.execute {
-                isLoading.compareAndSet(false, true)
-                onLoadMore(page)
-                isLoading.compareAndSet(true, false)
-            }
+            isLoading.compareAndSet(false, true)
+            onLoadMore(page)
+            isLoading.compareAndSet(true, false)
         }
     }
 }
