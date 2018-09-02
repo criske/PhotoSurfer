@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.entities
 
+import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.photo.LikePhotoEntity
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.local.photo.SearchPhotoEntity
@@ -42,6 +43,9 @@ fun PhotoJSON.toLikePhotoDbEntity(pagingData: PagingData, nextIndex: Int): LikeP
 
 fun PhotoJSON.toSearchPhotoDbEntity(pagingData: PagingData, nextIndex: Int): SearchPhotoEntity =
         PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, SearchPhotoEntity::class.java)
+
+fun PhotoJSON.toCollectionPhotoDbEntity(pagingData: PagingData, nextIndex: Int): CollectionPhotoEntity =
+        PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, CollectionPhotoEntity::class.java)
 
 fun Photo.toLikePhotoDbEntity(nextIndex: Int): LikePhotoEntity =
         PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, LikePhotoEntity::class.java)

@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.data.local.photo
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.crskdev.photosurfer.data.local.BaseDBEntity
 import com.crskdev.photosurfer.data.local.Contract
 
@@ -9,6 +10,9 @@ import com.crskdev.photosurfer.data.local.Contract
  */
 @Entity(tableName = Contract.TABLE_PHOTOS)
 open class PhotoEntity: BaseDBEntity() {
+    @PrimaryKey
+    lateinit var id: String
+
     lateinit var createdAt: String
     lateinit var updatedAt: String
     var width: Int = -1

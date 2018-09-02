@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.data.local.user
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.crskdev.photosurfer.data.local.BaseDBEntity
 import com.crskdev.photosurfer.data.local.Contract
 
@@ -9,6 +10,8 @@ import com.crskdev.photosurfer.data.local.Contract
  */
 @Entity(tableName = Contract.TABLE_USERS)
 class UserEntity : BaseDBEntity() {
+    @PrimaryKey
+    lateinit var id: String
     lateinit var lastUpdated: String
     lateinit var userName: String
     var firstName: String? = null

@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import java.util.concurrent.Executor
 
-class UIThreadExecutor(private val threadCallChecker: ThreadCallChecker) : Executor {
+class UIThreadExecutor(private val threadCallChecker: ThreadCallChecker) : KExecutor {
 
     private val mHandler = Handler(Looper.getMainLooper())
 

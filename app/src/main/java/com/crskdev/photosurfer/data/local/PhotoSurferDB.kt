@@ -4,6 +4,10 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.crskdev.photosurfer.data.local.collections.CollectionEntity
+import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
+import com.crskdev.photosurfer.data.local.collections.CollectionsCollectionPhotoEntity
+import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.local.track.StaleDataTackDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackEntity
@@ -20,9 +24,12 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             LikePhotoEntity::class,
             SearchPhotoEntity::class,
             UserEntity::class,
-            StaleDataTrackEntity::class
+            StaleDataTrackEntity::class,
+            CollectionEntity::class,
+            CollectionPhotoEntity::class,
+            CollectionsCollectionPhotoEntity::class
         ],
-        version = 7,
+        version = 8,
         exportSchema = false
 )
 abstract class PhotoSurferDB : RoomDatabase() {
@@ -37,7 +44,8 @@ abstract class PhotoSurferDB : RoomDatabase() {
                     .fallbackToDestructiveMigration()
                     .build()
         }
-        fun createForTestEnvironment(context: Context):PhotoSurferDB{
+
+        fun createForTestEnvironment(context: Context): PhotoSurferDB {
             return Room.inMemoryDatabaseBuilder(context, PhotoSurferDB::class.java)
                     .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
@@ -50,6 +58,8 @@ abstract class PhotoSurferDB : RoomDatabase() {
     abstract fun photoUserDAO(): PhotoUserDAO
     abstract fun photoLikeDAO(): PhotoLikeDAO
     abstract fun photoSearchDAO(): PhotoSearchDAO
+
+    abstract fun collectionsDAO(): CollectionsDAO
 
     abstract fun userDAO(): UserDAO
 

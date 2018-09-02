@@ -62,7 +62,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
     private val transactional: TransactionRunner = daoManager.transactionRunner()
 
     override fun clear() {
-        diskExecutor.execute {
+        diskExecutor {
             userDAO.clear()
         }
     }
@@ -75,16 +75,16 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
 
 
     override fun searchUsers(query: String, page: Int, callback: Repository.Callback<Unit>?) {
-        uiExecutor.execute {
+        uiExecutor {
             apiCallDispatcher.cancel()
         }
-        ioExecutor.execute {
+        ioExecutor {
             try {
                 val response = apiCallDispatcher { userAPI.search(query, page) }
                 with(response) {
                     if (isSuccessful) {
                         val pagingData = PagingData.createFromHeaders(headers())
-                        diskExecutor.execute {
+                        diskExecutor {
                             transactional {
                                 val nextIndex = userDAO.getNextIndex()
                                 val users = response.body()!!.results.map {
@@ -115,13 +115,13 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun login(email: String, password: String, callback: Repository.Callback<Unit>) {
         apiCallDispatcher.runOn(uiExecutor) { cancel() }
-        ioExecutor.execute {
+        ioExecutor {
             try {
                 val authResponse = apiCallDispatcher { authAPI.authorize(email, password) }
                 with(authResponse) {
                     if (isSuccessful) {
                         //TODO USE DIFFERENT FLOW - MAYBE CREATE A TABLE FOR LOGGED USER instead of saving user name in authtoken storage
-                        diskExecutor.execute {
+                        diskExecutor {
                             val authTokenJSON = authResponse.body()!!
                             authTokenStorage.saveToken(authTokenJSON.toAuthToken(""))
                             val meResponse = userAPI.getMe().execute()
@@ -150,7 +150,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
     }
 
     override fun logout(callback: Repository.Callback<Unit>?) {
-        diskExecutor.execute {
+        diskExecutor {
             authTokenStorage.clearToken()
             daoManager.clearAll()
             callback?.runOn(uiExecutor) { onSuccess(Unit) }
@@ -160,7 +160,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun me(callback: Repository.Callback<User>) {
         apiCallDispatcher.runOn(ioExecutor) { cancel() }
-        uiExecutor.execute {
+        uiExecutor {
             try {
                 val userResponse = apiCallDispatcher { userAPI.getMe() }
                 with(userResponse) {
@@ -193,7 +193,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun getUser(username: String, callback: Repository.Callback<User>) {
         apiCallDispatcher.runOn(uiExecutor) { cancel() }
-        ioExecutor.execute {
+        ioExecutor {
             try {
                 val userResponse = apiCallDispatcher { userAPI.getUser(username) }
                 with(userResponse) {

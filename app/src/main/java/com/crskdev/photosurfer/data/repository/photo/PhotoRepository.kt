@@ -21,6 +21,7 @@ import com.crskdev.photosurfer.services.Tag
 import com.crskdev.photosurfer.services.WorkData
 import com.crskdev.photosurfer.services.WorkType
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.util.runOn
 import retrofit2.Call
 import kotlin.math.roundToInt
 
@@ -89,10 +90,10 @@ class PhotoRepositoryImpl(
 
     //this must be called on the io thread
     override fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>?) {
-        uiExecutor.execute {
+        uiExecutor {
             apiCallDispatcher.cancel()
         }
-        ioExecutor.execute {
+        ioExecutor {
             try {
                 val response = if (repositoryAction.type == RepositoryAction.Type.SEARCH) {
                     apiCallDispatcher { api.getSearchedPhotos(repositoryAction.extras[0].toString(), page) }
@@ -110,7 +111,7 @@ class PhotoRepositoryImpl(
                     val headers = headers()
                     val pagingData = PagingData.createFromHeaders(headers)
                     if (isSuccessful) {
-                        diskExecutor.execute {
+                        diskExecutor {
                             @Suppress("UNCHECKED_CAST")
                             val body = body()?.let {
                                 if (repositoryAction.type == RepositoryAction.Type.SEARCH)
@@ -131,20 +132,20 @@ class PhotoRepositoryImpl(
                                     RepositoryAction.Type.SEARCH -> daoPhotoFacade.insertPhotos(Contract.TABLE_SEARCH_PHOTOS, this, page == 1)
                                 }
                             }
-                            uiExecutor.execute {
+                            uiExecutor {
                                 callback?.onSuccess(Unit)
                             }
 
                         }
                     } else {
-                        uiExecutor.execute {
+                        uiExecutor {
                             callback?.onError(Error("${code()}:${errorBody()?.string()}"))
                         }
                     }
                 }
             } catch (ex: Exception) {
                 ex.printStackTrace()
-                uiExecutor.execute {
+                uiExecutor {
                     callback?.onError(ex)
                 }
             }
@@ -152,49 +153,48 @@ class PhotoRepositoryImpl(
     }
 
     override fun download(photo: Photo, callback: Repository.Callback<DownloadProgress>?) {
-        uiExecutor.execute {
+        uiExecutor {
             apiCallDispatcher.cancel()
         }
-        ioExecutor.execute {
+        ioExecutor {
             try {
                 val now = System.currentTimeMillis()
                 var start = true
                 downloadManager.download(photo) { _, bytesRead, contentLength, done ->
                     val passed = System.currentTimeMillis() - now
                     if (passed < 500 && done) {
-                        callback?.onSuccess(DownloadProgress(100, false, true))
+                        callback?.runOn(uiExecutor) {
+                            onSuccess(DownloadProgress(100, false, true))
+                        }
                     } else {
                         if (contentLength == -1L) { //indeterminated
                             if (start) {
-                                uiExecutor.execute {
-                                    callback?.onSuccess(DownloadProgress.INDETERMINATED_START)
+                                callback?.runOn(uiExecutor) {
+                                    onSuccess(DownloadProgress.INDETERMINATED_START)
                                 }
-
                             } else if (done) {
-                                uiExecutor.execute {
-                                    callback?.onSuccess(DownloadProgress.INDETERMINATED_END)
+                                callback?.runOn(uiExecutor) {
+                                    onSuccess(DownloadProgress.INDETERMINATED_END)
                                 }
-
                             }
                         } else {
                             val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
-                            if (percent % 10 == 0 || percent == 100 || done){// backpressure relief
-                                uiExecutor.execute {
-                                    callback?.onSuccess(DownloadProgress(percent, start, percent == 100 || done))
+                            if (percent % 10 == 0 || percent == 100 || done) {// backpressure relief
+                                callback?.runOn(uiExecutor) {
+                                    onSuccess(DownloadProgress(percent, start, percent == 100 || done))
                                 }
                             }
                         }
                         start = false
                     }
-
                 }
-                uiExecutor.execute{
-                    callback?.onSuccess(DownloadProgress.NONE)
+                callback?.runOn(uiExecutor) {
+                    onSuccess(DownloadProgress.NONE)
                 }
             } catch (ex: Exception) {
-                uiExecutor.execute {
-                    callback?.onSuccess(DownloadProgress.INDETERMINATED_END)
-                    callback?.onError(ex)
+                ex.printStackTrace()
+                callback?.runOn(uiExecutor) {
+                    onSuccess(DownloadProgress.INDETERMINATED_END)
                 }
             }
         }
@@ -210,16 +210,14 @@ class PhotoRepositoryImpl(
 
     override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
         if (!authTokenStorage.hasToken()) {
-            ioExecutor.execute {
-                callback.onError(Error("You need to login"), true)
+            callback.runOn(uiExecutor) {
+                onError(Error("You need to login"), true)
             }
             return
         }
-        diskExecutor.execute {
+        diskExecutor {
             daoPhotoFacade.like(photo.id, photo.likedByMe)
-            ioExecutor.execute {
-                callback.onSuccess(photo.likedByMe)
-            }
+            callback.runOn(uiExecutor) { onSuccess(photo.likedByMe) }
         }
         scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id,
                 "likedByMe" to photo.likedByMe))
@@ -227,20 +225,20 @@ class PhotoRepositoryImpl(
 
     @MainThread
     override fun cancel() {
-        uiExecutor.execute {
+        uiExecutor {
             apiCallDispatcher.cancel()
             downloadManager.cancel()
         }
     }
 
     override fun clearAll() {
-        diskExecutor.execute {
+        diskExecutor {
             daoPhotoFacade.clear()
         }
     }
 
     override fun clear(repositoryAction: RepositoryAction) {
-        diskExecutor.execute {
+        diskExecutor {
             val table = when (repositoryAction.type) {
                 RepositoryAction.Type.LIKE -> Contract.TABLE_LIKE_PHOTOS
                 RepositoryAction.Type.TRENDING -> Contract.TABLE_PHOTOS

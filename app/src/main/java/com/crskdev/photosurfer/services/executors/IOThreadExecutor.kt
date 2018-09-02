@@ -3,7 +3,7 @@ package com.crskdev.photosurfer.services.executors
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
-class IOThreadExecutor : Executor {
+class IOThreadExecutor : KExecutor {
 
     private val executorService = Executors.newSingleThreadExecutor { r -> Thread(r, "PhotoSurfer - IO Thread") }
 

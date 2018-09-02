@@ -8,9 +8,6 @@ import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.services.executors.DiskThreadExecutor
-import com.crskdev.photosurfer.services.executors.IOThreadExecutor
-import com.crskdev.photosurfer.services.executors.UIThreadExecutor
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
 import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
@@ -27,10 +24,8 @@ import com.crskdev.photosurfer.services.ScheduledWorkServiceImpl
 import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
 import com.crskdev.photosurfer.services.ScheduledWorkService
-import com.crskdev.photosurfer.services.executors.ExecutorsManager
-import com.crskdev.photosurfer.services.executors.AndroidThreadCallChecker
+import com.crskdev.photosurfer.services.executors.*
 import com.crskdev.photosurfer.util.Listenable
-import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import retrofit2.Retrofit
 import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -49,11 +44,11 @@ object DependencyGraph {
     //EXECUTORS
     //util
     val threadCallChecker: ThreadCallChecker = AndroidThreadCallChecker()
-    val uiThreadExecutor: Executor = UIThreadExecutor(threadCallChecker)
-    val diskThreadExecutor: Executor = DiskThreadExecutor()
-    val ioThreadExecutor: Executor = IOThreadExecutor()
+    val uiThreadExecutor: KExecutor = UIThreadExecutor(threadCallChecker)
+    val diskThreadExecutor: KExecutor = DiskThreadExecutor()
+    val ioThreadExecutor: KExecutor = IOThreadExecutor()
     val executorManager: ExecutorsManager = ExecutorsManager(
-            EnumMap<ExecutorsManager.Type, Executor>(ExecutorsManager.Type::class.java).apply {
+            EnumMap<ExecutorsManager.Type, KExecutor>(ExecutorsManager.Type::class.java).apply {
                 put(ExecutorsManager.Type.DISK, diskThreadExecutor)
                 put(ExecutorsManager.Type.NETWORK, ioThreadExecutor)
                 put(ExecutorsManager.Type.UI, uiThreadExecutor)
@@ -138,7 +133,8 @@ object DependencyGraph {
                         Contract.TABLE_LIKE_PHOTOS to db.photoLikeDAO(),
                         Contract.TABLE_USER_PHOTOS to db.photoUserDAO(),
                         Contract.TABLE_SEARCH_PHOTOS to db.photoSearchDAO(),
-                        Contract.TABLE_USERS to db.userDAO()
+                        Contract.TABLE_USERS to db.userDAO(),
+                        Contract.TABLE_COLLECTIONS to db.collectionsDAO()
                 ))
 
         //photo

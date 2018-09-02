@@ -11,7 +11,10 @@ import androidx.annotation.StringRes
 import androidx.appcompat.widget.SearchView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.*
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -34,15 +37,16 @@ import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
 import com.crskdev.photosurfer.services.ScheduledWorkService
+import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
+import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
-import java.util.concurrent.Executor
 
 /**
  * Created by Cristian Pela on 01.08.2018.
@@ -63,21 +67,18 @@ class ListPhotosFragment : Fragment() {
                 ?.getParcelable<ParcelableFilter>(KEY_CURRENT_FILTER)
                 ?.deparcelize()
                 ?: FilterVM(FilterVM.Type.TRENDING, R.string.trending)
-        viewModel = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                val graph = context!!.dependencyGraph()
-                @Suppress("UNCHECKED_CAST")
-                return ListPhotosViewModel(
-                        currentFilter,
-                        graph.diskThreadExecutor,
-                        graph.userRepository,
-                        graph.photoRepository,
-                        graph.searchTermTracker,
-                        graph.scheduledWorkService,
-                        graph.listenableAuthState
-                ) as T
-            }
-        }).get(ListPhotosViewModel::class.java)
+        viewModel = viewModelFromProvider(this) {
+            val graph = context!!.dependencyGraph()
+            ListPhotosViewModel(
+                    currentFilter,
+                    graph.diskThreadExecutor,
+                    graph.userRepository,
+                    graph.photoRepository,
+                    graph.searchTermTracker,
+                    graph.scheduledWorkService,
+                    graph.listenableAuthState
+            )
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -116,6 +117,9 @@ class ListPhotosFragment : Fragment() {
                     R.id.menu_item_search_users -> {
                         toolbarListPhotos.findNavController().navigate(R.id.fragment_search_users, null,
                                 defaultTransitionNavOptions())
+                    }
+                    R.id.menu_action_collections -> {
+
                     }
                 }
                 true
@@ -173,7 +177,7 @@ class ListPhotosFragment : Fragment() {
 
         viewModel.filterLiveData.observe(this, Observer {
             val title = if (it.type == FilterVM.Type.SEARCH) {
-                val term = if (it.data?.isNotEmpty() == true) " #${it.data}" else ""
+                val term = if (it.data?.isNotEmpty() == true) " ${it.data}" else ""
                 getString(it.title) + term
             } else {
                 getString(it.title)
@@ -218,7 +222,7 @@ data class FilterVM(val type: FilterVM.Type, @StringRes val title: Int, val data
 data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: String? = null) : Parcelable
 
 class ListPhotosViewModel(initialFilterVM: FilterVM,
-                          private val diskExecutor: Executor,
+                          private val diskExecutor: KExecutor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
                           private val searchTermTracker: SearchTermTracker,
@@ -233,7 +237,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
         searchTermTrackerLiveData.observeForever {
             //we have a new user in accessed so we clear the old uset photos table
             if (it.first != it.second && it.second != null) {
-                diskExecutor.execute {
+                diskExecutor {
                     photoRepository.clear(RepositoryAction(RepositoryAction.Type.SEARCH))
                 }
             }
@@ -262,7 +266,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
     )
 
     fun refresh() {
-            photoRepository.refresh()
+        photoRepository.refresh()
     }
 
     fun cancel() {
@@ -271,7 +275,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
 
     fun logout() {
         scheduledWorkService.clearAllScheduled()
-        diskExecutor.execute {
+        diskExecutor {
             userRepository.logout()
         }
     }

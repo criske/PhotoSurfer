@@ -12,6 +12,11 @@ object Contract {
 
     const val TABLE_USERS = "users"
 
-    val TABLES = arrayOf(TABLE_PHOTOS, TABLE_USER_PHOTOS, TABLE_LIKE_PHOTOS, TABLE_USERS)
+    const val TABLE_COLLECTIONS = "collections"
+    const val TABLE_COLLECTION_PHOTOS = "collection_photos"
+    const val TABLE_COLLECTIONS_COLLECTION_PHOTOS = "collections_collection_photos"
+
+    val TABLES = arrayOf(TABLE_PHOTOS, TABLE_USER_PHOTOS, TABLE_LIKE_PHOTOS, TABLE_USERS,
+            TABLE_COLLECTIONS, TABLE_COLLECTION_PHOTOS)
 
 }

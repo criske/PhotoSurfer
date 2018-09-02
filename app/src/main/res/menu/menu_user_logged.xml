@@ -6,9 +6,16 @@
         android:title="@string/logout"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_action_collections"
+        android:title="@string/collections"
+        android:icon="@drawable/ic_collections_white_24dp"
+        android:orderInCategory="5"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/menu_action_edit_profile"
         android:icon="@drawable/ic_edit_white_24dp"
         android:title="@string/edit"
+        android:orderInCategory="4"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_action_likes"

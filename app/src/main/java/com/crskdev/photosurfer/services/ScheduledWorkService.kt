@@ -26,8 +26,13 @@ class ScheduledWorkServiceImpl : ScheduledWorkService {
 
     private val workManager = WorkManager.getInstance()
 
-    override fun schedule(workData: WorkData) {
+    init {
+        workManager.getStatusesByTag("").observeForever {
 
+        }
+    }
+
+    override fun schedule(workData: WorkData) {
         val dataBuilder = Data.Builder()
         workData.extras.forEach {
             val any = it.second

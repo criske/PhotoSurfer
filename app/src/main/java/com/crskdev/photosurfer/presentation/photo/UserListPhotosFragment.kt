@@ -28,6 +28,7 @@ import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
+import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import kotlinx.android.synthetic.main.fragment_list_photos.*
@@ -92,7 +93,7 @@ class UserListPhotosFragment : Fragment() {
 
 class UserListPhotosViewModel(userName: String,
                               searchTermTracker: SearchTermTracker,
-                              diskExecutor: Executor,
+                              diskExecutor: KExecutor,
                               private val photoRepository: PhotoRepository) : ViewModel() {
 
     val errorLiveData = SingleLiveEvent<Throwable>()
@@ -110,7 +111,7 @@ class UserListPhotosViewModel(userName: String,
         searchTermTrackerLiveData.observeForever {
             //we have a new user in accessed so we clear the old uset photos table
             if (it.first != it.second && it.second != null) {
-                diskExecutor.execute {
+                diskExecutor {
                     photoRepository.clear(RepositoryAction(RepositoryAction.Type.USER_PHOTOS))
                 }
             }

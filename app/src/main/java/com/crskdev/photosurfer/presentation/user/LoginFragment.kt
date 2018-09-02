@@ -17,6 +17,7 @@ import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
+import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_login.*
 import java.util.concurrent.Executor
 
@@ -27,15 +28,9 @@ class LoginFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                val dependencies = context!!.dependencyGraph()
-                return LoginViewModel(
-                        dependencies.ioThreadExecutor,
-                        dependencies.userRepository
-                ) as T
-            }
-        }).get(LoginViewModel::class.java)
+        viewModel = viewModelFromProvider(this) {
+            LoginViewModel(context!!.dependencyGraph().userRepository)
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -66,8 +61,7 @@ class LoginFragment : Fragment() {
     }
 }
 
-class LoginViewModel(private val ioThreadExecutor: Executor,
-                     private val userRepository: UserRepository) : ViewModel() {
+class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
@@ -75,17 +69,15 @@ class LoginViewModel(private val ioThreadExecutor: Executor,
 
     fun login(email: String, password: String) {
         if (email.isNotBlank() && password.isNotBlank()) {
-            ioThreadExecutor.execute {
-                userRepository.login(email, password, object : Repository.Callback<Unit> {
-                    override fun onSuccess(data: Unit, extras: Any?) {
-                        loggedInLiveData.postValue(Unit)
-                    }
+            userRepository.login(email, password, object : Repository.Callback<Unit> {
+                override fun onSuccess(data: Unit, extras: Any?) {
+                    loggedInLiveData.postValue(Unit)
+                }
 
-                    override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                        errorLiveData.postValue(error)
-                    }
-                })
-            }
+                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                    errorLiveData.postValue(error)
+                }
+            })
         } else {
             errorLiveData.value = Error("Email or Password is Empty!")
         }

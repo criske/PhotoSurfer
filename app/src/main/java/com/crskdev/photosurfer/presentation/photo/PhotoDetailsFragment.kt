@@ -39,10 +39,10 @@ import com.crskdev.photosurfer.setStatusBarColor
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
+import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_photo_details.*
 import kotlinx.android.synthetic.main.progress_layout.*
-import java.util.concurrent.Executor
 
 class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
 
@@ -55,17 +55,9 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProviders.of(this, object : ViewModelProvider.Factory {
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                val dependencyGraph = context!!.dependencyGraph()
-                @Suppress("UNCHECKED_CAST")
-                return PhotoDetailViewModel(
-                        dependencyGraph.uiThreadExecutor,
-                        dependencyGraph.diskThreadExecutor,
-                        dependencyGraph.ioThreadExecutor,
-                        dependencyGraph.photoRepository) as T
-            }
-        }).get(PhotoDetailViewModel::class.java)
+        viewModel = viewModelFromProvider(this){
+            PhotoDetailViewModel(context!!.dependencyGraph().photoRepository)
+        }
         photo = PhotoDetailsFragmentArgs.fromBundle(arguments)
                 .photo.deparcelize()
     }
@@ -235,9 +227,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 }
 
 class PhotoDetailViewModel(
-        private val uiExecutor: Executor,
-        private val backgroundExecutor: Executor,
-        private val ioExecutor: Executor,
         private val photoRepository: PhotoRepository) : ViewModel() {
 
     companion object {
@@ -270,12 +259,12 @@ class PhotoDetailViewModel(
         value = IDLE
         addSource(downloadLiveData) {
             if (it.isStaringValue)
-                postValue(DOWNLOADING)
+                value = DOWNLOADING
             else if (it.doneOrCanceled)
-                postValue(IDLE)
+                value = IDLE
         }
         addSource(errorLiveData) {
-            postValue(IDLE)
+            value = IDLE
         }
     }
 
@@ -289,49 +278,42 @@ class PhotoDetailViewModel(
 
 
     fun download(photo: Photo) {
-        backgroundExecutor.execute {
-            val isDownloaded = photoRepository.isDownloaded(photo.id)
-            if (isDownloaded) {
-                isDownloadedLiveData.postValue(Unit)
-            } else {
-                photoRepository.download(photo, object : Repository.Callback<DownloadProgress> {
-                    override fun onSuccess(data: DownloadProgress, extras: Any?) {
-                        val downloadProgress = data as DownloadProgress
-                        if (downloadProgress.doneOrCanceled) {
-                            uiExecutor.execute {
-                                // make sure the done value is consumed
-                                downloadLiveData.value = downloadProgress
-                            }
-                        } else {
-                            downloadLiveData.postValue(downloadProgress)
-                        }
+        val isDownloaded = photoRepository.isDownloaded(photo.id)
+        if (isDownloaded) {
+            isDownloadedLiveData.value = Unit
+        } else {
+            photoRepository.download(photo, object : Repository.Callback<DownloadProgress> {
+                override fun onSuccess(data: DownloadProgress, extras: Any?) {
+                    val downloadProgress = data
+                    if (downloadProgress.doneOrCanceled) {
+                        downloadLiveData.value = downloadProgress
+                    } else {
+                        downloadLiveData.value = downloadProgress
                     }
+                }
 
-                    override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                        errorLiveData.postValue(error)
-                    }
-                })
-            }
+                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                    errorLiveData.value = error
+                }
+            })
         }
 
     }
 
     fun like(photo: Photo) {
-        ioExecutor.execute {
-            photoRepository.like(photo, object : Repository.Callback<Boolean> {
-                override fun onSuccess(data: Boolean, extras: Any?) {
-                    likeLiveData.postValue(data)
-                }
+        photoRepository.like(photo, object : Repository.Callback<Boolean> {
+            override fun onSuccess(data: Boolean, extras: Any?) {
+                likeLiveData.value = data
+            }
 
-                override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                    if (!isAuthenticationError) {
-                        errorLiveData.postValue(error)
-                    } else {
-                        needsAuthLiveData.postValue(Unit)
-                    }
+            override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                if (!isAuthenticationError) {
+                    errorLiveData.value = error
+                } else {
+                    needsAuthLiveData.value = Unit
                 }
-            })
-        }
+            }
+        })
     }
 
 

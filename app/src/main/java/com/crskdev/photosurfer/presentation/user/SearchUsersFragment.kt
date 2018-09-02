@@ -30,6 +30,7 @@ import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
+import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.*
 import kotlinx.android.synthetic.main.fragment_search_users.*
@@ -123,7 +124,7 @@ class SearchUsersFragment : Fragment() {
 }
 
 class SearchUsersViewModel(
-        private val diskExecutor: Executor,
+        private val diskExecutor: KExecutor,
         private val userRepository: UserRepository,
         private val searchTermTracker: SearchTermTracker) : ViewModel() {
 
@@ -136,7 +137,7 @@ class SearchUsersViewModel(
         searchTermTrackerLiveData
                 .observeForever {
                     if (it.first != it.second && it.second != null) {
-                        diskExecutor.execute {
+                        diskExecutor {
                             userRepository.clear()
                         }
                     }
