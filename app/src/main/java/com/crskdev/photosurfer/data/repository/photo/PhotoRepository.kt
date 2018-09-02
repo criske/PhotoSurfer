@@ -1,6 +1,5 @@
 package com.crskdev.photosurfer.data.repository.photo
 
-import androidx.annotation.AnyThread
 import androidx.annotation.MainThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
@@ -17,12 +16,11 @@ import com.crskdev.photosurfer.data.remote.photo.SearchedPhotosJSON
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.ScheduledWorkService
-import com.crskdev.photosurfer.services.Tag
-import com.crskdev.photosurfer.services.WorkData
-import com.crskdev.photosurfer.services.WorkType
+import com.crskdev.photosurfer.data.repository.scheduled.Tag
+import com.crskdev.photosurfer.data.repository.scheduled.WorkData
+import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.util.runOn
-import retrofit2.Call
 import kotlin.math.roundToInt
 
 /**
@@ -219,7 +217,7 @@ class PhotoRepositoryImpl(
             daoPhotoFacade.like(photo.id, photo.likedByMe)
             callback.runOn(uiExecutor) { onSuccess(photo.likedByMe) }
         }
-        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id,
+        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), true, "id" to photo.id,
                 "likedByMe" to photo.likedByMe))
     }
 

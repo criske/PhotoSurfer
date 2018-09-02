@@ -2,11 +2,9 @@ package com.crskdev.photosurfer.data.remote.collections
 
 import com.crskdev.photosurfer.data.remote.REQUIRE_AUTH
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
+import okhttp3.ResponseBody
 import retrofit2.Call
-import retrofit2.http.GET
-import retrofit2.http.Headers
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.http.*
 
 /**
  * Created by Cristian Pela on 30.08.2018.
@@ -23,4 +21,8 @@ interface CollectionsAPI {
     @GET("/collections/{id}/photos")
     @Headers(REQUIRE_AUTH)
     fun getMyCollectionPhotos(@Path("id") collectionId: Int, @Query("page") page: Int = 1): Call<List<PhotoJSON>>
+
+    @POST("/collections")
+    @Headers(REQUIRE_AUTH)
+    fun createCollection(@Field("title") title: String, @Field("description") description: String, @Field("private") private: Boolean):Call<CollectionJSON>
 }

@@ -16,7 +16,10 @@ import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.*
+import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
 import com.crskdev.photosurfer.data.remote.user.UserAPI
+import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
+import com.crskdev.photosurfer.data.repository.collection.CollectionRepositoryImpl
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
@@ -31,6 +34,7 @@ import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
+import com.squareup.moshi.Moshi
 import java.util.*
 
 
@@ -66,6 +70,10 @@ object DependencyGraph {
     lateinit var externalPhotoGalleryDAO: ExternalPhotoGalleryDAO
         private set
 
+    //serialization
+    //todo unify this moshi with the one from retrofit converter
+    val moshi: Moshi = Moshi.Builder().build()
+
     //NETWORK
     lateinit var apiCallDispatcher: APICallDispatcher
         private set
@@ -89,11 +97,15 @@ object DependencyGraph {
     //APIs
     lateinit var photoAPI: PhotoAPI
         private set
+    lateinit var collectionsAPI: CollectionsAPI
+        private set
 
     //repositories
     lateinit var photoRepository: PhotoRepository
         private set
     lateinit var userRepository: UserRepository
+        private set
+    lateinit var collectionsRepository: CollectionRepository
         private set
     lateinit var searchTermTracker: SearchTermTracker
         private set
@@ -152,6 +164,19 @@ object DependencyGraph {
                 downloadManager,
                 scheduledWorkService
         )
+
+        collectionsAPI = retrofit.create(CollectionsAPI::class.java)
+        collectionsRepository = CollectionRepositoryImpl(
+                executorManager,
+                daoManager,
+                moshi,
+                scheduledWorkService,
+                apiCallDispatcher,
+                collectionsAPI,
+                authTokenStorage,
+                staleDataTrackSupervisor
+        )
+
 
         //search
         searchTermTracker = SearchTermTrackerImpl(preferences)

@@ -25,7 +25,7 @@ import com.crskdev.photosurfer.data.local.Contract
 class CollectionsCollectionPhotoEntity {
 
     @PrimaryKey(autoGenerate = true)
-    var id: Long = -1L
+    var id: Int = 0
 
     @ColumnInfo(name = "collection_id")
     var collectionId: Int = -1

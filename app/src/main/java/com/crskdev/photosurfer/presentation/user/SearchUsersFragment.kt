@@ -32,9 +32,11 @@ import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.dpToPx
-import com.crskdev.photosurfer.util.livedata.*
+import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
+import com.crskdev.photosurfer.util.livedata.defaultConfig
+import com.crskdev.photosurfer.util.livedata.filter
+import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_search_users.*
-import java.util.concurrent.Executor
 
 
 class SearchUsersFragment : Fragment() {

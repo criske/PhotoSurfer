@@ -9,17 +9,22 @@ import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.entities.Collection
+import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.util.runOn
+import com.squareup.moshi.Moshi
 
 /**
  * Created by Cristian Pela on 31.08.2018.
  */
 interface CollectionRepository : Repository {
+
+    fun createCollection(collection: Collection, withPhotoId: String? = null)
 
     fun getCollections(): DataSource.Factory<Int, Collection>
 
@@ -33,6 +38,8 @@ interface CollectionRepository : Repository {
 class CollectionRepositoryImpl(
         executorsManager: ExecutorsManager,
         daoManager: DaoManager,
+        moshi: Moshi,
+        private val scheduledWorkService: ScheduledWorkService,
         private val apiCallDispatcher: APICallDispatcher,
         private val collectionAPI: CollectionsAPI,
         private val authTokenStorage: AuthTokenStorage,
@@ -40,11 +47,19 @@ class CollectionRepositoryImpl(
 ) : CollectionRepository {
 
     private val collectionDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
-    private val transactional = daoManager.transactionRunner()
 
+    private val transactional = daoManager.transactionRunner()
     private val ioExecutor = executorsManager.types[ExecutorsManager.Type.NETWORK]!!
+
     private val diskExecutor = executorsManager.types[ExecutorsManager.Type.DISK]!!
     private val uiExecutor = executorsManager.types[ExecutorsManager.Type.UI]!!
+
+    private val collectionJsonAdapter by lazy { moshi.adapter(CollectionJSON::class.java) }
+
+    override fun createCollection(collection: Collection, withPhotoId: String?) {
+        scheduledWorkService.schedule(CreateCollectionWorker.createWorkData(collectionJsonAdapter
+                .toJson(collection.toJSON()), withPhotoId))
+    }
 
     override fun getCollections(): DataSource.Factory<Int, Collection> =
             collectionDAO.getCollections().mapByPage { page ->

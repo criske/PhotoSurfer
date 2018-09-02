@@ -6,7 +6,9 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.*
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.data.repository.scheduled.Tag
+import com.crskdev.photosurfer.data.repository.scheduled.WorkData
+import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import java.util.concurrent.TimeUnit
 
 
@@ -25,12 +27,6 @@ interface ScheduledWorkService {
 class ScheduledWorkServiceImpl : ScheduledWorkService {
 
     private val workManager = WorkManager.getInstance()
-
-    init {
-        workManager.getStatusesByTag("").observeForever {
-
-        }
-    }
 
     override fun schedule(workData: WorkData) {
         val dataBuilder = Data.Builder()
@@ -51,7 +47,11 @@ class ScheduledWorkServiceImpl : ScheduledWorkService {
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build())
                 .build()
-        workManager.beginUniqueWork(workerTag, ExistingWorkPolicy.REPLACE, request).enqueue()
+        if (workData.isUniqueWork) {
+            workManager.beginUniqueWork(workerTag, ExistingWorkPolicy.REPLACE, request).enqueue()
+        } else {
+            workManager.enqueue(request)
+        }
     }
 
     override fun clearScheduled(workerTag: Tag) {
@@ -63,18 +63,6 @@ class ScheduledWorkServiceImpl : ScheduledWorkService {
     }
 }
 
-class WorkData(val tag: Tag, vararg val extras: Pair<String, Any>)
-
-
-enum class WorkType(val workerClass: Class<out Worker>) {
-    LIKE(LikeWorker::class.java)
-}
-
-class Tag(val type: WorkType, val uniqueId: String) {
-    override fun toString(): String {
-        return "$type#$uniqueId"
-    }
-}
 
 abstract class TypedWorker : Worker() {
 
@@ -103,51 +91,5 @@ abstract class TypedWorker : Worker() {
         notificationManager.notify(1337, notification)
     }
 
-
 }
 
-class LikeWorker : TypedWorker() {
-
-    override val type: WorkType = WorkType.LIKE
-
-    override fun doWork(): Result {
-        val graph = applicationContext.dependencyGraph()
-        val api = graph.photoAPI
-        val apiCallDispatcher = graph.apiCallDispatcher
-
-        val id = inputData.getString("id")
-        val liked: Boolean = inputData.getBoolean("likedByMe", false)
-
-        if (id == null)
-            return Result.FAILURE
-
-        return try {
-            val response = apiCallDispatcher {
-                if (liked)
-                    api.like(id)
-                else
-                    api.unlike(id)
-            }
-            val code = response.code()
-            when (code) {
-                201, 200 -> {
-                    sendPlatformNotification("Scheduled photo like for id: $id successful")
-                    Result.SUCCESS
-                }
-                401 -> {
-                    sendPlatformNotification("Scheduled photo like for id: $id failed. Need login")
-                    Result.RETRY
-                }
-                429 -> {
-                    sendPlatformNotification("Scheduled photo like for id: $id failed. Request limit reached")
-                    Result.RETRY
-                }
-                else -> Result.RETRY
-            }
-        } catch (ex: Exception) {
-            sendPlatformNotification("Scheduled photo like for id: $id failed. No network. Will retry later")
-            Result.RETRY
-        }
-    }
-
-}

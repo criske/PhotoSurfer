@@ -84,8 +84,7 @@ class StaleDataTrackSupervisor private constructor(
         }
 
         val hasNoStaleDataRecords = !hasStaleDataTrack(table)
-        val isNotEmptyTable = !isEmptyTable(table)
-        if (hasNoStaleDataRecords && isNotEmptyTable) {
+        if (hasNoStaleDataRecords) {
             recordStaleDataTrack(table)
         }
     }

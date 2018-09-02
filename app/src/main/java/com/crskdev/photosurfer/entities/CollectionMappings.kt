@@ -3,6 +3,8 @@ package com.crskdev.photosurfer.entities
 import com.crskdev.photosurfer.data.local.collections.CollectionEntity
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
+import com.crskdev.photosurfer.data.remote.photo.AuthorJSON
+import com.squareup.moshi.JsonAdapter
 
 /**
  * Created by Cristian Pela on 31.08.2018.
@@ -27,6 +29,28 @@ fun CollectionJSON.toCollectionDB(pagingData: PagingData): CollectionEntity =
             this.curr = pagingData.curr
             this.next = pagingData.next
             this.prev = pagingData.prev
+        }
+
+fun CollectionJSON.toJSONString(jsonAdapter: JsonAdapter<CollectionJSON>): String =
+        jsonAdapter.toJson(this)
+
+fun Collection.toJSON(): CollectionJSON =
+        CollectionJSON().apply {
+            this.id = this@toJSON.id
+            this.publishedAt = this@toJSON.publishedAt
+            this.updatedAt = this@toJSON.updatedAt
+            this.coverPhoto = null
+            this.title = this@toJSON.title
+            this.description = this@toJSON.description
+            this.curated = this@toJSON.curated
+            this.totalPhotos = this@toJSON.totalPhotos
+            this.private = this@toJSON.private
+            this.sharedKey = this@toJSON.sharedKey
+            this.owner = AuthorJSON().apply {
+                this.id = this@toJSON.ownerId
+                this.username = this@toJSON.ownerUsername
+            }
+            this.links = this@toJSON.links
         }
 
 fun CollectionEntity.toCollection(): Collection {
