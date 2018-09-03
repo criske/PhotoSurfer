@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.crskdev.photosurfer.entities.CollectionMappingsKt.collectionsAsLiteStr;
+import static com.crskdev.photosurfer.entities.CollectionMappingsKt.collectionsJSONAsLiteStr;
 import static com.crskdev.photosurfer.entities.PhotoMappingsKt.ENTRY_DELIM;
 import static com.crskdev.photosurfer.entities.PhotoMappingsKt.KV_DELIM;
 
@@ -34,7 +36,9 @@ final class PhotoToEntityMappingReflect {
             setField(instance, photo.getHeight(), clazz, "height");
             setField(instance, photo.getColorString(), clazz, "colorString");
             setField(instance, transformUrls(photo.getUrls()), clazz, "urls");
+            setField(instance, photo.getDescription(), clazz, "description");
             setField(instance, transformListToStr(photo.getCategories()), clazz, "categories");
+            setField(instance, collectionsJSONAsLiteStr(photo.getCollections()), clazz, "collections");
             setField(instance, photo.getLikes(), clazz, "likes");
             setField(instance, photo.getLikedByMe(), clazz, "likedByMe");
             setField(instance, photo.getViews(), clazz, "views");
@@ -65,7 +69,9 @@ final class PhotoToEntityMappingReflect {
             setField(instance, photo.getHeight(), clazz, "height");
             setField(instance, photo.getColorString(), clazz, "colorString");
             setField(instance, transformUrls(photo.getUrls()), clazz, "urls");
+            setField(instance, photo.getDescription(), clazz, "description");
             setField(instance, transformListToStr(photo.getCategories()), clazz, "categories");
+            setField(instance, collectionsAsLiteStr(photo.getCollections()), clazz, "collections");
             setField(instance, photo.getLikes(), clazz, "likes");
             setField(instance, photo.getLikedByMe(), clazz, "likedByMe");
             setField(instance, photo.getViews(), clazz, "views");

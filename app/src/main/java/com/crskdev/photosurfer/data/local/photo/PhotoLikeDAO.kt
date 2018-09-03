@@ -36,4 +36,7 @@ interface PhotoLikeDAO : DataAccessor {
 
     @Delete
     fun unlike(photo: LikePhotoEntity)
+
+    @Update
+    fun update(photo: PhotoEntity)
 }

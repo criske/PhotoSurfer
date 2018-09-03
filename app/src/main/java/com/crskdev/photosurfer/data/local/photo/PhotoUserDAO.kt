@@ -31,4 +31,7 @@ interface PhotoUserDAO : DataAccessor {
     @Query("SELECT * FROM user_photos WHERE id=:id")
     fun getPhoto(id: String): UserPhotoEntity?
 
+    @Update
+    fun update(photo: PhotoEntity)
+
 }

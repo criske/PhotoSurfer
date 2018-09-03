@@ -73,3 +73,26 @@ fun CollectionEntity.toCollection(): Collection {
             pagingData
     )
 }
+
+fun CollectionJSON.asLiteStr(): String = "$id#$title"
+
+fun Collection.asLiteStr(): String = "$id#$title"
+
+fun collectionsLiteStrAdd(collectionsStr: String, collection: Collection) =
+        "$collectionsStr@${collection.asLiteStr()}"
+
+fun collectionsJSONAsLiteStr(collections: List<CollectionJSON>): String = collections.map { it.asLiteStr() }.joinToString("@")
+
+fun collectionsAsLiteStr(collections: List<Collection>): String = collections.map { it.asLiteStr() }.joinToString("@")
+
+fun toLiteCollections(liteStrList: String): List<Collection> {
+    return liteStrList.split("@").map {
+        val split = it.split("#")
+        if (split.size == 2) {
+            throw IllegalAccessException("Invalid parse from string to collection list")
+        } else {
+            Collection(split[0].toInt(), split[1],
+                    "", "", "", sharedKey = "", ownerId = "", ownerUsername = "", links = emptyMap())
+        }
+    }
+}

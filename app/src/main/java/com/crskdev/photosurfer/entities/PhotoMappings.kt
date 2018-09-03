@@ -7,7 +7,9 @@ import com.crskdev.photosurfer.data.local.photo.SearchPhotoEntity
 import com.crskdev.photosurfer.data.local.photo.UserPhotoEntity
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.PagingData
+import com.crskdev.photosurfer.data.remote.photo.AuthorJSON
 import com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto
+import com.squareup.moshi.Json
 import java.util.*
 
 /**
@@ -22,8 +24,11 @@ fun PhotoEntity.toPhoto(): Photo =
                 width, height,
                 colorString,
                 transformStrMapToUrls(urls),
+                description,
                 categories?.split(ENTRY_DELIM)?.toList() ?: emptyList(),
-                likes, likedByMe,
+                collections?.let { toLiteCollections(it) } ?: emptyList(),
+                likes,
+                likedByMe,
                 views,
                 authorId,
                 authorUsername,
@@ -50,12 +55,35 @@ fun PhotoJSON.toCollectionPhotoDbEntity(pagingData: PagingData, nextIndex: Int):
 fun Photo.toLikePhotoDbEntity(nextIndex: Int): LikePhotoEntity =
         PhotoToEntityMappingReflect.toDbEntity(this, pagingData, nextIndex, LikePhotoEntity::class.java)
 
+fun Photo.toJSON(): PhotoJSON =
+        PhotoJSON().apply {
+            id = this@toJSON.id
+            createdAt = this@toJSON.createdAt
+            updatedAt = this@toJSON.updatedAt
+            width = this@toJSON.width
+            height = this@toJSON.height
+            colorString = this@toJSON.colorString
+            urls = this@toJSON.urls
+            description = this@toJSON.description
+            categories = this@toJSON.categories
+            likes = this@toJSON.likes
+            likedByMe = this@toJSON.likedByMe
+            views = this@toJSON.views
+            author = AuthorJSON().apply {
+                id = this@toJSON.id
+                username = this@toJSON.authorUsername
+            }
+        }
+
 fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
         createdAt, updatedAt,
         width, height,
         colorString,
         urls.entries.fold(mutableMapOf()) { a, c -> a.apply { put(c.key.toString(), c.value) } },
-        categories, likes, likedByMe, views, authorId, authorUsername,
+        description,
+        categories,
+        collectionsAsLiteStr(collections),
+        likes, likedByMe, views, authorId, authorUsername,
         pagingData?.total, pagingData?.curr, pagingData?.prev, pagingData?.next)
 
 fun ParcelizedPhoto.deparcelize(): Photo =
@@ -65,6 +93,9 @@ fun ParcelizedPhoto.deparcelize(): Photo =
                 colorString,
                 urls.entries.fold(EnumMap<ImageType, String>(ImageType::class.java))
                 { a, c -> a.apply { put(ImageType.valueOf(c.key.toUpperCase()), c.value) } },
-                categories, likes, likedByMe, views, authorId, authorUsername,
+                description,
+                categories,
+                toLiteCollections(collections),
+                likes, likedByMe, views, authorId, authorUsername,
                 PagingData(total ?: -1, curr ?: -1, prev, next))
 

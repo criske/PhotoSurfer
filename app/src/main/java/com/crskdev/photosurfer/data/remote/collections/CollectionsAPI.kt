@@ -24,5 +24,23 @@ interface CollectionsAPI {
 
     @POST("/collections")
     @Headers(REQUIRE_AUTH)
-    fun createCollection(@Field("title") title: String, @Field("description") description: String, @Field("private") private: Boolean):Call<CollectionJSON>
+    fun createCollection(@Field("title") title: String, @Field("description") description: String, @Field("private") private: Boolean): Call<CollectionJSON>
+
+    @PUT("/collections/{id}")
+    @Headers(REQUIRE_AUTH)
+    fun updateCollection(@Path("id") id: Int, @Field("title") title: String, @Field("description") description: String, @Field("private") private: Boolean): Call<CollectionJSON>
+
+    @DELETE("/collections/:id")
+    @Headers(REQUIRE_AUTH)
+    fun deleteCollection(@Path("id") id: Int): Call<ResponseBody>
+
+    @POST("/collections/{collection_id}/add")
+    @Headers(REQUIRE_AUTH)
+    fun addPhotoToCollection(@Path("collection_id") @Field("collection_id") collectionId: Int, @Field("photo_id") photoId: String): Call<PhotoJSON>
+
+    @POST("/collections/{collection_id}/remove")
+    @Headers(REQUIRE_AUTH)
+    fun removePhotoFromCollection(@Path("collection_id") @Field("collection_id") collectionId: Int, @Field("photo_id") photoId: String): Call<PhotoJSON>
+
+
 }

@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.remote.photo
 
+import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
 import com.crskdev.photosurfer.entities.ImageType
 import com.squareup.moshi.Json
 import java.util.*
@@ -16,6 +17,7 @@ class PhotoJSON {
     lateinit var colorString: String
     lateinit var urls: EnumMap<ImageType, String>
     var description: String? = null
+    lateinit var collections: List<CollectionJSON>
     lateinit var categories: List<String>
     var likes: Int = 0
     @Json(name = "liked_by_user")

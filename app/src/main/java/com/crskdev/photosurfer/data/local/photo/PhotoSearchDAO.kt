@@ -31,4 +31,7 @@ interface PhotoSearchDAO : DataAccessor {
     @Update
     fun like(photo: SearchPhotoEntity)
 
+    @Update
+    fun update(photo: PhotoEntity)
+
 }

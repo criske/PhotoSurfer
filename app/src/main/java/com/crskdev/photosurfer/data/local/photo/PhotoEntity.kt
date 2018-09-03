@@ -9,7 +9,7 @@ import com.crskdev.photosurfer.data.local.Contract
  * Created by Cristian Pela on 09.08.2018.
  */
 @Entity(tableName = Contract.TABLE_PHOTOS)
-open class PhotoEntity: BaseDBEntity() {
+open class PhotoEntity : BaseDBEntity() {
     @PrimaryKey
     lateinit var id: String
 
@@ -22,10 +22,12 @@ open class PhotoEntity: BaseDBEntity() {
      * unwind link map key-values and concat them with ";"
      */
     lateinit var urls: String
+    var description: String? = null
     /*
     unwind values and concat them with ";"
      */
     var categories: String? = null
+    var collections: String? = null
     var likes: Int = 0
     var likedByMe: Boolean = false
     var views: Int = 0
