@@ -1,7 +1,6 @@
 package com.crskdev.photosurfer.data.repository.collection
 
 import com.crskdev.photosurfer.data.local.Contract
-import com.crskdev.photosurfer.data.local.collections.CollectionsCollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
@@ -12,7 +11,6 @@ import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.dependencyGraph
 import com.crskdev.photosurfer.entities.toCollectionDB
-import com.crskdev.photosurfer.entities.toCollectionPhotoDbEntity
 import com.crskdev.photosurfer.services.TypedWorker
 
 /**
@@ -64,20 +62,6 @@ class CreateCollectionWorker : TypedWorker() {
                             PagingData(it.total ?: 0, it.curr ?: 1, it.prev, it.next)
                         } ?: PagingData(0, 1, null, null)
                         collectionsDAO.createCollection(cjson.toCollectionDB(pagingData))
-                        if (photoJSON != null) {
-                            val photoPagingData = collectionsDAO
-                                    .getLatestCollectionPhoto(cjson.id)?.let {
-                                        PagingData(it.total ?: 1+1, it.curr ?: 1, it.prev, it.next)
-                                    } ?: PagingData(1, 1, null, null)
-                            val photoDB = photoJSON.toCollectionPhotoDbEntity(
-                                    photoPagingData,
-                                    collectionsDAO.getNextCollectionPhotoIndex())
-                            collectionsDAO.insertCollectionPhoto(photoDB)
-                            collectionsDAO.addPhotoToCollection(CollectionsCollectionPhotoEntity().apply {
-                                collectionId = cjson.id
-                                photoId = photoJSON.id
-                            })
-                        }
                     }
                     sendPlatformNotification("Collection created")
                 }

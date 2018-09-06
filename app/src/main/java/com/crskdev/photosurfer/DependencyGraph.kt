@@ -146,7 +146,8 @@ object DependencyGraph {
                         Contract.TABLE_USER_PHOTOS to db.photoUserDAO(),
                         Contract.TABLE_SEARCH_PHOTOS to db.photoSearchDAO(),
                         Contract.TABLE_USERS to db.userDAO(),
-                        Contract.TABLE_COLLECTIONS to db.collectionsDAO()
+                        Contract.TABLE_COLLECTIONS to db.collectionsDAO(),
+                        Contract.TABLE_COLLECTION_PHOTOS to db.collectionPhotoDAO()
                 ))
 
         //photo
@@ -154,9 +155,10 @@ object DependencyGraph {
         externalPhotoGalleryDAO = ExternalPhotoGalleryDAOImpl(context)
         photoDownloader = PhotoDownloaderImpl(apiCallDispatcher, photoAPI)
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
+        val daoPhotoFacade = PhotoDAOFacade(daoManager)
         photoRepository = PhotoRepositoryImpl(
                 executorManager,
-                PhotoDAOFacade(daoManager),
+                daoPhotoFacade,
                 authTokenStorage,
                 staleDataTrackSupervisor,
                 apiCallDispatcher,
@@ -170,6 +172,7 @@ object DependencyGraph {
                 executorManager,
                 daoManager,
                 moshi,
+                daoPhotoFacade,
                 scheduledWorkService,
                 apiCallDispatcher,
                 collectionsAPI,

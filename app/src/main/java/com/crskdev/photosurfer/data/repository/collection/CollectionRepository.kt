@@ -3,7 +3,7 @@ package com.crskdev.photosurfer.data.repository.collection
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
-import com.crskdev.photosurfer.data.local.collections.CollectionsCollectionPhotoEntity
+import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
@@ -54,6 +54,7 @@ class CollectionRepositoryImpl(
 ) : CollectionRepository {
 
     private val collectionDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
+    private val collectionPhotoDAO: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
 
     private val transactional = daoManager.transactionRunner()
     private val ioExecutor = executorsManager.types[ExecutorsManager.Type.NETWORK]!!
@@ -131,20 +132,11 @@ class CollectionRepositoryImpl(
                     if (response.isSuccessful) {
                         val pagingData = PagingData.createFromHeaders(headers())
                         diskExecutor {
-                            transactional {
-                                val nextIndex = collectionDAO.getNextCollectionPhotoIndex()
-                                val photos = response.body()?.map {
-                                    it.toCollectionPhotoDbEntity(pagingData, nextIndex)
-                                } ?: emptyList()
-                                val manyToManyIndices = photos.map {
-                                    CollectionsCollectionPhotoEntity().apply {
-                                        this.collectionId = collectionId
-                                        this.photoId = it.id
-                                    }
-                                }
-                                collectionDAO.insertCollectionPhotos(photos)
-                                collectionDAO.addPhotosToCollection(manyToManyIndices)
-                            }
+                            val nextIndex = collectionDAO.getNextIndex()
+                            val photos = response.body()?.map {
+                                it.toCollectionPhotoDbEntity(pagingData, nextIndex)
+                            } ?: emptyList()
+                            collectionPhotoDAO.insertPhotos(photos)
                             callback?.runOn(uiExecutor) { onSuccess(Unit) }
                             Unit
                         }
@@ -163,18 +155,18 @@ class CollectionRepositoryImpl(
             collectionAPI.addPhotoToCollection(collection.id, photo.id)
         }
         diskExecutor {
-            val photosFromAllTables = photoDAOFacade.getPhotoFromAllTables(photo.id).map {
-                it.collections = it.collections?.let { cstr -> collectionsLiteStrAdd(cstr, collection) }
-                it
-            }
-            photosFromAllTables.forEach {
-                photoDAOFacade.updateForAllTables(it)
-            }
+            photoDAOFacade.addCollection(photo.id, collection.asLiteStr())
         }
     }
 
     override fun removePhotoFromCollection(collection: Collection, photo: Photo) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        //todo schedule api call
+        ioExecutor {
+            collectionAPI.removePhotoFromCollection(collection.id, photo.id)
+        }
+        diskExecutor {
+            photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
+        }
     }
 
 }

@@ -5,8 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.crskdev.photosurfer.data.local.collections.CollectionEntity
+import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
-import com.crskdev.photosurfer.data.local.collections.CollectionsCollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.local.track.StaleDataTackDAO
@@ -26,8 +26,7 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             UserEntity::class,
             StaleDataTrackEntity::class,
             CollectionEntity::class,
-            CollectionPhotoEntity::class,
-            CollectionsCollectionPhotoEntity::class
+            CollectionPhotoEntity::class
         ],
         version = 9,
         exportSchema = false
@@ -53,16 +52,15 @@ abstract class PhotoSurferDB : RoomDatabase() {
         }
     }
 
-
     abstract fun photoDAO(): PhotoDAO
     abstract fun photoUserDAO(): PhotoUserDAO
     abstract fun photoLikeDAO(): PhotoLikeDAO
     abstract fun photoSearchDAO(): PhotoSearchDAO
+    abstract fun collectionPhotoDAO(): CollectionPhotoDAO
 
     abstract fun collectionsDAO(): CollectionsDAO
 
     abstract fun userDAO(): UserDAO
-
     abstract fun staleDataTrackDAO(): StaleDataTackDAO
 }
 

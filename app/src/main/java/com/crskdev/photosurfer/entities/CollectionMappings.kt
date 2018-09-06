@@ -78,8 +78,15 @@ fun CollectionJSON.asLiteStr(): String = "$id#$title"
 
 fun Collection.asLiteStr(): String = "$id#$title"
 
-fun collectionsLiteStrAdd(collectionsStr: String, collection: Collection) =
-        "$collectionsStr@${collection.asLiteStr()}"
+fun collectionsLiteStrAdd(collectionsStr: String, collectionStr: String): String {
+    val entry = "$collectionStr@"
+    return collectionsStr.replace(entry, "").plus(entry)
+}
+
+fun collectionsLiteStrRemove(collectionsStr: String, collectionStr: String): String {
+    val entry = "$collectionStr@"
+    return collectionsStr.replace(entry, "")
+}
 
 fun collectionsJSONAsLiteStr(collections: List<CollectionJSON>): String = collections.map { it.asLiteStr() }.joinToString("@")
 

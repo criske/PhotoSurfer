@@ -5,7 +5,11 @@ import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
 import com.crskdev.photosurfer.data.local.DataAccessor
 import com.crskdev.photosurfer.data.local.TransactionRunner
+import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
+import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
+import com.crskdev.photosurfer.entities.collectionsLiteStrAdd
+import com.crskdev.photosurfer.entities.collectionsLiteStrRemove
 
 /**
  * Created by Cristian Pela on 22.08.2018.
@@ -18,7 +22,7 @@ class PhotoDAOFacade(daoManager: DaoManager
     private val daoLikes: PhotoLikeDAO = daoManager.getDao(Contract.TABLE_LIKE_PHOTOS)
     private val daoUserPhotos: PhotoUserDAO = daoManager.getDao(Contract.TABLE_USER_PHOTOS)
     private val daoSearchDAO: PhotoSearchDAO = daoManager.getDao(Contract.TABLE_SEARCH_PHOTOS)
-    private val daoCollections: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
+    private val daoCollectionPhoto: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
     private val transactional: TransactionRunner = daoManager.transactionRunner()
 
     fun getPhotos(table: String): DataSource.Factory<Int, out PhotoEntity> {
@@ -27,6 +31,7 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_PHOTOS -> daoPhotos.getPhotos()
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.getPhotos()
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getPhotos()
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getPhotos()
             else -> throw Error("Dao for table $table not found or not supported")
         }
     }
@@ -37,6 +42,7 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_PHOTOS -> daoPhotos.insertPhotos(photos)
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.insertPhotos(photos.map { it as LikePhotoEntity })
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.insertPhotos(photos.map { it as SearchPhotoEntity })
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.insertPhotos(photos.map { it as CollectionPhotoEntity })
             else -> throw Error("Dao for table $table not found or not supported")
         }
     }
@@ -59,6 +65,7 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_PHOTOS -> daoPhotos.update(photo)
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.update(photo)
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.update(photo)
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.update(photo)
             else -> throw Error("Dao for table $table not found")
         }
     }
@@ -70,6 +77,7 @@ class PhotoDAOFacade(daoManager: DaoManager
                 daoPhotos.clear()
                 daoLikes.clear()
                 daoSearchDAO.clear()
+                daoCollectionPhoto.clear()
             }
         } else {
             when (table) {
@@ -77,6 +85,7 @@ class PhotoDAOFacade(daoManager: DaoManager
                 Contract.TABLE_PHOTOS -> daoPhotos.clear()
                 Contract.TABLE_LIKE_PHOTOS -> daoLikes.clear()
                 Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.clear()
+                Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.clear()
                 else -> throw Error("Dao for table $table not found")
             }
         }
@@ -88,6 +97,7 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_PHOTOS -> daoPhotos.getNextIndex()
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.getNextIndex()
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getNextIndex()
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getNextIndex()
             else -> throw Error("Dao for table $table not found")
         }
     }
@@ -98,6 +108,7 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_PHOTOS -> daoPhotos.isEmpty()
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.isEmpty()
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.isEmpty()
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.isEmpty()
             else -> throw Error("Dao for table $table not found")
         }
     }
@@ -108,6 +119,7 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_PHOTOS -> daoPhotos.getPhoto(id)
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.getPhoto(id)
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getPhoto(id)
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getPhoto(id)
             else -> throw Error("Dao for table $table not found")
         }
     }
@@ -128,14 +140,13 @@ class PhotoDAOFacade(daoManager: DaoManager
 
     fun like(id: String, liked: Boolean) {
         transactional {
-            val photo = daoPhotos.getPhoto(id)?.apply { likedByMe = liked }
-            photo?.let { daoPhotos.like(photo) }
-            val userPhoto = daoUserPhotos.getPhoto(id)?.apply { likedByMe = liked }
-            userPhoto?.let { daoUserPhotos.like(userPhoto) }
-            val searchedPhoto = daoSearchDAO.getPhoto(id)?.apply { likedByMe = liked }
-            searchedPhoto?.let { daoSearchDAO.like(it) }
-            if (!daoLikes.isEmpty()) { // we doing nothing unless there already fetched the likes from server
-                val likePhoto = (photo ?: userPhoto ?: searchedPhoto)?.let {
+            val photos = getPhotoFromAllTables(id)
+            photos.forEach {
+                it.likedByMe = liked
+                updateForAllTables(it)
+            }
+            if (!daoLikes.isEmpty() && photos.isNotEmpty()) { // we doing nothing unless there already fetched the likes from server
+                val likePhoto = photos.first().let {
                     LikePhotoEntity().apply {
                         this.id = it.id
                         this.createdAt = it.createdAt
@@ -149,7 +160,7 @@ class PhotoDAOFacade(daoManager: DaoManager
                         this.authorId = it.authorId
                     }
                 }
-                likePhoto?.let {
+                likePhoto.let {
                     if (liked) {
                         with(it) {
                             val lastLiked = daoLikes.getLastPhoto()
@@ -160,10 +171,32 @@ class PhotoDAOFacade(daoManager: DaoManager
                             total = lastLiked.total
                         }
                         daoLikes.like(it)
-                    } else {
+                    }else{
                         daoLikes.unlike(it)
                     }
+
                 }
+            }
+        }
+    }
+
+
+    fun addCollection(id: String, collectionStr: String){
+        transactional{
+            val photos = getPhotoFromAllTables(id)
+            photos.forEach {
+                it.collections = it.collections?.let { c -> collectionsLiteStrAdd(c, collectionStr) }
+                updateForAllTables(it)
+            }
+        }
+    }
+
+    fun removePhotoFromCollection(id: String, collectionStr: String){
+        transactional{
+            val photos = getPhotoFromAllTables(id)
+            photos.forEach {
+                it.collections = it.collections?.let { c -> collectionsLiteStrRemove(c, collectionStr) }
+                updateForAllTables(it)
             }
         }
     }

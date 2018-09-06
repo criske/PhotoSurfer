@@ -1,8 +1,6 @@
 package com.crskdev.photosurfer.data.local.collections
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
