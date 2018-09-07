@@ -91,7 +91,7 @@ class PhotoRepositoryImpl(
         uiExecutor {
             apiCallDispatcher.cancel()
         }
-        ioExecutor {
+        ioExecutor.execute{
             try {
                 val response = if (repositoryAction.type == RepositoryAction.Type.SEARCH) {
                     apiCallDispatcher { api.getSearchedPhotos(repositoryAction.extras[0].toString(), page) }

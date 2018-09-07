@@ -40,6 +40,7 @@ import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
@@ -97,10 +98,11 @@ class ListPhotosFragment : Fragment() {
         collapsingToolbarListPhotos.isTitleEnabled = false
         toolbarListPhotos.apply {
             setOnMenuItemClickListener {
+                val navController = toolbarListPhotos.findNavController()
                 when (it.itemId) {
                     R.id.menu_item_account -> {
                         authNavigatorMiddleware.navigate(
-                                toolbarListPhotos.findNavController(),
+                                navController,
                                 ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(
                                         viewModel.authStateLiveData.value ?: ""))
                     }
@@ -115,11 +117,11 @@ class ListPhotosFragment : Fragment() {
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
                     R.id.menu_item_search_users -> {
-                        toolbarListPhotos.findNavController().navigate(R.id.fragment_search_users, null,
+                        navController.navigate(R.id.fragment_search_users, null,
                                 defaultTransitionNavOptions())
                     }
                     R.id.menu_action_collections -> {
-
+                        authNavigatorMiddleware.navigate(navController, R.id.fragment_collections)
                     }
                 }
                 true
@@ -146,11 +148,15 @@ class ListPhotosFragment : Fragment() {
                     ActionWhat.LIKE -> {
                         viewModel.like(photo)
                     }
+                    ActionWhat.COLLECTION -> {
+                        Toast.makeText(context, photo.collections.joinToString("-"), Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
+                val margin = 2.dpToPx(resources).toInt()
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
-                    outRect.set(0, 4, 0, 4)
+                    outRect.set(margin, margin, margin, margin)
                 }
             })
         }

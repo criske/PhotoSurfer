@@ -21,5 +21,5 @@ data class Collection(
         val ownerId: String,
         val ownerUsername: String,
         val links: Map<String, String>,
-        val pagingData: PagingData? = null
-)
+        override val pagingData: PagingData? = null
+): BaseEntity()

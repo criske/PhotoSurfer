@@ -28,6 +28,7 @@ class ListPhotosVH(private val glide: RequestManager,
         itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it) } }
         itemView.textAuthor.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.AUTHOR, it) } }
         itemView.imgLike.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it.copy(likedByMe = !it.likedByMe)) } }
+        itemView.imgCollection.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it) } }
     }
 
     fun bind(photo: Photo) {

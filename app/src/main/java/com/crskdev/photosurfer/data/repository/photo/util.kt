@@ -9,7 +9,7 @@ import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.repository.GenericBoundaryCallback
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.util.livedata.defaultConfig
+import com.crskdev.photosurfer.util.livedata.defaultConfigBuild
 import java.util.concurrent.Executor
 
 /**
@@ -41,7 +41,7 @@ private fun createLiveData(dataSourceFactory: DataSource.Factory<Int, Photo>,
                            errorLiveData: MutableLiveData<Throwable>,
                            repositoryActionProvider: () -> RepositoryAction): LiveData<PagedList<Photo>> =
         PagedList.Config.Builder()
-                .defaultConfig()
+                .defaultConfigBuild()
                 .build()
                 .let {
                     LivePagedListBuilder<Int, Photo>(dataSourceFactory, it)

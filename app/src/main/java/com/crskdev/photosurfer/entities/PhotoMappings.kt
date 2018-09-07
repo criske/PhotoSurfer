@@ -9,7 +9,6 @@ import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.photo.AuthorJSON
 import com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto
-import com.squareup.moshi.Json
 import java.util.*
 
 /**
@@ -26,7 +25,7 @@ fun PhotoEntity.toPhoto(): Photo =
                 transformStrMapToUrls(urls),
                 description,
                 categories?.split(ENTRY_DELIM)?.toList() ?: emptyList(),
-                collections?.let { toLiteCollections(it) } ?: emptyList(),
+                collections?.let { toCollectionsFromLiteStr(it) } ?: emptyList(),
                 likes,
                 likedByMe,
                 views,
@@ -95,7 +94,7 @@ fun ParcelizedPhoto.deparcelize(): Photo =
                 { a, c -> a.apply { put(ImageType.valueOf(c.key.toUpperCase()), c.value) } },
                 description,
                 categories,
-                toLiteCollections(collections),
+                toCollectionsFromLiteStr(collections),
                 likes, likedByMe, views, authorId, authorUsername,
                 PagingData(total ?: -1, curr ?: -1, prev, next))
 

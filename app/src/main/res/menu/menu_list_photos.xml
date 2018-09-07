@@ -18,4 +18,11 @@
         android:icon="@drawable/ic_trending_up_white_24dp"
         android:title="@string/trending"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_action_collections"
+        android:title="@string/collections"
+        android:icon="@drawable/ic_collections_white_24dp"
+        android:orderInCategory="5"
+        app:showAsAction="ifRoom" />
 </menu>

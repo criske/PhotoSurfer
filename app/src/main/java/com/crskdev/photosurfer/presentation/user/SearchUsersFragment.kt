@@ -33,7 +33,7 @@ import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
-import com.crskdev.photosurfer.util.livedata.defaultConfig
+import com.crskdev.photosurfer.util.livedata.defaultConfigBuild
 import com.crskdev.photosurfer.util.livedata.filter
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_search_users.*
@@ -146,7 +146,7 @@ class SearchUsersViewModel(
                 }
     }
 
-    private val pageListConfig = PagedList.Config.Builder().defaultConfig().build()
+    private val pageListConfig = PagedList.Config.Builder().defaultConfigBuild().build()
 
     val usersLiveData = Transformations
             .switchMap(searchTermTrackerLiveData) {

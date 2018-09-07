@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.entities
 import com.crskdev.photosurfer.data.local.collections.CollectionEntity
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
+import com.crskdev.photosurfer.data.remote.collections.CollectionLiteJSON
 import com.crskdev.photosurfer.data.remote.photo.AuthorJSON
 import com.squareup.moshi.JsonAdapter
 
@@ -74,7 +75,7 @@ fun CollectionEntity.toCollection(): Collection {
     )
 }
 
-fun CollectionJSON.asLiteStr(): String = "$id#$title"
+fun CollectionLiteJSON.asLiteStr(): String = "$id#$title"
 
 fun Collection.asLiteStr(): String = "$id#$title"
 
@@ -88,14 +89,17 @@ fun collectionsLiteStrRemove(collectionsStr: String, collectionStr: String): Str
     return collectionsStr.replace(entry, "")
 }
 
-fun collectionsJSONAsLiteStr(collections: List<CollectionJSON>): String = collections.map { it.asLiteStr() }.joinToString("@")
+fun collectionsLiteJSONAsLiteStr(collections: List<CollectionLiteJSON>): String = collections.joinToString("@") { it.asLiteStr() }
 
-fun collectionsAsLiteStr(collections: List<Collection>): String = collections.map { it.asLiteStr() }.joinToString("@")
+fun collectionsAsLiteStr(collections: List<Collection>): String = collections.joinToString("@") { it.asLiteStr() }
 
-fun toLiteCollections(liteStrList: String): List<Collection> {
+fun toCollectionsFromLiteStr(liteStrList: String): List<Collection> {
+    if(liteStrList.isEmpty()){
+        return emptyList()
+    }
     return liteStrList.split("@").map {
         val split = it.split("#")
-        if (split.size == 2) {
+        if (split.size != 2) {
             throw IllegalAccessException("Invalid parse from string to collection list")
         } else {
             Collection(split[0].toInt(), split[1],

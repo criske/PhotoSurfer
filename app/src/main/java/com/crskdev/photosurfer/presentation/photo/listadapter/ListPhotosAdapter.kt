@@ -31,7 +31,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
     }
 
     enum class ActionWhat {
-        PHOTO_DETAIL, AUTHOR, LIKE
+        PHOTO_DETAIL, AUTHOR, LIKE, COLLECTION
     }
 
 }

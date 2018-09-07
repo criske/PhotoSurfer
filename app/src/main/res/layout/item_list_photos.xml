@@ -54,4 +54,15 @@
         android:contentDescription="@null"
         android:src="@drawable/ic_thumb_up_white_24dp" />
 
+    <ImageButton
+        android:id="@+id/imgCollection"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:alpha="0.5"
+        android:background="?android:attr/selectableItemBackground"
+        android:contentDescription="@null"
+        app:srcCompat="@drawable/ic_collections_white_24dp" />
+
 </FrameLayout>

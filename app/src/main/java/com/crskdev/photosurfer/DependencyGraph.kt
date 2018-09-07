@@ -52,11 +52,12 @@ object DependencyGraph {
     val diskThreadExecutor: KExecutor = DiskThreadExecutor()
     val ioThreadExecutor: KExecutor = IOThreadExecutor()
     val executorManager: ExecutorsManager = ExecutorsManager(
-            EnumMap<ExecutorsManager.Type, KExecutor>(ExecutorsManager.Type::class.java).apply {
-                put(ExecutorsManager.Type.DISK, diskThreadExecutor)
-                put(ExecutorsManager.Type.NETWORK, ioThreadExecutor)
-                put(ExecutorsManager.Type.UI, uiThreadExecutor)
-            })
+            EnumMap<ExecutorsManager.Type, KExecutor>(ExecutorsManager.Type::class.java)
+                    .apply {
+                        put(ExecutorsManager.Type.DISK, diskThreadExecutor)
+                        put(ExecutorsManager.Type.NETWORK, ioThreadExecutor)
+                        put(ExecutorsManager.Type.UI, uiThreadExecutor)
+                    })
 
     //DB
     lateinit var db: PhotoSurferDB

@@ -15,4 +15,6 @@
     <string name="search_title">Cauta</string>
     <string name="search_users">Cauta utilizatori…</string>
     <string name="collections">Colectii</string>
+    <string name="no_description">Nu are descriere</string>
+    <string name="add">Adauga</string>
 </resources>

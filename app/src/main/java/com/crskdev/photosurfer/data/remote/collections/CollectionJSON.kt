@@ -103,11 +103,20 @@ class CollectionJSON {
     @Json(name = "total_photos")
     var totalPhotos: Int = 0
     var private: Boolean = false
-    @Json(name = "shared_key")
+    @Json(name = "share_key")
     lateinit var sharedKey: String
     @Json(name = "cover_photo")
     var coverPhoto: PhotoJSON? = null
     @Json(name = "user")
     lateinit var owner: AuthorJSON
     lateinit var links: Map<String, String>
+}
+
+class CollectionLiteJSON {
+    var id: Int = -1
+    lateinit var title: String
+    @Json(name = "published_at")
+    lateinit var publishedAt: String
+    @Json(name = "updated_at")
+    lateinit var updatedAt: String
 }

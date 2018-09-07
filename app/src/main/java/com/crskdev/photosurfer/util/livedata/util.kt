@@ -60,7 +60,9 @@ inline fun <reified V : ViewModel> viewModelFromProvider(fragment: Fragment, cro
             }
         }).get(V::class.java)
 
-fun PagedList.Config.Builder.defaultConfig() = this
+fun PagedList.Config.Builder.defaultConfigBuild() = this
         .setEnablePlaceholders(true)
         .setPrefetchDistance(10)
         .setPageSize(10)
+
+fun defaultPageListConfig(): PagedList.Config = PagedList.Config.Builder().defaultConfigBuild().build()

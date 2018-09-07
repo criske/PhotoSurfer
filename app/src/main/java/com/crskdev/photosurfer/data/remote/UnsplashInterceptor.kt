@@ -11,7 +11,8 @@ internal class UnsplashInterceptor(private val tokenStorage: AuthTokenStorage,
     override fun intercept(chain: Interceptor.Chain): Response {
         val req = chain.request()
         return when {
-            requestHas(req, HEADER_KEY_BYPASS) -> chain.proceed(req)
+            requestHas(req, HEADER_KEY_BYPASS) -> (if(tokenStorage.hasToken())
+                appendOAuthToken(req, tokenStorage.token()!!.access) else req).let { chain.proceed(it) }
             requestHas(req, HEADER_KEY_AUTHORIZING) -> OAuth2Authorizer().authorize(chain, apiKeys)
             requestHas(req, HEADER_KEY_AUTH) -> tokenStorage.token()
                     ?.let {

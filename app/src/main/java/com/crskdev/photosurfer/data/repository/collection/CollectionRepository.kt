@@ -32,7 +32,7 @@ interface CollectionRepository : Repository {
 
     fun getCollectionsForPhoto(photo: Photo): DataSource.Factory<Int, Pair<Collection, Boolean>>
 
-    fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>?)
+    fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>? = null)
 
     fun fetchAndSaveCollectionPhotos(collectionId: Int, page: Int, callback: Repository.Callback<Unit>?)
 

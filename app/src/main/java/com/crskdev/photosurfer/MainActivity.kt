@@ -28,11 +28,13 @@ class MainActivity : AppCompatActivity() {
         val viewModel = viewModelFromProvider(this) {
             MainActivityViewModel(dependencyGraph().apiCallDispatcher)
         }
-        viewModel.apiCallStateLiveData.observe(this, Observer {
-            if (!(savedInstanceState != null && it == APICallDispatcher.State.EXECUTED)) {
-                Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
-            }
-        })
+//        if (BuildConfig.DEBUG) {
+//            viewModel.apiCallStateLiveData.observe(this, Observer {
+//                if (!(savedInstanceState != null && it == APICallDispatcher.State.EXECUTED)) {
+//                    Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
+//                }
+//            })
+//        }
     }
 
     override fun onSupportNavigateUp() = findNavController(R.id.nav_host_fragment).navigateUp()

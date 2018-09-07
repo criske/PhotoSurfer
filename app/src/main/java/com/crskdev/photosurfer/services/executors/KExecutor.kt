@@ -7,8 +7,8 @@ import java.util.concurrent.Executor
  */
 interface KExecutor : Executor {
 
-    operator fun invoke(run: KExecutor.() -> Unit) {
-        this.apply(run)
+    operator fun invoke(run: () -> Unit) {
+        this.execute(run)
     }
 
 }

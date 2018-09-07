@@ -32,4 +32,6 @@
     <string name="search_title">&#8981;</string>
     <string name="search_users">Search users…</string>
     <string name="collections">Collections</string>
+    <string name="no_description">No description</string>
+    <string name="add">Add</string>
 </resources>

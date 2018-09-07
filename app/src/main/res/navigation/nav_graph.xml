@@ -47,9 +47,15 @@
         tools:layout="@layout/fragment_search_users"
         android:id="@+id/fragment_search_users">
     </fragment>
+    <fragment
+        android:id="@+id/fragment_collections"
+        android:name="com.crskdev.photosurfer.presentation.collection.CollectionsFragment"
+        android:label="fragment_collections"
+        tools:layout="@layout/fragment_collections" />
 
     <!-- global actions -->
     <action
         android:id="@+id/action_global_login"
         app:destination="@id/fragment_login" />
+
 </navigation>
