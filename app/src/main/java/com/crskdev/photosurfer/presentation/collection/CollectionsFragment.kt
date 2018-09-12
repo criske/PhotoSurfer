@@ -21,7 +21,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.GenericBoundaryCallback
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.util.dpToPx
@@ -70,11 +70,12 @@ class CollectionsFragment : Fragment() {
                 findNavController().popBackStack()
             }
             setOnMenuItemClickListener {
-                when(it.itemId){
+                when (it.itemId) {
                     R.id.menu_action_add_collection -> {
                         Toast.makeText(context, "Add new collection screen", Toast.LENGTH_SHORT).show()
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
                 true
             }
@@ -86,7 +87,7 @@ class CollectionsFragment : Fragment() {
 }
 
 class CollectionsViewModel(private val collectionsRepository: CollectionRepository,
-                           private val diskExecutor: Executor) : ViewModel() {
+                           diskExecutor: Executor) : ViewModel() {
 
     val collectionsLiveData = LivePagedListBuilder<Int, Collection>(collectionsRepository.getCollections(), defaultPageListConfig())
             .setFetchExecutor(diskExecutor)
@@ -111,7 +112,7 @@ class CollectionsAdapter(
     override fun onBindViewHolder(holder: CollectionVH, position: Int) {
         getItem(position)?.let {
             holder.bind(it)
-        }
+        } ?: holder.clear()
     }
 
     override fun onViewRecycled(holder: CollectionVH) {

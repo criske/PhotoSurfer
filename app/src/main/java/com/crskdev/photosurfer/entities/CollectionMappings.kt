@@ -10,6 +10,30 @@ import com.squareup.moshi.JsonAdapter
 /**
  * Created by Cristian Pela on 31.08.2018.
  */
+
+fun Collection.toCollectionDB() = CollectionEntity().apply {
+    CollectionEntity().apply {
+        this.id = this@toCollectionDB.id
+        this.publishedAt = this@toCollectionDB.publishedAt
+        this.updatedAt = this@toCollectionDB.updatedAt
+        this.coverPhotoUrls = this@toCollectionDB.coverPhotoUrls?.stringify()
+        this.title = this@toCollectionDB.title
+        this.description = this@toCollectionDB.description
+        this.coverPhotoId = this@toCollectionDB.coverPhotoId
+        this.curated = this@toCollectionDB.curated
+        this.totalPhotos = this@toCollectionDB.totalPhotos
+        this.private = this@toCollectionDB.private
+        this.sharedKey = this@toCollectionDB.sharedKey
+        this.ownerId = this@toCollectionDB.ownerId
+        this.ownerUsername = this@toCollectionDB.ownerUsername
+        this.links = this@toCollectionDB.links.stringify()
+        this.total = this@toCollectionDB.pagingData?.total
+        this.curr = this@toCollectionDB.pagingData?.curr
+        this.next = this@toCollectionDB.pagingData?.next
+        this.prev = this@toCollectionDB.pagingData?.prev
+    }
+}
+
 fun CollectionJSON.toCollectionDB(pagingData: PagingData): CollectionEntity =
         CollectionEntity().apply {
             this.id = this@toCollectionDB.id
@@ -54,6 +78,8 @@ fun Collection.toJSON(): CollectionJSON =
             this.links = this@toJSON.links
         }
 
+
+
 fun CollectionEntity.toCollection(): Collection {
     val pagingData = PagingData(total ?: 0, curr ?: 1, prev, next)
     return Collection(
@@ -97,7 +123,7 @@ fun toCollectionsFromLiteStr(liteStrList: String): List<Collection> {
     if(liteStrList.isEmpty()){
         return emptyList()
     }
-    return liteStrList.split("@").map {
+    return liteStrList.split("@").filter { it.isNotEmpty() }.map {
         val split = it.split("#")
         if (split.size != 2) {
             throw IllegalAccessException("Invalid parse from string to collection list")

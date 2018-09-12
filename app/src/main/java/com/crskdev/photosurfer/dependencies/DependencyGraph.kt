@@ -1,6 +1,7 @@
-package com.crskdev.photosurfer
+package com.crskdev.photosurfer.dependencies
 
 import android.content.Context
+import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.local.*
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
@@ -30,7 +31,6 @@ import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.*
 import com.crskdev.photosurfer.util.Listenable
 import retrofit2.Retrofit
-import java.util.concurrent.Executor
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.PersistentCookieJar

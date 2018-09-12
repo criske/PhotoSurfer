@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.Navigation
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 
 /**

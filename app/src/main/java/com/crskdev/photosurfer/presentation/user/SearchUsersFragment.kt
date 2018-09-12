@@ -27,7 +27,7 @@ import com.crskdev.photosurfer.data.local.search.Term
 import com.crskdev.photosurfer.data.repository.GenericBoundaryCallback
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.services.executors.KExecutor

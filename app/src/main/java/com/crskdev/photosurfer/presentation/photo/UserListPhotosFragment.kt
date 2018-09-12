@@ -24,7 +24,7 @@ import com.crskdev.photosurfer.data.local.search.Term
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
@@ -32,7 +32,6 @@ import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import kotlinx.android.synthetic.main.fragment_list_photos.*
-import java.util.concurrent.Executor
 
 class UserListPhotosFragment : Fragment() {
 

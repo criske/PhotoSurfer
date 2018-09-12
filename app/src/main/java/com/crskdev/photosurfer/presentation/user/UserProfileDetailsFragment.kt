@@ -23,13 +23,12 @@ import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_user_profile_details.*
-import java.util.concurrent.Executor
 
 /**
  * A simple [Fragment] subclass.

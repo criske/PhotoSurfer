@@ -1,6 +1,6 @@
 package com.crskdev.photosurfer.data.repository.photo
 
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.TypedWorker
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 

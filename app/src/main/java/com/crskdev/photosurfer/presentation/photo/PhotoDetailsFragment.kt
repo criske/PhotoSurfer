@@ -23,12 +23,12 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
-import com.crskdev.photosurfer.AppPermissions
+import com.crskdev.photosurfer.AppPermissionsHelper
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
@@ -89,8 +89,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         setLikeButton(photo.likedByMe)
 
         fabDownload.setOnClickListener { v ->
-            if (!AppPermissions.hasStoragePermission(v.context)) {
-                AppPermissions.requestStoragePermission(activity!!)
+            if (!AppPermissionsHelper.hasStoragePermission(v.context)) {
+                AppPermissionsHelper.requestStoragePermission(activity!!)
             } else
                 viewModel.download(photo)
         }

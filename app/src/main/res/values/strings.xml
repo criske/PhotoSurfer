@@ -34,4 +34,5 @@
     <string name="collections">Collections</string>
     <string name="no_description">No description</string>
     <string name="add">Add</string>
+    <string name="create_new_collection">Create New Collection</string>
 </resources>

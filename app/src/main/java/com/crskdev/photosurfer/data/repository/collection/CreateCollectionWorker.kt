@@ -9,7 +9,7 @@ import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.repository.scheduled.Tag
 import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.toCollectionDB
 import com.crskdev.photosurfer.services.TypedWorker
 

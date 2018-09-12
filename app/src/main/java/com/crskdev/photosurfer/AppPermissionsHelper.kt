@@ -13,7 +13,7 @@ import com.crskdev.photosurfer.presentation.HasAppPermissionAwareness
 /**
  * Created by Cristian Pela on 07.08.2018.
  */
-object AppPermissions {
+object AppPermissionsHelper {
 
     private const val STORAGE_PERMISSION_CODE = 1337
 
@@ -33,6 +33,7 @@ object AppPermissions {
         val grantedPermissions = permissions.zip(grantResults.asList()) { l, r -> l to r }
                 .filter { it.second == PackageManager.PERMISSION_GRANTED }
                 .map { it.first }
+        //recursively notify all the interested fragments and child fragments
         fun notifyAwareFragments(f: Fragment){
             if(f is HasAppPermissionAwareness){
                 f.onPermissionsGranted(grantedPermissions)

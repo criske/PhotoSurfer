@@ -49,12 +49,12 @@ class PhotoDAOFacade(daoManager: DaoManager
 
     fun updateForAllTables(photo: PhotoEntity) {
         transactional {
-            try {
-                Contract.TABLES.forEach {
+            Contract.TABLES.forEach {
+                try {
                     update(it, photo)
+                } catch (ex: Exception) {
+                    //no-op
                 }
-            } catch (ex: Exception) {
-                //no-op
             }
         }
     }
@@ -66,7 +66,7 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.update(photo)
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.update(photo)
             Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.update(photo)
-            else -> throw Error("Dao for table $table not found")
+            else -> throw Exception("Dao for table $table not found")
         }
     }
 
@@ -120,20 +120,21 @@ class PhotoDAOFacade(daoManager: DaoManager
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.getPhoto(id)
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getPhoto(id)
             Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getPhoto(id)
-            else -> throw Error("Dao for table $table not found")
+            else -> throw Exception("Dao for table $table not found")
         }
     }
 
     fun getPhotoFromAllTables(id: String): List<PhotoEntity> {
         val list = mutableListOf<PhotoEntity>()
         transactional {
-            try {
-                Contract.TABLES.forEach {
+            Contract.TABLES.forEach {
+                try {
                     getPhoto(it, id)?.let { e -> list.add(e) }
+                } catch (ex: Exception) {
+                    //no-op
                 }
-            } catch (ex: Exception) {
-                //no-op
             }
+
         }
         return list
     }
@@ -171,7 +172,7 @@ class PhotoDAOFacade(daoManager: DaoManager
                             total = lastLiked.total
                         }
                         daoLikes.like(it)
-                    }else{
+                    } else {
                         daoLikes.unlike(it)
                     }
 
@@ -181,8 +182,8 @@ class PhotoDAOFacade(daoManager: DaoManager
     }
 
 
-    fun addCollection(id: String, collectionStr: String){
-        transactional{
+    fun addCollection(id: String, collectionStr: String) {
+        transactional {
             val photos = getPhotoFromAllTables(id)
             photos.forEach {
                 it.collections = it.collections?.let { c -> collectionsLiteStrAdd(c, collectionStr) }
@@ -191,8 +192,8 @@ class PhotoDAOFacade(daoManager: DaoManager
         }
     }
 
-    fun removePhotoFromCollection(id: String, collectionStr: String){
-        transactional{
+    fun removePhotoFromCollection(id: String, collectionStr: String) {
+        transactional {
             val photos = getPhotoFromAllTables(id)
             photos.forEach {
                 it.collections = it.collections?.let { c -> collectionsLiteStrRemove(c, collectionStr) }

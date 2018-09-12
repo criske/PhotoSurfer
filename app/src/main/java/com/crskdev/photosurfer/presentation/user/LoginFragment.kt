@@ -9,17 +9,14 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_login.*
-import java.util.concurrent.Executor
 
 
 class LoginFragment : Fragment() {

@@ -30,7 +30,7 @@ import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
 import com.crskdev.photosurfer.data.repository.user.UserRepository
-import com.crskdev.photosurfer.dependencyGraph
+import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
@@ -137,19 +137,19 @@ class ListPhotosFragment : Fragment() {
                 when (what) {
                     ActionWhat.PHOTO_DETAIL -> {
                         navController.navigate(
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()),
-                                defaultTransitionNavOptions())
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()))
                     }
                     ActionWhat.AUTHOR -> {
                         navController.navigate(
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(photo.authorUsername),
-                                defaultTransitionNavOptions())
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(photo.authorUsername))
                     }
                     ActionWhat.LIKE -> {
                         viewModel.like(photo)
                     }
                     ActionWhat.COLLECTION -> {
-                        Toast.makeText(context, photo.collections.joinToString("-"), Toast.LENGTH_SHORT).show()
+                        authNavigatorMiddleware.navigate(
+                                navController,
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentAddToCollection(photo.parcelize()))
                     }
                 }
             }

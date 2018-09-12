@@ -30,7 +30,7 @@ interface CollectionRepository : Repository {
 
     fun getCollections(): DataSource.Factory<Int, Collection>
 
-    fun getCollectionsForPhoto(photo: Photo): DataSource.Factory<Int, Pair<Collection, Boolean>>
+    fun getCollectionsForPhoto(photoId: String): DataSource.Factory<Int, PairBE<Collection, Boolean>>
 
     fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>? = null)
 
@@ -78,12 +78,13 @@ class CollectionRepositoryImpl(
                 page.map { it.toCollection() }
             }
 
-    override fun getCollectionsForPhoto(photo: Photo): DataSource.Factory<Int, Pair<Collection, Boolean>> {
+    override fun getCollectionsForPhoto(photoId: String): DataSource.Factory<Int, PairBE<Collection, Boolean>> {
         return collectionDAO.getCollections().mapByPage { page ->
             staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_COLLECTIONS)
             page.map { ce ->
                 val c = ce.toCollection()
-                c to (photo.collections.firstOrNull { it.id == c.id } != null)
+                val photoDb = photoDAOFacade.getPhotoFromAllTables(photoId).firstOrNull()?.toPhoto()
+                c toBE (photoDb?.collections?.firstOrNull { it.id == c.id } != null)
             }
         }
     }
@@ -152,20 +153,32 @@ class CollectionRepositoryImpl(
     override fun addPhotoToCollection(collection: Collection, photo: Photo) {
         //todo schedule api call
         ioExecutor {
-            collectionAPI.addPhotoToCollection(collection.id, photo.id)
+            collectionAPI.addPhotoToCollection(collection.id, collection.id, photo.id).execute()
         }
         diskExecutor {
-            photoDAOFacade.addCollection(photo.id, collection.asLiteStr())
+            transactional{
+                val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
+                    totalPhotos += 1
+                }
+                collectionDB?.let { collectionDAO.updateCollection(it) }
+                photoDAOFacade.addCollection(photo.id, collection.asLiteStr())
+            }
         }
     }
 
     override fun removePhotoFromCollection(collection: Collection, photo: Photo) {
         //todo schedule api call
         ioExecutor {
-            collectionAPI.removePhotoFromCollection(collection.id, photo.id)
+            collectionAPI.removePhotoFromCollection(collection.id, collection.id, photo.id).execute()
         }
         diskExecutor {
-            photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
+            transactional {
+                val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
+                    totalPhotos -= 1
+                }
+                collectionDB?.let { collectionDAO.updateCollection(it) }
+                photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
+            }
         }
     }
 
