@@ -116,6 +116,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
     override fun login(email: String, password: String, callback: Repository.Callback<Unit>) {
         apiCallDispatcher.runOn(uiExecutor) { cancel() }
         ioExecutor {
+            daoManager.clearAll()
             try {
                 val authResponse = apiCallDispatcher { authAPI.authorize(email, password) }
                 with(authResponse) {
@@ -142,6 +143,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
                     }
                 }
             } catch (ex: Exception) {
+                ex.printStackTrace()
                 authTokenStorage.runOn(diskExecutor) { clearToken() }//rollback
                 callback.runOn(uiExecutor) { onError(ex) }
             }

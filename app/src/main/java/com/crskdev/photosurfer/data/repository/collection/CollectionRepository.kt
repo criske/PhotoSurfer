@@ -83,7 +83,8 @@ class CollectionRepositoryImpl(
             staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_COLLECTIONS)
             page.map { ce ->
                 val c = ce.toCollection()
-                val photoCollections = photoDAOFacade.getPhotoFromEitherTable(photoId)?.toPhoto()?.collections
+                val photo = photoDAOFacade.getPhotoFromEitherTable(photoId)?.toPhoto()
+                val photoCollections = photo?.collections
                 c toBE (photoCollections?.firstOrNull { it.id == c.id } != null)
             }
         }
@@ -156,7 +157,7 @@ class CollectionRepositoryImpl(
             collectionAPI.addPhotoToCollection(collection.id, collection.id, photo.id).execute()
         }
         diskExecutor {
-            transactional{
+            transactional {
                 val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
                     totalPhotos += 1
                 }

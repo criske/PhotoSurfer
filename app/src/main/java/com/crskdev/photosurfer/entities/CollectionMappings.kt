@@ -12,26 +12,24 @@ import com.squareup.moshi.JsonAdapter
  */
 
 fun Collection.toCollectionDB() = CollectionEntity().apply {
-    CollectionEntity().apply {
-        this.id = this@toCollectionDB.id
-        this.publishedAt = this@toCollectionDB.publishedAt
-        this.updatedAt = this@toCollectionDB.updatedAt
-        this.coverPhotoUrls = this@toCollectionDB.coverPhotoUrls?.stringify()
-        this.title = this@toCollectionDB.title
-        this.description = this@toCollectionDB.description
-        this.coverPhotoId = this@toCollectionDB.coverPhotoId
-        this.curated = this@toCollectionDB.curated
-        this.totalPhotos = this@toCollectionDB.totalPhotos
-        this.private = this@toCollectionDB.private
-        this.sharedKey = this@toCollectionDB.sharedKey
-        this.ownerId = this@toCollectionDB.ownerId
-        this.ownerUsername = this@toCollectionDB.ownerUsername
-        this.links = this@toCollectionDB.links.stringify()
-        this.total = this@toCollectionDB.pagingData?.total
-        this.curr = this@toCollectionDB.pagingData?.curr
-        this.next = this@toCollectionDB.pagingData?.next
-        this.prev = this@toCollectionDB.pagingData?.prev
-    }
+    this.id = this@toCollectionDB.id
+    this.publishedAt = this@toCollectionDB.publishedAt
+    this.updatedAt = this@toCollectionDB.updatedAt
+    this.coverPhotoUrls = this@toCollectionDB.coverPhotoUrls?.stringify()
+    this.title = this@toCollectionDB.title
+    this.description = this@toCollectionDB.description
+    this.coverPhotoId = this@toCollectionDB.coverPhotoId
+    this.curated = this@toCollectionDB.curated
+    this.totalPhotos = this@toCollectionDB.totalPhotos
+    this.private = this@toCollectionDB.private
+    this.sharedKey = this@toCollectionDB.sharedKey
+    this.ownerId = this@toCollectionDB.ownerId
+    this.ownerUsername = this@toCollectionDB.ownerUsername
+    this.links = this@toCollectionDB.links.stringify()
+    this.total = this@toCollectionDB.pagingData?.total
+    this.curr = this@toCollectionDB.pagingData?.curr
+    this.next = this@toCollectionDB.pagingData?.next
+    this.prev = this@toCollectionDB.pagingData?.prev
 }
 
 fun CollectionJSON.toCollectionDB(pagingData: PagingData): CollectionEntity =
@@ -78,6 +76,12 @@ fun Collection.toJSON(): CollectionJSON =
             this.links = this@toJSON.links
         }
 
+fun Collection.toLiteJSON(): CollectionLiteJSON = CollectionLiteJSON().apply {
+    this.id = this@toLiteJSON.id
+    this.publishedAt = this@toLiteJSON.publishedAt
+    this.updatedAt = this@toLiteJSON.updatedAt
+    this.title = this@toLiteJSON.title
+}
 
 
 fun CollectionEntity.toCollection(): Collection {
@@ -106,21 +110,23 @@ fun CollectionLiteJSON.asLiteStr(): String = "$id#$title"
 fun Collection.asLiteStr(): String = "$id#$title"
 
 fun collectionsLiteStrAdd(collectionsStr: String, collectionStr: String): String {
-    val entry = "$collectionStr@"
-    return collectionsStr.replace(entry, "").plus(entry)
+    return if (!collectionsStr.contains(collectionStr)) {
+        (collectionsStr.split("@") + collectionStr).joinToString("@")
+    } else {
+        collectionsStr
+    }
 }
 
 fun collectionsLiteStrRemove(collectionsStr: String, collectionStr: String): String {
-    val entry = "$collectionStr@"
-    return collectionsStr.replace(entry, "")
+    return collectionsStr.replace("(@?$collectionStr)".toRegex(), "")
 }
 
-fun collectionsLiteJSONAsLiteStr(collections: List<CollectionLiteJSON>): String = collections.joinToString("@") { it.asLiteStr() }
+fun collectionsLiteJSONAsLiteStr(collections: List<CollectionLiteJSON>): String = collections.map { it.asLiteStr() }.joinToString("@")
 
-fun collectionsAsLiteStr(collections: List<Collection>): String = collections.joinToString("@") { it.asLiteStr() }
+fun collectionsAsLiteStr(collections: List<Collection>): String = collections.map { it.asLiteStr() }.joinToString("@")
 
 fun toCollectionsFromLiteStr(liteStrList: String): List<Collection> {
-    if(liteStrList.isEmpty()){
+    if (liteStrList.isEmpty()) {
         return emptyList()
     }
     return liteStrList.split("@").filter { it.isNotEmpty() }.map {

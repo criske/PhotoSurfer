@@ -13,15 +13,14 @@ import com.crskdev.photosurfer.entities.collectionsLiteStrRemove
 /**
  * Created by Cristian Pela on 22.08.2018.
  */
-class PhotoDAOFacade(daoManager: DaoManager
-) : DataAccessor {
+class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
 
-    //add collection photo table support
     private val daoPhotos: PhotoDAO = daoManager.getDao(Contract.TABLE_PHOTOS)
     private val daoLikes: PhotoLikeDAO = daoManager.getDao(Contract.TABLE_LIKE_PHOTOS)
     private val daoUserPhotos: PhotoUserDAO = daoManager.getDao(Contract.TABLE_USER_PHOTOS)
     private val daoSearchDAO: PhotoSearchDAO = daoManager.getDao(Contract.TABLE_SEARCH_PHOTOS)
     private val daoCollectionPhoto: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
+
     private val transactional: TransactionRunner = daoManager.transactionRunner()
 
     fun getPhotos(table: String): DataSource.Factory<Int, out PhotoEntity> {
@@ -112,15 +111,12 @@ class PhotoDAOFacade(daoManager: DaoManager
     }
 
     fun getPhotoFromEitherTable(id: String): PhotoEntity? {
-        var photo: PhotoEntity? = null
-        transactional {
-            Contract.PHOTO_TABLES.forEach {
-                photo = getPhoto(it, id)
-                if (photo != null)
-                    return@forEach
-            }
+        Contract.PHOTO_TABLES.forEach {
+            val photo = getPhoto(it, id)
+            if (photo != null)
+                return photo
         }
-        return photo
+        return null
     }
 
     fun getPhotoMappedByTable(id: String): Map<String, PhotoEntity> {
@@ -137,19 +133,15 @@ class PhotoDAOFacade(daoManager: DaoManager
 
     fun like(id: String, liked: Boolean) {
         transactional {
-
+            //(un)like the photo in each photo-table
             val photos = getPhotoMappedByTable(id)
-
             photos.forEach {
-                val p = it.value.apply {
-                    likedByMe = liked
-                }
-                val t = it.key
-                update(t, p)
+                val photo = it.value.apply { likedByMe = liked }
+                val table = it.key
+                update(table, photo)
             }
-
             //if photo does not exists in like table and is already fetched from server we insert it
-            val exists = getPhoto(id, Contract.TABLE_LIKE_PHOTOS) != null
+            val exists = getPhoto(Contract.TABLE_LIKE_PHOTOS, id) != null
             if (!exists && !daoLikes.isEmpty()) {
                 val pickedPhoto = photos.entries.first().value
                 val lastLiked = daoLikes.getLastPhoto()
@@ -178,28 +170,32 @@ class PhotoDAOFacade(daoManager: DaoManager
     }
 
 
-    fun addPhotoToCollection(id: String, collectionStr: String) {
+    fun addPhotoToCollection(id: String, collectionStr: String): Int {
+        var updated = 0
         transactional {
             val photosByTable = getPhotoMappedByTable(id)
             photosByTable.forEach {
                 val photo = it.value
                 photo.collections = photo.collections?.let { c -> collectionsLiteStrAdd(c, collectionStr) }
                 val table = it.key
-                update(table, photo)
+                updated += update(table, photo)
             }
         }
+        return updated
     }
 
-    fun removePhotoFromCollection(id: String, collectionStr: String) {
+    fun removePhotoFromCollection(id: String, collectionStr: String): Int {
+        var updated = 0
         transactional {
             val photosByTable = getPhotoMappedByTable(id)
             photosByTable.forEach {
                 val photo = it.value
                 photo.collections = photo.collections?.let { c -> collectionsLiteStrRemove(c, collectionStr) }
                 val table = it.key
-                update(table, photo)
+                updated += update(table, photo)
             }
         }
+        return updated
     }
 
     fun refresh(table: String) {
@@ -228,3 +224,4 @@ class PhotoDAOFacade(daoManager: DaoManager
 
 
 }
+

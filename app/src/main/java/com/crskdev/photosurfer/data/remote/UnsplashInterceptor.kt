@@ -8,12 +8,14 @@ import okhttp3.*
 internal class UnsplashInterceptor(private val tokenStorage: AuthTokenStorage,
                                    private val apiKeys: APIKeys) : Interceptor {
 
+    private val oAuth2Authorizer = OAuth2Authorizer()
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val req = chain.request()
         return when {
-            requestHas(req, HEADER_KEY_BYPASS) -> (if(tokenStorage.hasToken())
+            requestHas(req, HEADER_KEY_BYPASS) -> (if (tokenStorage.hasToken())
                 appendOAuthToken(req, tokenStorage.token()!!.access) else req).let { chain.proceed(it) }
-            requestHas(req, HEADER_KEY_AUTHORIZING) -> OAuth2Authorizer().authorize(chain, apiKeys)
+            requestHas(req, HEADER_KEY_AUTHORIZING) -> oAuth2Authorizer.authorize(chain, apiKeys)
             requestHas(req, HEADER_KEY_AUTH) -> tokenStorage.token()
                     ?.let {
                         val response = chain.proceed(appendOAuthToken(req, it.access))

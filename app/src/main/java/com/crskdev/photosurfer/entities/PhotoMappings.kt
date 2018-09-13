@@ -65,6 +65,7 @@ fun Photo.toJSON(): PhotoJSON =
             urls = this@toJSON.urls
             description = this@toJSON.description
             categories = this@toJSON.categories
+            collections = this@toJSON.collections.map { it.toLiteJSON() }
             likes = this@toJSON.likes
             likedByMe = this@toJSON.likedByMe
             views = this@toJSON.views

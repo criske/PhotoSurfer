@@ -41,7 +41,7 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .connectTimeout(30, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(false)
+            .retryOnConnectionFailure(true)
             .addInterceptor(UnsplashInterceptor(tokenStorage, apiKeys))
             .addInterceptor(RateLimitInterceptor())
             .addInterceptor(downloadInterceptor)

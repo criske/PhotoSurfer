@@ -7,6 +7,7 @@ import com.crskdev.photosurfer.data.remote.errorResponse
 import okhttp3.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Cristian Pela on 30.07.2018.
@@ -25,6 +26,9 @@ class OAuth2Authorizer {
             "write_collections"
     )
 
+    @Volatile
+    private var redirectURIServer: OAuth2RedirectURIServer? = null
+
 
     private val baseAuthHttpUrl = HttpUrl.Builder()
             .host(BASE_HOST_AUTHORIZING)
@@ -32,14 +36,29 @@ class OAuth2Authorizer {
             .addPathSegment("oauth")
             .build()
 
-    fun authorize(chain: Interceptor.Chain, apiKeys: APIKeys): Response {
+    @Synchronized
+    private fun startServerIfNotStarted(hostName: String, port: Int) {
+        if (redirectURIServer == null)
+            redirectURIServer = OAuth2RedirectURIServer(hostName, port)
+        if (redirectURIServer?.isAlive == false)
+            redirectURIServer?.start()
+    }
 
+    fun authorize(chain: Interceptor.Chain, apiKeys: APIKeys): Response {
         //setup server
         val (hostName, port) = HttpUrl.parse(apiKeys.redirectURI)!!.let {
             it.host() to it.port()
         }
-        val redirectURIServer = OAuth2RedirectURIServer(hostName, port)
-                .apply { start() }
+        startServerIfNotStarted(hostName, port)
+        var timeout = 0
+        while (redirectURIServer?.isAlive == false) {
+            Thread.sleep(10)
+            timeout += 1
+            if (timeout >= TimeUnit.SECONDS.toMillis(30)) {
+                return errorResponse(chain.request(), 500, "Could not start the auth token server")
+            }
+        }
+        //
 
         val loginRequest = chain.request()
         val internalLoginUrl = loginRequest.url()
@@ -58,7 +77,7 @@ class OAuth2Authorizer {
                     doc = Jsoup.parse(loginResponse.body()?.string())
                     val invalidCredentials = tryGetInvalidCredentials(doc)
                     if (invalidCredentials != null) {
-                        redirectURIServer.stop()
+                       //redirectURIServer?.closeAllConnections()
                         return errorResponse(loginRequest, 401, invalidCredentials)
                     }
                     authorizationCode = tryExtractAuthorizationCode(doc)
@@ -68,27 +87,26 @@ class OAuth2Authorizer {
                             doc = Jsoup.parse(grantResponse.body()?.string())
                             authorizationCode = tryExtractAuthorizationCode(doc)
                         } else {
-                            redirectURIServer.stop()
+                           //redirectURIServer?.closeAllConnections()
                             return grantResponse
                         }
                     }
                 } else {
-                    redirectURIServer.stop()
+                   //redirectURIServer?.closeAllConnections()
                     return loginResponse
                 }
             }
             return if (authorizationCode != null) {
-                redirectURIServer.stop()
+               //redirectURIServer?.closeAllConnections()
                 requestToken(chain, apiKeys, authorizationCode)
             } else {
-                redirectURIServer.stop()
+               //redirectURIServer?.closeAllConnections()
                 errorResponse(loginRequest, 401)
             }
         } else {
-            redirectURIServer.stop()
+           //redirectURIServer?.closeAllConnections()
             responseAuthenticityToken
         }
-
     }
 
     private fun tryGetInvalidCredentials(doc: Document): String? {
