@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.GenericBoundaryCallback
@@ -59,7 +60,7 @@ class CollectionsFragment : Fragment() {
             val fragmentCtx = this@CollectionsFragment.context!!
             val nav = this.findNavController()
             adapter = CollectionsAdapter(LayoutInflater.from(fragmentCtx), Glide.with(fragmentCtx)) { what, collection ->
-                when(what){
+                when (what) {
                     What.PHOTOS -> nav.navigate(CollectionsFragmentDirections
                             .ActionFragmentCollectionsToCollectionListPhotosFragment(collection.id), defaultTransitionNavOptions())
                     What.EDIT -> TODO()
@@ -144,10 +145,11 @@ class CollectionVH(view: View, private val glide: RequestManager,
     fun bind(collection: Collection) {
         this.collection = collection
         collection.coverPhotoUrls?.get(ImageType.REGULAR)?.let {
-            glide.load(it)
+            glide.asDrawable().load(it)
                     .apply(RequestOptions()
-                            .placeholder(R.drawable.ic_avatar_placeholder)
+                            .placeholder(R.drawable.ic_logo)
                             .centerCrop())
+                    .transition(DrawableTransitionOptions().crossFade())
                     .into(itemView.imageCollectionCover)
         }
         itemView.textCollectionTitle.text = collection.title

@@ -14,7 +14,7 @@
         android:background="@color/colorLightGray"
         android:contentDescription="@null"
         android:scaleType="centerCrop"
-        tools:src="@drawable/ic_launcher_background" />
+        android:src="@drawable/ic_logo" />
 
     <TextView
         android:id="@+id/textAuthor"

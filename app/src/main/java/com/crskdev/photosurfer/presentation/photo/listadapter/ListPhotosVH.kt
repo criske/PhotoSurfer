@@ -5,10 +5,12 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.TransitionOptions
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
@@ -40,7 +42,9 @@ class ListPhotosVH(private val glide: RequestManager,
         glide.asDrawable()
                 .load(photo.urls[ImageType.SMALL])
                 .apply(RequestOptions()
+                        .placeholder(R.drawable.ic_logo)
                         .transforms(CenterCrop(), RoundedCorners(8)))
+                .transition(DrawableTransitionOptions().crossFade())
                 .addListener(object : RequestListener<Drawable> {
                     override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?,
                                               isFirstResource: Boolean): Boolean {

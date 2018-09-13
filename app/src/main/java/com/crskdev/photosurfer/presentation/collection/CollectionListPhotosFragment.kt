@@ -88,7 +88,8 @@ class CollectionListPhotosFragment : Fragment() {
 
         viewModel.collectionLiveData.observe(this, Observer {
             val size = it.totalPhotos.toString()
-            toolbarCollectionListPhotos.title = "${it.title}($size)"
+            toolbarCollectionListPhotos.title = it.title
+            toolbarCollectionListPhotos.subtitle = "($size)"
         })
 
     }
