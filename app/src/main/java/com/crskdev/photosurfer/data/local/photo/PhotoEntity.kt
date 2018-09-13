@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.crskdev.photosurfer.data.local.BaseDBEntity
 import com.crskdev.photosurfer.data.local.Contract
+import com.crskdev.photosurfer.entities.User
 
 /**
  * Created by Cristian Pela on 09.08.2018.
@@ -44,4 +45,14 @@ class LikePhotoEntity : PhotoEntity()
 
 @Entity(tableName = Contract.TABLE_SEARCH_PHOTOS)
 class SearchPhotoEntity : PhotoEntity()
+
+
+fun PhotoEntity.toUserPhotoEntity(): UserPhotoEntity {
+        val dis = this@toUserPhotoEntity
+        return UserPhotoEntity().apply {
+            id= dis.id
+            indexInResponse = dis.indexInResponse
+
+        }
+}
 

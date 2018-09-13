@@ -29,7 +29,7 @@ interface PhotoLikeDAO : DataAccessor {
     fun getPhoto(id: String): LikePhotoEntity?
 
     @Query("SELECT * FROM like_photos ORDER BY indexInResponse LIMIT 1")
-    fun getLastPhoto(): LikePhotoEntity
+    fun getLastPhoto(): LikePhotoEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun like(photo: LikePhotoEntity)
@@ -38,5 +38,5 @@ interface PhotoLikeDAO : DataAccessor {
     fun unlike(photo: LikePhotoEntity)
 
     @Update
-    fun update(photo: PhotoEntity)
+    fun update(photo: LikePhotoEntity): Int
 }

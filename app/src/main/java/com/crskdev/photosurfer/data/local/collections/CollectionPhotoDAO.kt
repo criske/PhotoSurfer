@@ -33,6 +33,6 @@ interface CollectionPhotoDAO: DataAccessor{
     fun like(photo: CollectionPhotoEntity)
 
     @Update
-    fun update(photo: PhotoEntity)
+    fun update(photo: CollectionPhotoEntity): Int
 
 }

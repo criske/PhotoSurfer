@@ -83,8 +83,8 @@ class CollectionRepositoryImpl(
             staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_COLLECTIONS)
             page.map { ce ->
                 val c = ce.toCollection()
-                val photoDb = photoDAOFacade.getPhotoFromAllTables(photoId).firstOrNull()?.toPhoto()
-                c toBE (photoDb?.collections?.firstOrNull { it.id == c.id } != null)
+                val photoCollections = photoDAOFacade.getPhotoFromEitherTable(photoId)?.toPhoto()?.collections
+                c toBE (photoCollections?.firstOrNull { it.id == c.id } != null)
             }
         }
     }
@@ -161,7 +161,8 @@ class CollectionRepositoryImpl(
                     totalPhotos += 1
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
-                photoDAOFacade.addCollection(photo.id, collection.asLiteStr())
+                val updated = photoDAOFacade.addPhotoToCollection(photo.id, collection.asLiteStr())
+                updated
             }
         }
     }
@@ -177,7 +178,8 @@ class CollectionRepositoryImpl(
                     totalPhotos -= 1
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
-                photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
+                val updated = photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
+                updated
             }
         }
     }

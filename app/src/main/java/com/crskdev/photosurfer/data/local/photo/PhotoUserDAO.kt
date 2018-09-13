@@ -32,6 +32,6 @@ interface PhotoUserDAO : DataAccessor {
     fun getPhoto(id: String): UserPhotoEntity?
 
     @Update
-    fun update(photo: PhotoEntity)
+    fun update(photo: UserPhotoEntity): Int
 
 }
