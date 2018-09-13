@@ -12,4 +12,6 @@ import com.crskdev.photosurfer.data.local.photo.PhotoEntity
         tableName = Contract.TABLE_COLLECTION_PHOTOS,
         indices = [Index("id")]
 )
-class CollectionPhotoEntity : PhotoEntity()
+class CollectionPhotoEntity : PhotoEntity() {
+    var currentCollectionId: Int = -1
+}

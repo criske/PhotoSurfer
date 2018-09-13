@@ -35,4 +35,10 @@ interface CollectionPhotoDAO: DataAccessor{
     @Update
     fun update(photo: CollectionPhotoEntity): Int
 
+    @Query("SELECT * FROM collection_photos ORDER BY indexInResponse LIMIT 1")
+    fun getLastPhoto(): CollectionPhotoEntity?
+
+    @Query("DELETE FROM collection_photos WHERE id=:id")
+    fun delete(id: String)
+
 }

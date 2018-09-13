@@ -1,8 +1,10 @@
 package com.crskdev.photosurfer.data.local.collections
 
+import androidx.lifecycle.LiveData
 import androidx.paging.DataSource
 import androidx.room.*
 import com.crskdev.photosurfer.data.local.DataAccessor
+import com.crskdev.photosurfer.entities.Photo
 
 /**
  * Created by Cristian Pela on 30.08.2018.
@@ -36,5 +38,9 @@ interface CollectionsDAO : DataAccessor {
 
     @Query("SELECT * FROM collections ORDER BY  strftime('%s', publishedAt) DESC LIMIT 1")
     fun getLatestCollection(): CollectionEntity?
+
+    @Query("SELECT * FROM collections WHERE id=:collectionId")
+    fun getCollectionLiveData(collectionId: Int): LiveData<CollectionEntity>
+
 
 }

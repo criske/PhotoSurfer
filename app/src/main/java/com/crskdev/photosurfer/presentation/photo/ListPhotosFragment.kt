@@ -32,10 +32,8 @@ import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveDat
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
-import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter.ActionWhat
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.Listenable
@@ -132,27 +130,10 @@ class ListPhotosFragment : Fragment() {
         recyclerUserListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) { what, photo ->
-                val navController = view.findNavController()
-                when (what) {
-                    ActionWhat.PHOTO_DETAIL -> {
-                        navController.navigate(
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()))
-                    }
-                    ActionWhat.AUTHOR -> {
-                        navController.navigate(
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(photo.authorUsername))
-                    }
-                    ActionWhat.LIKE -> {
-                        viewModel.like(photo)
-                    }
-                    ActionWhat.COLLECTION -> {
-                        authNavigatorMiddleware.navigate(
-                                navController,
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentAddToCollection(photo.parcelize()))
-                    }
-                }
-            }
+            val actionHelper = ListPhotosAdapter.actionHelper(
+                    view.findNavController(),
+                    authNavigatorMiddleware) { viewModel.like(it) }
+            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 val margin = 2.dpToPx(resources).toInt()
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
@@ -205,10 +186,6 @@ class ListPhotosFragment : Fragment() {
         viewModel.needsAuthLiveData.observe(this, Observer {
             authNavigatorMiddleware.navigateToLogin(activity!!)
         })
-
-        refreshListPhotos.setOnClickListener {
-            viewModel.refresh()
-        }
 
     }
 
@@ -270,10 +247,6 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
             choosablePhotoDataSourceFactory,
             errorLiveData
     )
-
-    fun refresh() {
-        photoRepository.refresh()
-    }
 
     fun cancel() {
         photoRepository.cancel()

@@ -24,6 +24,7 @@ import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
@@ -56,7 +57,15 @@ class CollectionsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         recyclerCollections.apply {
             val fragmentCtx = this@CollectionsFragment.context!!
-            adapter = CollectionsAdapter(LayoutInflater.from(fragmentCtx), Glide.with(fragmentCtx))
+            val nav = this.findNavController()
+            adapter = CollectionsAdapter(LayoutInflater.from(fragmentCtx), Glide.with(fragmentCtx)) { what, collection ->
+                when(what){
+                    What.PHOTOS -> nav.navigate(CollectionsFragmentDirections
+                            .ActionFragmentCollectionsToCollectionListPhotosFragment(collection.id), defaultTransitionNavOptions())
+                    What.EDIT -> TODO()
+                    What.DELETE -> TODO()
+                }
+            }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
                     val margin = 8.dpToPx(resources).toInt()
@@ -99,7 +108,8 @@ class CollectionsViewModel(private val collectionsRepository: CollectionReposito
 
 class CollectionsAdapter(
         private val inflater: LayoutInflater,
-        private val glide: RequestManager) : PagedListAdapter<Collection, CollectionVH>(
+        private val glide: RequestManager,
+        private val action: (What, Collection) -> Unit) : PagedListAdapter<Collection, CollectionVH>(
         object : DiffUtil.ItemCallback<Collection>() {
             override fun areItemsTheSame(oldItem: Collection, newItem: Collection): Boolean = oldItem.id == newItem.id
             override fun areContentsTheSame(oldItem: Collection, newItem: Collection): Boolean = oldItem == newItem
@@ -107,7 +117,7 @@ class CollectionsAdapter(
 ) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CollectionVH =
-            CollectionVH(inflater.inflate(R.layout.item_list_collections, parent, false), glide)
+            CollectionVH(inflater.inflate(R.layout.item_list_collections, parent, false), glide, action)
 
     override fun onBindViewHolder(holder: CollectionVH, position: Int) {
         getItem(position)?.let {
@@ -120,9 +130,16 @@ class CollectionsAdapter(
     }
 }
 
-class CollectionVH(view: View, private val glide: RequestManager) : RecyclerView.ViewHolder(view) {
+class CollectionVH(view: View, private val glide: RequestManager,
+                   private val action: (What, Collection) -> Unit) : RecyclerView.ViewHolder(view) {
 
     private var collection: Collection? = null
+
+    init {
+        itemView.imageCollectionCover.setOnClickListener {
+            collection?.let { c -> action(What.PHOTOS, c) }
+        }
+    }
 
     fun bind(collection: Collection) {
         this.collection = collection

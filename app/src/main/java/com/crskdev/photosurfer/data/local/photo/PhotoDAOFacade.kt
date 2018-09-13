@@ -140,9 +140,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                 val table = it.key
                 update(table, photo)
             }
-            //if photo does not exists in like table and is already fetched from server we insert it
-            val exists = getPhoto(Contract.TABLE_LIKE_PHOTOS, id) != null
-            if (!exists && !daoLikes.isEmpty()) {
+            if (!daoLikes.isEmpty()) {
                 val pickedPhoto = photos.entries.first().value
                 val lastLiked = daoLikes.getLastPhoto()
                 pickedPhoto.let {
@@ -163,7 +161,12 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.prev = lastLiked?.prev
                         this.total = lastLiked?.total ?: 1
                     }
-                    daoLikes.insertPhotos(listOf(likePhoto))
+                    if (liked) {
+                        daoLikes.like(likePhoto)
+                    } else {
+                        daoLikes.unlike(likePhoto)
+                    }
+
                 }
             }
         }
@@ -180,6 +183,30 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                 val table = it.key
                 updated += update(table, photo)
             }
+            if (!daoLikes.isEmpty()) {
+                val pickedPhoto = photosByTable.entries.first().value
+                val lastLiked = daoCollectionPhoto.getLastPhoto()
+                pickedPhoto.let {
+                    val collectionPhoto = CollectionPhotoEntity().apply {
+                        this.id = it.id
+                        this.createdAt = it.createdAt
+                        this.updatedAt = it.updatedAt
+                        this.width = it.width
+                        this.height = it.height
+                        this.colorString = it.colorString
+                        this.urls = it.urls
+                        this.likedByMe = it.likedByMe
+                        this.authorUsername = it.authorUsername
+                        this.authorId = it.authorId
+                        this.indexInResponse = lastLiked?.indexInResponse ?: 0 + 1
+                        this.curr = lastLiked?.curr
+                        this.next = lastLiked?.next
+                        this.prev = lastLiked?.prev
+                        this.total = lastLiked?.total ?: 1
+                    }
+                    daoCollectionPhoto.insertPhotos(listOf(collectionPhoto))
+                }
+            }
         }
         return updated
     }
@@ -194,6 +221,8 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                 val table = it.key
                 updated += update(table, photo)
             }
+            daoCollectionPhoto.delete(id)
+
         }
         return updated
     }

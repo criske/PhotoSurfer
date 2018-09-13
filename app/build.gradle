@@ -52,6 +52,7 @@ repositories {
 
 dependencies {
     implementation "androidx.legacy:legacy-support-v4:$rootProject.legacyVersion"
+    implementation 'com.android.support:support-v4:28.0.0-rc02'
     kapt "com.github.bumptech.glide:compiler:$rootProject.glideVersion"
     implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.lifecycleVersion"
     implementation "android.arch.navigation:navigation-fragment-ktx:$rootProject.navigationVersion"

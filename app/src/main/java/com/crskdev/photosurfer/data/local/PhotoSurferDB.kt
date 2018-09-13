@@ -28,7 +28,7 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             CollectionEntity::class,
             CollectionPhotoEntity::class
         ],
-        version = 9,
+        version = 10,
         exportSchema = false
 )
 abstract class PhotoSurferDB : RoomDatabase() {

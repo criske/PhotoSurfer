@@ -55,8 +55,11 @@
         android:id="@+id/fragment_collections"
         android:name="com.crskdev.photosurfer.presentation.collection.CollectionsFragment"
         android:label="fragment_collections"
-        tools:layout="@layout/fragment_collections" />
-
+        tools:layout="@layout/fragment_collections" >
+        <action
+            android:id="@+id/action_fragment_collections_to_collectionListPhotosFragment"
+            app:destination="@id/collectionListPhotosFragment" />
+    </fragment>
     <fragment
         android:id="@+id/fragment_add_to_collection"
         android:name="com.crskdev.photosurfer.presentation.collection.AddToCollectionFragment"
@@ -66,11 +69,21 @@
             android:name="photo"
             app:argType="com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto" />
     </fragment>
+    <fragment
+        android:id="@+id/collectionListPhotosFragment"
+        android:name="com.crskdev.photosurfer.presentation.collection.CollectionListPhotosFragment"
+        android:label="fragment_collection_list_photos"
+        tools:layout="@layout/fragment_collection_list_photos">
+        <argument
+            android:name="collectionId"
+            app:argType="integer" />
+    </fragment>
 
     <!-- global actions -->
     <action
         android:id="@+id/action_global_login"
         app:destination="@id/fragment_login" />
+
 
 
 </navigation>

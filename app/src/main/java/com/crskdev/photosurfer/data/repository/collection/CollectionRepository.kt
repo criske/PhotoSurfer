@@ -1,5 +1,7 @@
 package com.crskdev.photosurfer.data.repository.collection
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
@@ -30,6 +32,8 @@ interface CollectionRepository : Repository {
 
     fun getCollections(): DataSource.Factory<Int, Collection>
 
+    fun getCollectionPhotos(collectionId: Int): DataSource.Factory<Int, Photo>
+
     fun getCollectionsForPhoto(photoId: String): DataSource.Factory<Int, PairBE<Collection, Boolean>>
 
     fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>? = null)
@@ -39,6 +43,8 @@ interface CollectionRepository : Repository {
     fun addPhotoToCollection(collection: Collection, photo: Photo)
 
     fun removePhotoFromCollection(collection: Collection, photo: Photo)
+
+    fun getCollection(collectionId: Int): LiveData<Collection>
 }
 
 class CollectionRepositoryImpl(
@@ -52,6 +58,7 @@ class CollectionRepositoryImpl(
         private val authTokenStorage: AuthTokenStorage,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor
 ) : CollectionRepository {
+
 
     private val collectionDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
     private val collectionPhotoDAO: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
@@ -90,6 +97,22 @@ class CollectionRepositoryImpl(
         }
     }
 
+    override fun getCollectionPhotos(collectionId: Int): DataSource.Factory<Int, Photo> {
+        return collectionPhotoDAO.getPhotos().mapByPage { col ->
+            val sample = col.firstOrNull()
+            if (sample?.currentCollectionId == collectionId) {
+                staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_COLLECTIONS)
+            } else {
+                collectionPhotoDAO.clear()
+            }
+            col.map { it.toPhoto() }
+        }
+    }
+
+    override fun getCollection(collectionId: Int): LiveData<Collection> =
+        Transformations.map(collectionDAO.getCollectionLiveData(collectionId)){ c ->
+            c.toCollection()
+        }
 
     override fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>?) {
         ioExecutor {
@@ -136,7 +159,9 @@ class CollectionRepositoryImpl(
                         diskExecutor {
                             val nextIndex = collectionDAO.getNextIndex()
                             val photos = response.body()?.map {
-                                it.toCollectionPhotoDbEntity(pagingData, nextIndex)
+                                it.toCollectionPhotoDbEntity(pagingData, nextIndex).apply {
+                                    currentCollectionId = collectionId
+                                }
                             } ?: emptyList()
                             collectionPhotoDAO.insertPhotos(photos)
                             callback?.runOn(uiExecutor) { onSuccess(Unit) }
