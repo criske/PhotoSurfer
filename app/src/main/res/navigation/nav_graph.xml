@@ -20,8 +20,7 @@
             app:destination="@id/fragment_search_users" />
         <action
             android:id="@+id/action_fragment_list_photos_to_fragment_add_to_collection"
-            app:destination="@id/fragment_add_to_collection">
-        </action>
+            app:destination="@id/fragment_add_to_collection"></action>
     </fragment>
     <fragment
         android:id="@+id/fragment_photo_details"
@@ -47,18 +46,20 @@
             app:argType="string" />
     </fragment>
     <fragment
+        android:id="@+id/fragment_search_users"
         android:name="com.crskdev.photosurfer.presentation.user.SearchUsersFragment"
-        tools:layout="@layout/fragment_search_users"
-        android:id="@+id/fragment_search_users">
-    </fragment>
+        tools:layout="@layout/fragment_search_users"></fragment>
     <fragment
         android:id="@+id/fragment_collections"
         android:name="com.crskdev.photosurfer.presentation.collection.CollectionsFragment"
         android:label="fragment_collections"
-        tools:layout="@layout/fragment_collections" >
+        tools:layout="@layout/fragment_collections">
         <action
             android:id="@+id/action_fragment_collections_to_collectionListPhotosFragment"
             app:destination="@id/collectionListPhotosFragment" />
+        <action
+            android:id="@+id/action_fragment_collections_to_newCollectionFragment"
+            app:destination="@id/newCollectionFragment" />
     </fragment>
     <fragment
         android:id="@+id/fragment_add_to_collection"
@@ -68,6 +69,9 @@
         <argument
             android:name="photo"
             app:argType="com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto" />
+        <action
+            android:id="@+id/action_fragment_add_to_collection_to_newCollectionFragment"
+            app:destination="@id/newCollectionFragment" />
     </fragment>
     <fragment
         android:id="@+id/collectionListPhotosFragment"
@@ -78,12 +82,21 @@
             android:name="collectionId"
             app:argType="integer" />
     </fragment>
+    <fragment
+        android:id="@+id/newCollectionFragment"
+        android:name="com.crskdev.photosurfer.presentation.collection.NewCollectionFragment"
+        android:label="fragment_new_collection"
+        tools:layout="@layout/fragment_new_collection">
+        <argument
+            android:name="withPhotoId"
+            app:argType="string"
+            app:nullable="true"/>
+    </fragment>
 
     <!-- global actions -->
     <action
         android:id="@+id/action_global_login"
         app:destination="@id/fragment_login" />
-
 
 
 </navigation>

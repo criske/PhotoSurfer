@@ -76,13 +76,15 @@ class CollectionsFragment : Fragment() {
         }
         toolbarCollections.apply {
             inflateMenu(R.menu.menu_collections)
+            val navController = findNavController()
             setNavigationOnClickListener {
-                findNavController().popBackStack()
+                navController.popBackStack()
             }
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.menu_action_add_collection -> {
-                        Toast.makeText(context, "Add new collection screen", Toast.LENGTH_SHORT).show()
+                        navController.navigate(CollectionsFragmentDirections
+                                .actionFragmentCollectionsToNewCollectionFragment(null), defaultTransitionNavOptions())
                     }
                     else -> {
                     }
@@ -149,7 +151,7 @@ class CollectionVH(view: View, private val glide: RequestManager,
                     .apply(RequestOptions()
                             .placeholder(R.drawable.ic_logo)
                             .centerCrop())
-                    .transition(DrawableTransitionOptions().crossFade())
+                    //.transition(DrawableTransitionOptions().crossFade())
                     .into(itemView.imageCollectionCover)
         }
         itemView.textCollectionTitle.text = collection.title

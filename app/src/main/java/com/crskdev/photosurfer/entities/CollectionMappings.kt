@@ -109,6 +109,8 @@ fun CollectionLiteJSON.asLiteStr(): String = "$id#$title"
 
 fun Collection.asLiteStr(): String = "$id#$title"
 
+fun CollectionEntity.asLiteStr(): String = "$id#$title"
+
 fun collectionsLiteStrAdd(collectionsStr: String, collectionStr: String): String {
     return if (!collectionsStr.contains(collectionStr)) {
         (collectionsStr.split("@") + collectionStr).joinToString("@")
@@ -139,3 +141,6 @@ fun toCollectionsFromLiteStr(liteStrList: String): List<Collection> {
         }
     }
 }
+
+fun extractIdAndTitleFromCollectionStr(collectionStr: String): Pair<Int, String> =
+        collectionStr.split("#").let { it[0].toInt() to it[1] }

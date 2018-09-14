@@ -18,6 +18,7 @@ fun transformStrMapToUrls(strMap: String): EnumMap<ImageType, String> =
                 { a, c -> c.split(KV_DELIM).let { a.apply { a[ImageType.valueOf(it[0].toUpperCase())] = it[1] } } }
 
 fun transformStrMapToMap(strMap: String): Map<String, String> =
-        strMap.split(ENTRY_DELIM)
-                .fold(mutableMapOf<String, String>())
+        strMap.trim().takeIf { it.isNotEmpty() }?.split(ENTRY_DELIM)
+                ?.fold(mutableMapOf())
                 { a, c -> c.split(KV_DELIM).let { a.apply { a[it[0]] = it[1] } } }
+                ?: emptyMap()

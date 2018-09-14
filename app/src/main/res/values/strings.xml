@@ -35,4 +35,8 @@
     <string name="no_description">No description</string>
     <string name="add">Add</string>
     <string name="create_new_collection">Create New Collection</string>
+    <string name="new_collection">New Collection</string>
+    <string name="collection_description">Description</string>
+    <string name="collection_private">Private</string>
+    <string name="collection_title">Title</string>
 </resources>

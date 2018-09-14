@@ -9,6 +9,8 @@ import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.entities.collectionsLiteStrAdd
 import com.crskdev.photosurfer.entities.collectionsLiteStrRemove
+import com.crskdev.photosurfer.entities.extractIdAndTitleFromCollectionStr
+import com.crskdev.photosurfer.entities.toCollectionsFromLiteStr
 
 /**
  * Created by Cristian Pela on 22.08.2018.
@@ -110,6 +112,16 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
         }
     }
 
+    fun getLastPhoto(table: String): PhotoEntity? =
+            when (table) {
+                Contract.TABLE_USER_PHOTOS -> null
+                Contract.TABLE_PHOTOS -> null
+                Contract.TABLE_LIKE_PHOTOS -> daoLikes.getLastPhoto()
+                Contract.TABLE_SEARCH_PHOTOS -> null
+                Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getLastPhoto()
+                else -> throw Exception("Dao for table $table not found")
+            }
+
     fun getPhotoFromEitherTable(id: String): PhotoEntity? {
         Contract.PHOTO_TABLES.forEach {
             val photo = getPhoto(it, id)
@@ -183,7 +195,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                 val table = it.key
                 updated += update(table, photo)
             }
-            if (!daoLikes.isEmpty()) {
+            if (!daoCollectionPhoto.isEmpty()) {
                 val pickedPhoto = photosByTable.entries.first().value
                 val lastLiked = daoCollectionPhoto.getLastPhoto()
                 pickedPhoto.let {
@@ -203,6 +215,8 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.next = lastLiked?.next
                         this.prev = lastLiked?.prev
                         this.total = lastLiked?.total ?: 1
+                        this.collections = it.collections
+                        this.currentCollectionId = extractIdAndTitleFromCollectionStr(collectionStr).first
                     }
                     daoCollectionPhoto.insertPhotos(listOf(collectionPhoto))
                 }
@@ -226,6 +240,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
         }
         return updated
     }
+
 
     fun refresh(table: String) {
         //TODO implement refresh

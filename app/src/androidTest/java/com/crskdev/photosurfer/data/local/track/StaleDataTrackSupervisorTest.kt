@@ -48,6 +48,7 @@ class StaleDataTrackSupervisorTest: BaseDBTest() {
     @Test
     fun shouldRecordTrackInsertRow() {
         //fresh data test
+        assertTrue(db.photoDAO().isEmpty())
         db.photoDAO().insertPhotos(listOf(EMPTY_PHOTO_ENTITY))
         tracker.runStaleDataCheckForTable(Contract.TABLE_PHOTOS)
         assertEquals(mockNowTimeProvider.now, dao.getRecordedTime(Contract.TABLE_PHOTOS))

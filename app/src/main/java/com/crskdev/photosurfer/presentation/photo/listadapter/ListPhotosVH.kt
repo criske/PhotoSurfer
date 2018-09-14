@@ -44,7 +44,7 @@ class ListPhotosVH(private val glide: RequestManager,
                 .apply(RequestOptions()
                         .placeholder(R.drawable.ic_logo)
                         .transforms(CenterCrop(), RoundedCorners(8)))
-                .transition(DrawableTransitionOptions().crossFade())
+                //.transition(DrawableTransitionOptions().crossFade())
                 .addListener(object : RequestListener<Drawable> {
                     override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?,
                                               isFirstResource: Boolean): Boolean {

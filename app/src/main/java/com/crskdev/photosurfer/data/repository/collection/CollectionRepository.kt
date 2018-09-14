@@ -110,9 +110,9 @@ class CollectionRepositoryImpl(
     }
 
     override fun getCollection(collectionId: Int): LiveData<Collection> =
-        Transformations.map(collectionDAO.getCollectionLiveData(collectionId)){ c ->
-            c.toCollection()
-        }
+            Transformations.map(collectionDAO.getCollectionLiveData(collectionId)) { c ->
+                c.toCollection()
+            }
 
     override fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>?) {
         ioExecutor {
@@ -183,12 +183,14 @@ class CollectionRepositoryImpl(
         }
         diskExecutor {
             transactional {
+                //update size and cover
                 val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
                     totalPhotos += 1
+                    coverPhotoId = photo.id
+                    coverPhotoUrls = transformMapUrls(photo.urls)
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
-                val updated = photoDAOFacade.addPhotoToCollection(photo.id, collection.asLiteStr())
-                updated
+                photoDAOFacade.addPhotoToCollection(photo.id, collection.asLiteStr())
             }
         }
     }
@@ -200,12 +202,18 @@ class CollectionRepositoryImpl(
         }
         diskExecutor {
             transactional {
+                photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
+
+                val lastPhoto = collectionPhotoDAO.getLastPhoto()
                 val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
                     totalPhotos -= 1
                 }
+                //update cover with latest photo in collection
+                lastPhoto?.let {
+                    collectionDB?.coverPhotoId = it.id
+                    collectionDB?.coverPhotoUrls = it.urls
+                }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
-                val updated = photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
-                updated
             }
         }
     }

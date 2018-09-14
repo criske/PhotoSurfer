@@ -22,12 +22,15 @@ open class PhotoEntity : BaseDBEntity() {
     /**
      * unwind link map key-values and concat them with ";"
      */
+    //TODO use type converters
     lateinit var urls: String
     var description: String? = null
     /*
     unwind values and concat them with ";"
      */
+    //TODO use type converters
     var categories: String? = null
+    //TODO use type converters
     var collections: String? = null
     var likes: Int = 0
     var likedByMe: Boolean = false

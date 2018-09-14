@@ -17,4 +17,6 @@
     <string name="collections">Colectii</string>
     <string name="no_description">Nu are descriere</string>
     <string name="add">Adauga</string>
+    <string name="create_new_collection">Creaza o Noua Colectie</string>
+    <string name="new_collection">Colectie Noua</string>
 </resources>

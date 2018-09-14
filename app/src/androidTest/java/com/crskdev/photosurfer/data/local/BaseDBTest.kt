@@ -4,6 +4,7 @@ import android.support.test.InstrumentationRegistry
 import androidx.annotation.CallSuper
 import androidx.arch.core.executor.ArchTaskExecutor
 import androidx.arch.core.executor.TaskExecutor
+import com.crskdev.photosurfer.services.executors.KExecutor
 import org.junit.After
 import org.junit.Before
 import java.util.concurrent.Executor
@@ -17,7 +18,11 @@ abstract class BaseDBTest{
 
     protected  lateinit var db: PhotoSurferDB
 
-    protected val emptyExecutor = Executor { command -> command?.run() }
+    protected val emptyExecutor = object: KExecutor{
+        override fun execute(command: Runnable?) {
+            command?.run()
+        }
+    }
 
     init {
         ArchTaskExecutor.getInstance().setDelegate(object : TaskExecutor() {
