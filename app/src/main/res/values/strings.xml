@@ -39,4 +39,5 @@
     <string name="collection_description">Description</string>
     <string name="collection_private">Private</string>
     <string name="collection_title">Title</string>
+    <string name="error_collection_title">Collection Title is Missing!</string>
 </resources>

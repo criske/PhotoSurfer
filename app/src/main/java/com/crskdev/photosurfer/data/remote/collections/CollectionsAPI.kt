@@ -22,6 +22,7 @@ interface CollectionsAPI {
     @Headers(REQUIRE_AUTH)
     fun getMyCollectionPhotos(@Path("id") collectionId: Int, @Query("page") page: Int = 1): Call<List<PhotoJSON>>
 
+    @FormUrlEncoded
     @POST("/collections")
     @Headers(REQUIRE_AUTH)
     fun createCollection(@Field("title") title: String, @Field("description") description: String, @Field("private") private: Boolean): Call<CollectionJSON>

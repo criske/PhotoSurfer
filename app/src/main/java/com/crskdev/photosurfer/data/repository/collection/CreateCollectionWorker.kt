@@ -19,15 +19,19 @@ import com.crskdev.photosurfer.services.TypedWorker
 class CreateCollectionWorker : TypedWorker() {
 
     companion object {
-        private const val COLLECTION = "collection"
+        private const val TITLE = "collection_title"
+        private const val DESCRIPTION = "collection_description"
+        private const val PRIVATE = "collection_private"
 
         private const val PHOTO = "photo"
 
         fun createWorkData(
-                collectionJson: String,
+                title: String,
+                description: String?,
+                private: Boolean,
                 withPhoto: String? = null): WorkData {
             return WorkData(Tag(WorkType.CREATE_COLLECTION), false, PHOTO to (withPhoto ?: ""),
-                    COLLECTION to collectionJson)
+                    TITLE to title, DESCRIPTION to (description ?: ""), PRIVATE to private)
         }
 
     }
@@ -39,11 +43,11 @@ class CreateCollectionWorker : TypedWorker() {
 
         val graph = applicationContext.dependencyGraph()
 
-        val jsonAdapter = graph.moshi.adapter(CollectionJSON::class.java)
-        val collection = jsonAdapter.fromJson(inputData.getString(COLLECTION)!!)!!
-        val photoJSON = inputData.getString(PHOTO)?.takeIf { it.isNotEmpty() }?.let {
-            graph.moshi.adapter(PhotoJSON::class.java).fromJson(it)
-        }
+        val title = inputData.getString(TITLE)!!
+        val description: String = inputData.getString(DESCRIPTION) ?: ""
+        val private: Boolean = inputData.getBoolean(PRIVATE, true)
+
+        val withPhotoId = inputData.getString(PHOTO)
 
         val collectionsDAO: CollectionsDAO = graph.daoManager.getDao(Contract.TABLE_COLLECTIONS)
         val collectionsAPI: CollectionsAPI = graph.collectionsAPI
@@ -51,7 +55,7 @@ class CreateCollectionWorker : TypedWorker() {
 
         try {
             val response = collectionsAPI
-                    .createCollection(collection.title, collection.description, collection.private)
+                    .createCollection(title, description, private)
                     .execute()
             if (response.isSuccessful) {
                 val collectionReturned = response.body()
@@ -59,8 +63,8 @@ class CreateCollectionWorker : TypedWorker() {
                     transactional {
                         val lastCollectionEntity = collectionsDAO.getLatestCollection()
                         val pagingData = lastCollectionEntity?.let {
-                            PagingData(it.total ?: 0, it.curr ?: 1, it.prev, it.next)
-                        } ?: PagingData(0, 1, null, null)
+                            PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
+                        } ?: PagingData(1, 1, null, null)
                         collectionsDAO.createCollection(cjson.toCollectionDB(pagingData))
                     }
                     sendPlatformNotification("Collection created")
@@ -70,6 +74,7 @@ class CreateCollectionWorker : TypedWorker() {
                 return Result.FAILURE
             }
         } catch (ex: Exception) {
+            ex.printStackTrace()
             sendPlatformNotification(ex.message ?: "Unknown error: ${ex}")
             Result.FAILURE
         }

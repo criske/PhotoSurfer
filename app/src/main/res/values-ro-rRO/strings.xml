@@ -19,4 +19,8 @@
     <string name="add">Adauga</string>
     <string name="create_new_collection">Creaza o Noua Colectie</string>
     <string name="new_collection">Colectie Noua</string>
+    <string name="collection_description">Descriere</string>
+    <string name="collection_private">Privat</string>
+    <string name="collection_title">Titlu</string>
+    <string name="error_collection_title">Titlul Colectiei Lipseste!</string>
 </resources>

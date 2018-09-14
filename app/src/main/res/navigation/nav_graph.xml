@@ -86,7 +86,7 @@
         android:id="@+id/newCollectionFragment"
         android:name="com.crskdev.photosurfer.presentation.collection.NewCollectionFragment"
         android:label="fragment_new_collection"
-        tools:layout="@layout/fragment_new_collection">
+        tools:layout="@layout/fragment_upsert_collection">
         <argument
             android:name="withPhotoId"
             app:argType="string"

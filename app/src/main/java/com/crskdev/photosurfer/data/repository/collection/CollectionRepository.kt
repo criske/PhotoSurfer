@@ -12,9 +12,7 @@ import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
-import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
-import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.entities.Collection
@@ -30,6 +28,8 @@ interface CollectionRepository : Repository {
 
     fun createCollection(collection: Collection, withPhoto: Photo? = null)
 
+    fun editCollection(collection: Collection)
+
     fun getCollections(): DataSource.Factory<Int, Collection>
 
     fun getCollectionPhotos(collectionId: Int): DataSource.Factory<Int, Photo>
@@ -44,7 +44,8 @@ interface CollectionRepository : Repository {
 
     fun removePhotoFromCollection(collection: Collection, photo: Photo)
 
-    fun getCollection(collectionId: Int): LiveData<Collection>
+    fun getCollectionLiveData(collectionId: Int): LiveData<Collection>
+
 }
 
 class CollectionRepositoryImpl(
@@ -69,14 +70,17 @@ class CollectionRepositoryImpl(
     private val diskExecutor = executorsManager.types[ExecutorsManager.Type.DISK]!!
     private val uiExecutor = executorsManager.types[ExecutorsManager.Type.UI]!!
 
-    private val collectionJsonAdapter by lazy { moshi.adapter(CollectionJSON::class.java) }
-    private val photoJsonAdapter by lazy { moshi.adapter(PhotoJSON::class.java) }
-
     override fun createCollection(collection: Collection, withPhoto: Photo?) {
         scheduledWorkService.schedule(CreateCollectionWorker
                 .createWorkData(
-                        collectionJsonAdapter.toJson(collection.toJSON()),
-                        withPhoto?.let { photoJsonAdapter.toJson(it.toJSON()) }))
+                        collection.title,
+                        collection.description,
+                        collection.private,
+                        withPhoto?.id))
+    }
+
+    override fun editCollection(collection: Collection) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun getCollections(): DataSource.Factory<Int, Collection> =
@@ -109,10 +113,11 @@ class CollectionRepositoryImpl(
         }
     }
 
-    override fun getCollection(collectionId: Int): LiveData<Collection> =
+    override fun getCollectionLiveData(collectionId: Int): LiveData<Collection> =
             Transformations.map(collectionDAO.getCollectionLiveData(collectionId)) { c ->
                 c.toCollection()
             }
+
 
     override fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>?) {
         ioExecutor {

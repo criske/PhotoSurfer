@@ -17,7 +17,7 @@ class CollectionEntity : BaseDBEntity() {
     @PrimaryKey
     var id: Int = -1
     lateinit var title: String
-    lateinit var description: String
+    var description: String? = null
     lateinit var publishedAt: String
     lateinit var updatedAt: String
     var curated: Boolean = false

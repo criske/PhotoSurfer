@@ -13,7 +13,6 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
 import androidx.paging.LivePagedListBuilder
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.crskdev.photosurfer.R
@@ -113,7 +112,7 @@ class CollectionListPhotosViewModel(collectionId: Int,
             })
             .build()
 
-    val collectionLiveData = collectionRepository.getCollection(collectionId)
+    val collectionLiveData = collectionRepository.getCollectionLiveData(collectionId)
 
     fun like(photo: Photo) {
         photoRepository.like(photo, object : Repository.Callback<Boolean> {

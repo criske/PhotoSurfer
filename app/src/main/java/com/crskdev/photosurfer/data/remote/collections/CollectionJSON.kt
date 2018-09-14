@@ -94,7 +94,7 @@ import com.squareup.moshi.Json
 class CollectionJSON {
     var id: Int = -1
     lateinit var title: String
-    lateinit var description: String
+    var description: String? = null
     @Json(name = "published_at")
     lateinit var publishedAt: String
     @Json(name = "updated_at")
@@ -119,4 +119,5 @@ class CollectionLiteJSON {
     lateinit var publishedAt: String
     @Json(name = "updated_at")
     lateinit var updatedAt: String
+    var private: Boolean = false
 }

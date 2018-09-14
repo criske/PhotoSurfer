@@ -122,26 +122,6 @@ class CollectionRepositoryImplTest : BaseDBTest() {
 
     @Test
     fun addPhotoToCollection() {
-        //        var id: Int = -1
-//        lateinit var title: String
-//        lateinit var description: String
-//        lateinit var publishedAt: String
-//        lateinit var updatedAt: String
-//        var curated: Boolean = false
-//        var totalPhotos: Int = 0
-//        var private: Boolean = false
-//        lateinit var sharedKey: String
-//        var coverPhotoId: String? = null
-//        var coverPhotoUrls: String? = null
-//        lateinit var ownerId: String
-//        lateinit var ownerUsername: String
-//        lateinit var links: String
-
-//        var total: Int? = null
-//        var curr: Int? = null
-//        var prev: Int? = null
-//        var next: Int? = null
-
         //create collection
         val collection1 = CollectionEntity().apply {
             id = 1

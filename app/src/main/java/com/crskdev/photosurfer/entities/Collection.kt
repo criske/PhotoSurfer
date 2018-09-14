@@ -9,7 +9,7 @@ import java.util.*
 data class Collection(
         val id: Int,
         val title: String,
-        val description: String,
+        val description: String? = null,
         val publishedAt: String,
         val updatedAt: String,
         val curated: Boolean = false,
@@ -22,4 +22,10 @@ data class Collection(
         val ownerUsername: String,
         val links: Map<String, String>,
         override val pagingData: PagingData? = null
-): BaseEntity()
+) : BaseEntity() {
+    companion object {
+        fun just(title: String, description: String? = null, private: Boolean): Collection =
+                Collection(-1, title, description ?: "", "", "", false,
+                        0, private, "", null, null, "", "", emptyMap())
+    }
+}

@@ -156,7 +156,7 @@ class CollectionVH(view: View, private val glide: RequestManager,
         }
         itemView.textCollectionTitle.text = collection.title
         itemView.textCollectionSize.text = collection.totalPhotos.toString()
-        itemView.textCollectionDescription.text = collection.description.trim().takeIf { it.isNotEmpty() }
+        itemView.textCollectionDescription.text = collection.description?.trim()
                 ?: itemView.context.getString(R.string.no_description)
     }
 
