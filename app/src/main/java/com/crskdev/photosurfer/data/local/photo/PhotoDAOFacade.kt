@@ -143,6 +143,30 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
         return map
     }
 
+    fun getPhotosBelongToCollectionMappedByTable(collectionId: Int): Map<String, List<PhotoEntity>> {
+        val likeCollectionId = "%$collectionId#%"
+        lateinit var map: Map<String, List<PhotoEntity>>
+        transactional {
+            map = Contract.PHOTO_TABLES.map {
+                when (it) {
+                    Contract.TABLE_USER_PHOTOS -> it to daoUserPhotos.getPhotosBelongToCollection(likeCollectionId)
+                    Contract.TABLE_PHOTOS -> it to daoPhotos.getPhotosBelongToCollection(likeCollectionId)
+                    Contract.TABLE_LIKE_PHOTOS -> it to daoLikes.getPhotosBelongToCollection(likeCollectionId)
+                    Contract.TABLE_SEARCH_PHOTOS -> it to daoSearchDAO.getPhotosBelongToCollection(likeCollectionId)
+                    Contract.TABLE_COLLECTION_PHOTOS -> it to daoCollectionPhoto.getPhotosBelongToCollection(likeCollectionId)
+                    else -> throw Exception("Dao for table $it not found")
+                }
+            }.filter {
+                it.second.isNotEmpty()
+            }.fold(mutableMapOf<String, List<PhotoEntity>>()) { acc, curr ->
+                acc.apply {
+                    this[curr.first] = curr.second
+                }
+            }
+        }
+        return map
+    }
+
     fun like(id: String, liked: Boolean) {
         transactional {
             //(un)like the photo in each photo-table

@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.local.collections
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -22,7 +23,8 @@ class CollectionEntity : BaseDBEntity() {
     lateinit var updatedAt: String
     var curated: Boolean = false
     var totalPhotos: Int = 0
-    var private: Boolean = false
+    @ColumnInfo(name = "_private")
+    var notPublic: Boolean = false
     lateinit var sharedKey: String
     var coverPhotoId: String? = null
     var coverPhotoUrls: String? = null

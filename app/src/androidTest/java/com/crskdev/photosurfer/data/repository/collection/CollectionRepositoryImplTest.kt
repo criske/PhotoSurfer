@@ -21,7 +21,6 @@ import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.executors.ThreadCallChecker
-import com.squareup.moshi.Moshi
 import okhttp3.Request
 import okhttp3.ResponseBody
 import org.junit.Assert.*
@@ -111,7 +110,6 @@ class CollectionRepositoryImplTest : BaseDBTest() {
                                     put(ExecutorsManager.Type.UI, emptyExecutor)
                                 }),
                 daoManager,
-                Moshi.Builder().build(),
                 PhotoDAOFacade(daoManager),
                 scheduledWorkService,
                 apiCallDispatcher,
@@ -136,6 +134,7 @@ class CollectionRepositoryImplTest : BaseDBTest() {
             links = ""
             total = 1
             curr = 1
+            notPublic = true
         }
         val collection2 = CollectionEntity().apply {
             id = 2
@@ -153,8 +152,14 @@ class CollectionRepositoryImplTest : BaseDBTest() {
         }
         val collectionsDAO = db.collectionsDAO()
         val collectionsPhotoDAO = db.collectionPhotoDAO()
-
         collectionsDAO.createCollection(collection1)
+
+        with(collectionsDAO.getCollection(1)){
+            assertEquals(collection1.id, this?.id)
+            assertEquals(collection1.title, this?.title)
+            assertEquals(collection1.description, this?.description)
+            assertEquals(collection1.notPublic, this?.notPublic == true)
+        }
         collectionsDAO.createCollection(collection2)
 
         val photo = Photo(

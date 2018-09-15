@@ -27,11 +27,11 @@ class CreateCollectionWorker : TypedWorker() {
 
         fun createWorkData(
                 title: String,
-                description: String?,
+                description: String,
                 private: Boolean,
                 withPhoto: String? = null): WorkData {
             return WorkData(Tag(WorkType.CREATE_COLLECTION), false, PHOTO to (withPhoto ?: ""),
-                    TITLE to title, DESCRIPTION to (description ?: ""), PRIVATE to private)
+                    TITLE to title, DESCRIPTION to description, PRIVATE to private)
         }
 
     }

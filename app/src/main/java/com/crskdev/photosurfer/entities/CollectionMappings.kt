@@ -21,7 +21,7 @@ fun Collection.toCollectionDB() = CollectionEntity().apply {
     this.coverPhotoId = this@toCollectionDB.coverPhotoId
     this.curated = this@toCollectionDB.curated
     this.totalPhotos = this@toCollectionDB.totalPhotos
-    this.private = this@toCollectionDB.private
+    this.notPublic = this@toCollectionDB.private
     this.sharedKey = this@toCollectionDB.sharedKey
     this.ownerId = this@toCollectionDB.ownerId
     this.ownerUsername = this@toCollectionDB.ownerUsername
@@ -43,7 +43,7 @@ fun CollectionJSON.toCollectionDB(pagingData: PagingData): CollectionEntity =
             this.coverPhotoId = this@toCollectionDB.coverPhoto?.id
             this.curated = this@toCollectionDB.curated
             this.totalPhotos = this@toCollectionDB.totalPhotos
-            this.private = this@toCollectionDB.private
+            this.notPublic = this@toCollectionDB.private
             this.sharedKey = this@toCollectionDB.sharedKey
             this.ownerId = this@toCollectionDB.owner.id
             this.ownerUsername = this@toCollectionDB.owner.username
@@ -94,7 +94,7 @@ fun CollectionEntity.toCollection(): Collection {
             updatedAt,
             curated,
             totalPhotos,
-            private,
+            notPublic,
             sharedKey,
             coverPhotoId,
             coverPhotoUrls?.let { transformStrMapToUrls(it) },

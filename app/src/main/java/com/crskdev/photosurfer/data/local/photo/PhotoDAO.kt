@@ -14,6 +14,9 @@ interface PhotoDAO : DataAccessor {
     @Query("SELECT * FROM photos ORDER BY indexInResponse ASC")
     fun getPhotos(): DataSource.Factory<Int, PhotoEntity>
 
+    @Query("SELECT * FROM photos WHERE collections LIKE :likeCollectionId")
+    fun getPhotosBelongToCollection(likeCollectionId: String): List<PhotoEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertPhotos(photos: List<PhotoEntity>)
 

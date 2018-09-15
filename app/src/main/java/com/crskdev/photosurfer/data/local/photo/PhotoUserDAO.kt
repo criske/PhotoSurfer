@@ -16,6 +16,9 @@ interface PhotoUserDAO : DataAccessor {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertPhotos(photos: List<UserPhotoEntity>)
 
+    @Query("SELECT * FROM user_photos WHERE collections LIKE :likeCollectionId")
+    fun getPhotosBelongToCollection(likeCollectionId: String): List<UserPhotoEntity>
+
     @Query("DELETE FROM user_photos")
     fun clear()
 

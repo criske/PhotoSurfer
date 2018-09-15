@@ -9,13 +9,16 @@ import com.crskdev.photosurfer.data.local.photo.PhotoEntity
  * Created by Cristian Pela on 05.09.2018.
  */
 @Dao
-interface CollectionPhotoDAO: DataAccessor{
+interface CollectionPhotoDAO : DataAccessor {
 
     @Query("SELECT * FROM collection_photos ORDER BY indexInResponse ASC")
     fun getPhotos(): DataSource.Factory<Int, CollectionPhotoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertPhotos(photos: List<CollectionPhotoEntity>)
+
+    @Query("SELECT * FROM collection_photos WHERE collections LIKE :likeCollectionId")
+    fun getPhotosBelongToCollection(likeCollectionId: String): List<CollectionPhotoEntity>
 
     @Query("DELETE FROM collection_photos")
     fun clear()

@@ -16,6 +16,9 @@ interface PhotoSearchDAO : DataAccessor {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertPhotos(photos: List<SearchPhotoEntity>)
 
+    @Query("SELECT * FROM search_photos WHERE collections LIKE :likeCollectionId")
+    fun getPhotosBelongToCollection(likeCollectionId: String): List<SearchPhotoEntity>
+
     @Query("DELETE FROM search_photos")
     fun clear()
 

@@ -19,7 +19,6 @@ import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.util.runOn
-import com.squareup.moshi.Moshi
 
 /**
  * Created by Cristian Pela on 31.08.2018.
@@ -29,6 +28,8 @@ interface CollectionRepository : Repository {
     fun createCollection(collection: Collection, withPhoto: Photo? = null)
 
     fun editCollection(collection: Collection)
+
+    fun deleteCollection(collectionId: Int)
 
     fun getCollections(): DataSource.Factory<Int, Collection>
 
@@ -51,7 +52,6 @@ interface CollectionRepository : Repository {
 class CollectionRepositoryImpl(
         executorsManager: ExecutorsManager,
         daoManager: DaoManager,
-        moshi: Moshi,
         private val photoDAOFacade: PhotoDAOFacade,
         private val scheduledWorkService: ScheduledWorkService,
         private val apiCallDispatcher: APICallDispatcher,
@@ -59,7 +59,6 @@ class CollectionRepositoryImpl(
         private val authTokenStorage: AuthTokenStorage,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor
 ) : CollectionRepository {
-
 
     private val collectionDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
     private val collectionPhotoDAO: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
@@ -74,13 +73,34 @@ class CollectionRepositoryImpl(
         scheduledWorkService.schedule(CreateCollectionWorker
                 .createWorkData(
                         collection.title,
-                        collection.description,
+                        collection.description?:"",
                         collection.private,
                         withPhoto?.id))
     }
 
     override fun editCollection(collection: Collection) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun deleteCollection(collectionId: Int) {
+        scheduledWorkService.schedule(DeleteCollectionWorker.createWorkData(collectionId))
+        diskExecutor {
+            transactional {
+                val collection = collectionDAO.getCollection(collectionId)
+                collectionDAO.deleteCollectionById(collectionId)
+                val photosByTable = photoDAOFacade
+                        .getPhotosBelongToCollectionMappedByTable(collectionId)
+                photosByTable.forEach {
+                    val photos = it.value
+                    val table = it.key
+                    photos.forEach { p ->
+                        p.collections = collectionsLiteStrRemove(p.collections
+                                ?: "", collection?.asLiteStr() ?: "")
+                        photoDAOFacade.update(table, p)
+                    }
+                }
+            }
+        }
     }
 
     override fun getCollections(): DataSource.Factory<Int, Collection> =
@@ -209,14 +229,17 @@ class CollectionRepositoryImpl(
             transactional {
                 photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
 
-                val lastPhoto = collectionPhotoDAO.getLastPhoto()
                 val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
                     totalPhotos -= 1
                 }
-                //update cover with latest photo in collection
-                lastPhoto?.let {
-                    collectionDB?.coverPhotoId = it.id
-                    collectionDB?.coverPhotoUrls = it.urls
+
+                val lastPhoto = collectionPhotoDAO.getLastPhoto()
+                //update cover with latest photo in collection only if current collection id is collection id
+                if (lastPhoto?.currentCollectionId == collection.id) {
+                    lastPhoto.let {
+                        collectionDB?.coverPhotoId = it.id
+                        collectionDB?.coverPhotoUrls = it.urls
+                    }
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
             }

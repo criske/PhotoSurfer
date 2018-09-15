@@ -30,6 +30,9 @@ interface CollectionsDAO : DataAccessor {
     @Delete
     fun deleteCollection(collection: CollectionEntity)
 
+    @Query("DELETE FROM collections WHERE id=:id")
+    fun deleteCollectionById(id: Int): Int
+
     @Update
     fun updateCollection(collection: CollectionEntity)
 

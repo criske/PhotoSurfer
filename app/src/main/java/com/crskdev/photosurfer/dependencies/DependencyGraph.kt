@@ -172,7 +172,6 @@ object DependencyGraph {
         collectionsRepository = CollectionRepositoryImpl(
                 executorManager,
                 daoManager,
-                moshi,
                 daoPhotoFacade,
                 scheduledWorkService,
                 apiCallDispatcher,
