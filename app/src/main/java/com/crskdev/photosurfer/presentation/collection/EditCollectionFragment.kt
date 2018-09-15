@@ -68,6 +68,7 @@ class EditCollectionFragment : Fragment() {
         })
 
         viewModel.successLiveData.observe(this, Observer {
+            editCollectionTitleLayout.error = null
             Toast.makeText(context, getString(R.string.message_collection_edited), Toast.LENGTH_SHORT).show()
         })
 
