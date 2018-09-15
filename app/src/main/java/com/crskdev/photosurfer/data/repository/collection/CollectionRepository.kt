@@ -73,7 +73,7 @@ class CollectionRepositoryImpl(
         scheduledWorkService.schedule(CreateCollectionWorker
                 .createWorkData(
                         collection.title,
-                        collection.description?:"",
+                        collection.description ?: "",
                         collection.private,
                         withPhoto?.id))
     }
@@ -86,7 +86,6 @@ class CollectionRepositoryImpl(
         scheduledWorkService.schedule(DeleteCollectionWorker.createWorkData(collectionId))
         diskExecutor {
             transactional {
-                val collection = collectionDAO.getCollection(collectionId)
                 collectionDAO.deleteCollectionById(collectionId)
                 val photosByTable = photoDAOFacade
                         .getPhotosBelongToCollectionMappedByTable(collectionId)
@@ -94,8 +93,7 @@ class CollectionRepositoryImpl(
                     val photos = it.value
                     val table = it.key
                     photos.forEach { p ->
-                        p.collections = collectionsLiteStrRemove(p.collections
-                                ?: "", collection?.asLiteStr() ?: "")
+                        p.collections = p.collections.filter { c -> c.id != collectionId }
                         photoDAOFacade.update(table, p)
                     }
                 }
@@ -215,7 +213,7 @@ class CollectionRepositoryImpl(
                     coverPhotoUrls = transformMapUrls(photo.urls)
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
-                photoDAOFacade.addPhotoToCollection(photo.id, collection.asLiteStr())
+                photoDAOFacade.addPhotoToCollection(photo.id, collection.asLite())
             }
         }
     }
@@ -227,7 +225,7 @@ class CollectionRepositoryImpl(
         }
         diskExecutor {
             transactional {
-                photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLiteStr())
+                photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLite())
 
                 val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
                     totalPhotos -= 1
@@ -240,6 +238,9 @@ class CollectionRepositoryImpl(
                         collectionDB?.coverPhotoId = it.id
                         collectionDB?.coverPhotoUrls = it.urls
                     }
+                }else if(lastPhoto == null){ // there is no photo in this collection
+                    collectionDB?.coverPhotoId = null
+                    collectionDB?.coverPhotoUrls = null
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
             }

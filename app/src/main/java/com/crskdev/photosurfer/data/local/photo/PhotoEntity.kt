@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.crskdev.photosurfer.data.local.BaseDBEntity
 import com.crskdev.photosurfer.data.local.Contract
+import com.crskdev.photosurfer.entities.CollectionLite
 import com.crskdev.photosurfer.entities.User
 
 /**
@@ -31,7 +32,7 @@ open class PhotoEntity : BaseDBEntity() {
     //TODO use type converters
     var categories: String? = null
     //TODO use type converters
-    var collections: String? = null
+    lateinit var collections: List<CollectionLite>
     var likes: Int = 0
     var likedByMe: Boolean = false
     var views: Int = 0
@@ -51,11 +52,11 @@ class SearchPhotoEntity : PhotoEntity()
 
 
 fun PhotoEntity.toUserPhotoEntity(): UserPhotoEntity {
-        val dis = this@toUserPhotoEntity
-        return UserPhotoEntity().apply {
-            id= dis.id
-            indexInResponse = dis.indexInResponse
+    val dis = this@toUserPhotoEntity
+    return UserPhotoEntity().apply {
+        id = dis.id
+        indexInResponse = dis.indexInResponse
 
-        }
+    }
 }
 

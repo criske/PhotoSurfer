@@ -78,8 +78,6 @@ fun Collection.toJSON(): CollectionJSON =
 
 fun Collection.toLiteJSON(): CollectionLiteJSON = CollectionLiteJSON().apply {
     this.id = this@toLiteJSON.id
-    this.publishedAt = this@toLiteJSON.publishedAt
-    this.updatedAt = this@toLiteJSON.updatedAt
     this.title = this@toLiteJSON.title
 }
 
@@ -105,42 +103,52 @@ fun CollectionEntity.toCollection(): Collection {
     )
 }
 
-fun CollectionLiteJSON.asLiteStr(): String = "$id#$title"
-
-fun Collection.asLiteStr(): String = "$id#$title"
-
-fun CollectionEntity.asLiteStr(): String = "$id#$title"
-
-fun collectionsLiteStrAdd(collectionsStr: String, collectionStr: String): String {
-    return if (!collectionsStr.contains(collectionStr)) {
-        (collectionsStr.split("@") + collectionStr).joinToString("@")
-    } else {
-        collectionsStr
-    }
+fun CollectionLiteJSON.toCollectionLite(): CollectionLite = CollectionLite(id, title)
+fun CollectionLite.toCollectionLiteJSON(): CollectionLiteJSON = CollectionLiteJSON().apply {
+    id = this@toCollectionLiteJSON.id
+    title = this@toCollectionLiteJSON.title
 }
+fun Collection.asLite(): CollectionLite = CollectionLite(id, title)
 
-fun collectionsLiteStrRemove(collectionsStr: String, collectionStr: String): String {
-    return collectionsStr.replace("(@?$collectionStr)".toRegex(), "")
-}
+//fun CollectionLiteJSON.asLiteStr(): String = "$id#$title"
 
-fun collectionsLiteJSONAsLiteStr(collections: List<CollectionLiteJSON>): String = collections.map { it.asLiteStr() }.joinToString("@")
+//fun Collection.asLiteStr(): String = "$id#$title"
 
-fun collectionsAsLiteStr(collections: List<Collection>): String = collections.map { it.asLiteStr() }.joinToString("@")
+//fun CollectionLite.asLiteStr(): String = "$id#$title"
 
-fun toCollectionsFromLiteStr(liteStrList: String): List<Collection> {
-    if (liteStrList.isEmpty()) {
-        return emptyList()
-    }
-    return liteStrList.split("@").filter { it.isNotEmpty() }.map {
-        val split = it.split("#")
-        if (split.size != 2) {
-            throw IllegalAccessException("Invalid parse from string to collection list")
-        } else {
-            Collection(split[0].toInt(), split[1],
-                    "", "", "", sharedKey = "", ownerId = "", ownerUsername = "", links = emptyMap())
-        }
-    }
-}
 
-fun extractIdAndTitleFromCollectionStr(collectionStr: String): Pair<Int, String> =
-        collectionStr.split("#").let { it[0].toInt() to it[1] }
+
+//fun CollectionEntity.asLiteStr(): String = "$id#$title"
+//
+//fun collectionsLiteStrAdd(collectionsStr: String, collectionStr: String): String {
+//    return if (!collectionsStr.contains(collectionStr)) {
+//        (collectionsStr.split("@") + collectionStr).joinToString("@")
+//    } else {
+//        collectionsStr
+//    }
+//}
+//
+//fun collectionsLiteStrRemove(collectionsStr: String, collectionStr: String): String {
+//    return collectionsStr.replace("(@?$collectionStr)".toRegex(), "")
+//}
+
+//fun collectionsLiteJSONAsLiteStr(collections: List<CollectionLiteJSON>): String = collections.map { it.asLiteStr() }.joinToString("@")
+
+//private fun collectionsAsLiteStr(collections: List<CollectionLite>): String = collections.map { it.asLiteStr() }.joinToString("@")
+
+//private fun toCollectionsFromLiteStr(liteStrList: String): List<CollectionLite> {
+//    if (liteStrList.isEmpty()) {
+//        return emptyList()
+//    }
+//    return liteStrList.split("@").filter { it.isNotEmpty() }.map {
+//        val split = it.split("#")
+//        if (split.size != 2) {
+//            throw IllegalAccessException("Invalid parse from string to collection list")
+//        } else {
+//            CollectionLite(split[0].toInt(), split[1])
+//        }
+//    }
+//}
+//
+//fun extractIdAndTitleFromCollectionStr(collectionStr: String): Pair<Int, String> =
+//        collectionStr.split("#").let { it[0].toInt() to it[1] }

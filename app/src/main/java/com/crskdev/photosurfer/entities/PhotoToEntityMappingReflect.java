@@ -1,8 +1,9 @@
 package com.crskdev.photosurfer.entities;
 
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity;
-import com.crskdev.photosurfer.data.remote.photo.PhotoJSON;
 import com.crskdev.photosurfer.data.remote.PagingData;
+import com.crskdev.photosurfer.data.remote.collections.CollectionLiteJSON;
+import com.crskdev.photosurfer.data.remote.photo.PhotoJSON;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -10,9 +11,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.crskdev.photosurfer.entities.CollectionMappingsKt.collectionsAsLiteStr;
-import static com.crskdev.photosurfer.entities.CollectionMappingsKt.collectionsLiteJSONAsLiteStr;
 import static com.crskdev.photosurfer.entities.PhotoMappingsKt.ENTRY_DELIM;
 import static com.crskdev.photosurfer.entities.PhotoMappingsKt.KV_DELIM;
 
@@ -38,7 +36,7 @@ final class PhotoToEntityMappingReflect {
             setField(instance, transformUrls(photo.getUrls()), clazz, "urls");
             setField(instance, photo.getDescription(), clazz, "description");
             setField(instance, transformListToStr(photo.getCategories()), clazz, "categories");
-            setField(instance, collectionsLiteJSONAsLiteStr(photo.getCollections()), clazz, "collections");
+            setField(instance, fromJsonList(photo.getCollections()), clazz, "collections");
             setField(instance, photo.getLikes(), clazz, "likes");
             setField(instance, photo.getLikedByMe(), clazz, "likedByMe");
             setField(instance, photo.getViews(), clazz, "views");
@@ -71,7 +69,7 @@ final class PhotoToEntityMappingReflect {
             setField(instance, transformUrls(photo.getUrls()), clazz, "urls");
             setField(instance, photo.getDescription(), clazz, "description");
             setField(instance, transformListToStr(photo.getCategories()), clazz, "categories");
-            setField(instance, collectionsAsLiteStr(photo.getCollections()), clazz, "collections");
+            setField(instance, photo.getCollections(), clazz, "collections");
             setField(instance, photo.getLikes(), clazz, "likes");
             setField(instance, photo.getLikedByMe(), clazz, "likedByMe");
             setField(instance, photo.getViews(), clazz, "views");
@@ -89,6 +87,15 @@ final class PhotoToEntityMappingReflect {
         }
         return null;
     }
+
+    private static List<CollectionLite> fromJsonList(List<CollectionLiteJSON> list) {
+        List<CollectionLite> out = new ArrayList<>(list.size());
+        for (CollectionLiteJSON c : list) {
+            out.add(new CollectionLite(c.getId(), c.getTitle()));
+        }
+        return out;
+    }
+
 
     private static String transformListToStr(List<String> categories) {
         StringBuilder builder = new StringBuilder();

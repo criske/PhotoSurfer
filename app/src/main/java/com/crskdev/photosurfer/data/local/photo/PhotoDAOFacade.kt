@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package com.crskdev.photosurfer.data.local.photo
 
 import androidx.paging.DataSource
@@ -7,10 +9,7 @@ import com.crskdev.photosurfer.data.local.DataAccessor
 import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
-import com.crskdev.photosurfer.entities.collectionsLiteStrAdd
-import com.crskdev.photosurfer.entities.collectionsLiteStrRemove
-import com.crskdev.photosurfer.entities.extractIdAndTitleFromCollectionStr
-import com.crskdev.photosurfer.entities.toCollectionsFromLiteStr
+import com.crskdev.photosurfer.entities.CollectionLite
 
 /**
  * Created by Cristian Pela on 22.08.2018.
@@ -158,7 +157,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                 }
             }.filter {
                 it.second.isNotEmpty()
-            }.fold(mutableMapOf<String, List<PhotoEntity>>()) { acc, curr ->
+            }.fold(mutableMapOf()) { acc, curr ->
                 acc.apply {
                     this[curr.first] = curr.second
                 }
@@ -209,13 +208,13 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
     }
 
 
-    fun addPhotoToCollection(id: String, collectionStr: String): Int {
+    fun addPhotoToCollection(id: String, collection: CollectionLite): Int {
         var updated = 0
         transactional {
             val photosByTable = getPhotoMappedByTable(id)
             photosByTable.forEach {
                 val photo = it.value
-                photo.collections = photo.collections?.let { c -> collectionsLiteStrAdd(c, collectionStr) }
+                photo.collections = photo.collections + collection
                 val table = it.key
                 updated += update(table, photo)
             }
@@ -240,7 +239,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.prev = lastLiked?.prev
                         this.total = lastLiked?.total ?: 1
                         this.collections = it.collections
-                        this.currentCollectionId = extractIdAndTitleFromCollectionStr(collectionStr).first
+                        this.currentCollectionId = collection.id
                     }
                     daoCollectionPhoto.insertPhotos(listOf(collectionPhoto))
                 }
@@ -249,13 +248,13 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
         return updated
     }
 
-    fun removePhotoFromCollection(id: String, collectionStr: String): Int {
+    fun removePhotoFromCollection(id: String, collection: CollectionLite): Int {
         var updated = 0
         transactional {
             val photosByTable = getPhotoMappedByTable(id)
             photosByTable.forEach {
                 val photo = it.value
-                photo.collections = photo.collections?.let { c -> collectionsLiteStrRemove(c, collectionStr) }
+                photo.collections = photo.collections - collection
                 val table = it.key
                 updated += update(table, photo)
             }

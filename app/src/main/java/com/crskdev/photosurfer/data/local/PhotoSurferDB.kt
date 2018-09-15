@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.crskdev.photosurfer.data.local.collections.CollectionEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
@@ -28,9 +29,10 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             CollectionEntity::class,
             CollectionPhotoEntity::class
         ],
-        version = 12,
+        version = 13,
         exportSchema = false
 )
+@TypeConverters(DataTypeConverters::class)
 abstract class PhotoSurferDB : RoomDatabase() {
     companion object {
         fun create(context: Context, useInMemory: Boolean): PhotoSurferDB {

@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.entities
 
+import com.crskdev.photosurfer.data.local.DataTypeConverters
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.photo.LikePhotoEntity
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
@@ -25,7 +26,7 @@ fun PhotoEntity.toPhoto(): Photo =
                 transformStrMapToUrls(urls),
                 description,
                 categories?.split(ENTRY_DELIM)?.toList() ?: emptyList(),
-                collections?.let { toCollectionsFromLiteStr(it) } ?: emptyList(),
+                collections,
                 likes,
                 likedByMe,
                 views,
@@ -65,7 +66,7 @@ fun Photo.toJSON(): PhotoJSON =
             urls = this@toJSON.urls
             description = this@toJSON.description
             categories = this@toJSON.categories
-            collections = this@toJSON.collections.map { it.toLiteJSON() }
+            collections = this@toJSON.collections.map { it.toCollectionLiteJSON() }
             likes = this@toJSON.likes
             likedByMe = this@toJSON.likedByMe
             views = this@toJSON.views
@@ -82,7 +83,7 @@ fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
         urls.entries.fold(mutableMapOf()) { a, c -> a.apply { put(c.key.toString(), c.value) } },
         description,
         categories,
-        collectionsAsLiteStr(collections),
+        DataTypeConverters().fromCollectionLiteListToString(collections),
         likes, likedByMe, views, authorId, authorUsername,
         pagingData?.total, pagingData?.curr, pagingData?.prev, pagingData?.next)
 
@@ -95,7 +96,7 @@ fun ParcelizedPhoto.deparcelize(): Photo =
                 { a, c -> a.apply { put(ImageType.valueOf(c.key.toUpperCase()), c.value) } },
                 description,
                 categories,
-                toCollectionsFromLiteStr(collections),
+                DataTypeConverters().fromStringToCollectionListList(collections),
                 likes, likedByMe, views, authorId, authorUsername,
                 PagingData(total ?: -1, curr ?: -1, prev, next))
 

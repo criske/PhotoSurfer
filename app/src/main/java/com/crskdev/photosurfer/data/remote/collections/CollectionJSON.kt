@@ -115,9 +115,4 @@ class CollectionJSON {
 class CollectionLiteJSON {
     var id: Int = -1
     lateinit var title: String
-    @Json(name = "published_at")
-    lateinit var publishedAt: String
-    @Json(name = "updated_at")
-    lateinit var updatedAt: String
-    var private: Boolean = false
 }
