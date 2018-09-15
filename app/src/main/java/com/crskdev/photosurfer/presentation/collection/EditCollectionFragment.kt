@@ -2,29 +2,37 @@ package com.crskdev.photosurfer.presentation.collection
 
 
 import android.os.Bundle
+import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
+
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_upsert_collection.*
 
-class NewCollectionFragment : Fragment() {
+/**
+ * A simple [Fragment] subclass.
+ *
+ */
+class EditCollectionFragment : Fragment() {
 
-    private lateinit var viewModel: NewCollectionViewModel
+    private lateinit var viewModel: EditCollectionViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val collectionId = EditCollectionFragmentArgs.fromBundle(arguments).id
+        val collectionRepository = context!!.dependencyGraph().collectionsRepository
         viewModel = viewModelFromProvider(this) {
-            NewCollectionViewModel(context!!.dependencyGraph().collectionsRepository)
+            EditCollectionViewModel(collectionId, collectionRepository)
         }
     }
 
@@ -34,11 +42,12 @@ class NewCollectionFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_upsert_collection, container, false)
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val withPhotoId = NewCollectionFragmentArgs.fromBundle(arguments).withPhotoId
         toolbarCollection.apply {
-            setTitle(R.string.new_collection)
+            setTitle(R.string.edit_collection)
+            setNavigationOnClickListener {
+                findNavController().popBackStack()
+            }
             menu.add("Save").apply {
                 icon = ContextCompat.getDrawable(context, R.drawable.ic_check_white_24dp)
                 setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS)
@@ -50,35 +59,40 @@ class NewCollectionFragment : Fragment() {
                     true
                 }
             }
-            if (withPhotoId != null) {
-                subtitle = "+1 photo"
-            }
-            setNavigationOnClickListener {
-                findNavController().popBackStack()
-            }
         }
+
+        viewModel.editCollectionLiveData.observe(this, Observer {
+            editCollectionTitle.setText(it.title)
+            editCollectionDescription.setText(it.description)
+            checkCollectionPrivate.isChecked = it.private
+        })
+
         viewModel.successLiveData.observe(this, Observer {
-            view.findNavController().popBackStack()
+            Toast.makeText(context, getString(R.string.message_collection_edited), Toast.LENGTH_SHORT).show()
         })
 
         viewModel.errorLiveData.observe(this, Observer {
             editCollectionTitleLayout.error = getString(R.string.error_collection_title)
         })
 
+
     }
 }
 
-class NewCollectionViewModel(collectionRepository: CollectionRepository) : ViewModel() {
+class EditCollectionViewModel(
+        collectionId: Int,
+        collectionRepository: CollectionRepository) : ViewModel() {
 
-    private val upsertCollectionDelegate = UpsertCollectionPresentationDelegate(collectionRepository)
+    private val upsertCollectionDelegate = UpsertCollectionPresentationDelegate(collectionRepository, collectionId)
 
     val successLiveData = upsertCollectionDelegate.successLiveData
 
     val errorLiveData = upsertCollectionDelegate.errorLiveData
 
+    val editCollectionLiveData = upsertCollectionDelegate.editingCollectionLiveData
+
     fun submit(title: String?, description: String? = null, private: Boolean) {
-        upsertCollectionDelegate.submit(title, description, private)
+        upsertCollectionDelegate.submit(title, description, private, true)
     }
 
 }
-

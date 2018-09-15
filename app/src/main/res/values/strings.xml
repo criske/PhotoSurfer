@@ -40,4 +40,6 @@
     <string name="collection_private">Private</string>
     <string name="collection_title">Title</string>
     <string name="error_collection_title">Collection Title is Missing!</string>
+    <string name="edit_collection">Edit Collection</string>
+    <string name="message_collection_edited">Collection Edited</string>
 </resources>

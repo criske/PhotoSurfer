@@ -30,8 +30,11 @@ class CreateCollectionWorker : TypedWorker() {
                 description: String,
                 private: Boolean,
                 withPhoto: String? = null): WorkData {
-            return WorkData(Tag(WorkType.CREATE_COLLECTION), false, PHOTO to (withPhoto ?: ""),
-                    TITLE to title, DESCRIPTION to description, PRIVATE to private)
+            return WorkData(Tag(WorkType.CREATE_COLLECTION), false,
+                    PHOTO to (withPhoto ?: ""),
+                    TITLE to title,
+                    DESCRIPTION to description,
+                    PRIVATE to private)
         }
 
     }

@@ -79,7 +79,23 @@ class CollectionRepositoryImpl(
     }
 
     override fun editCollection(collection: Collection) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        scheduledWorkService.schedule(EditCollectionWorker.createWorkData(
+                collection.id,
+                collection.title,
+                collection.description ?: "",
+                collection.private
+        ))
+        diskExecutor {
+            transactional {
+                collectionDAO.getCollection(collection.id)?.apply {
+                    title = collection.title
+                    description = collection.description
+                    notPublic = collection.private
+                }?.run {
+                    collectionDAO.updateCollection(this)
+                }
+            }
+        }
     }
 
     override fun deleteCollection(collectionId: Int) {
@@ -239,7 +255,7 @@ class CollectionRepositoryImpl(
                         collectionDB?.coverPhotoId = it.id
                         collectionDB?.coverPhotoUrls = it.urls
                     }
-                }else if(lastPhoto == null){ // there is no photo in this collection
+                } else if (lastPhoto == null) { // there is no photo in this collection
                     collectionDB?.coverPhotoId = null
                     collectionDB?.coverPhotoUrls = null
                 }

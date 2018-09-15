@@ -9,14 +9,13 @@
 
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbarNewCollection"
+        android:id="@+id/toolbarCollection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:navigationIcon="@drawable/ic_arrow_back_white_24dp"
-        app:title="@string/new_collection" />
+        app:navigationIcon="@drawable/ic_arrow_back_white_24dp" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -30,14 +29,14 @@
             android:orientation="vertical">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/editNewCollectionTitleLayout"
+                android:id="@+id/editCollectionTitleLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 app:errorEnabled="true">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editNewCollectionTitle"
+                    android:id="@+id/editCollectionTitle"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:maxLines="1"
@@ -46,7 +45,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <CheckBox
-                android:id="@+id/checkNewCollectionPrivate"
+                android:id="@+id/checkCollectionPrivate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
@@ -59,7 +58,7 @@
                 android:layout_marginBottom="8dp">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editNewCollectionDescription"
+                    android:id="@+id/editCollectionDescription"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="top|start"

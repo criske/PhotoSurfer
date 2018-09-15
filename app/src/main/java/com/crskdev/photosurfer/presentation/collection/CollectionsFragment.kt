@@ -63,7 +63,8 @@ class CollectionsFragment : Fragment() {
                 when (what) {
                     What.PHOTOS -> nav.navigate(CollectionsFragmentDirections
                             .ActionFragmentCollectionsToCollectionListPhotosFragment(collection.id), defaultTransitionNavOptions())
-                    What.EDIT -> TODO()
+                    What.EDIT -> nav.navigate(CollectionsFragmentDirections.actionFragmentCollectionsToEditCollectionFragment(collection.id),
+                            defaultTransitionNavOptions())
                     What.DELETE -> viewModel.deleteCollection(collection)
                 }
             }
@@ -145,6 +146,9 @@ class CollectionVH(view: View, private val glide: RequestManager,
     init {
         itemView.imageCollectionCover.setOnClickListener {
             collection?.let { c -> action(What.PHOTOS, c) }
+        }
+        itemView.btnCollectionEdit.setOnClickListener {
+            collection?.let { c -> action(What.EDIT, c) }
         }
         itemView.btnCollectionDelete.setOnClickListener {
             collection?.let { c -> action(What.DELETE, c) }

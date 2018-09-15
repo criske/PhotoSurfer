@@ -23,4 +23,6 @@
     <string name="collection_private">Privat</string>
     <string name="collection_title">Titlu</string>
     <string name="error_collection_title">Titlul Colectiei Lipseste!</string>
+    <string name="edit_collection">Editeaza Colectia</string>
+    <string name="message_collection_edited">Colectia a fost moddificata!</string>
 </resources>

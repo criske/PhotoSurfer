@@ -60,6 +60,9 @@
         <action
             android:id="@+id/action_fragment_collections_to_newCollectionFragment"
             app:destination="@id/newCollectionFragment" />
+        <action
+            android:id="@+id/action_fragment_collections_to_editCollectionFragment"
+            app:destination="@id/editCollectionFragment" />
     </fragment>
     <fragment
         android:id="@+id/fragment_add_to_collection"
@@ -97,6 +100,15 @@
     <action
         android:id="@+id/action_global_login"
         app:destination="@id/fragment_login" />
+    <fragment
+        android:id="@+id/editCollectionFragment"
+        tools:layout="@layout/fragment_upsert_collection"
+        android:name="com.crskdev.photosurfer.presentation.collection.EditCollectionFragment"
+        android:label="EditCollectionFragment" >
+        <argument
+            android:name="id"
+            app:argType="integer" />
+    </fragment>
 
 
 </navigation>
