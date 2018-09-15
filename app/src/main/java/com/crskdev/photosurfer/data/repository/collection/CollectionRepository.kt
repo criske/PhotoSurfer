@@ -93,6 +93,7 @@ class CollectionRepositoryImpl(
                     val photos = it.value
                     val table = it.key
                     photos.forEach { p ->
+                        //remove collection for this photo
                         p.collections = p.collections.filter { c -> c.id != collectionId }
                         photoDAOFacade.update(table, p)
                     }

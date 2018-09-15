@@ -35,7 +35,8 @@ class ScheduledWorkServiceImpl : ScheduledWorkService {
             when (any) {
                 is String -> dataBuilder.putString(it.first, any)
                 is Boolean -> dataBuilder.putBoolean(it.first, any)
-                else -> throw Error("Format not supported yed")
+                is Int -> dataBuilder.putInt(it.first, any)
+                else -> throw Error("Format not supported yet")
             }
         }
         val workerTag = workData.tag.toString()

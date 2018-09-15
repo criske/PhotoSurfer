@@ -64,7 +64,7 @@ class CollectionsFragment : Fragment() {
                     What.PHOTOS -> nav.navigate(CollectionsFragmentDirections
                             .ActionFragmentCollectionsToCollectionListPhotosFragment(collection.id), defaultTransitionNavOptions())
                     What.EDIT -> TODO()
-                    What.DELETE -> TODO()
+                    What.DELETE -> viewModel.deleteCollection(collection)
                 }
             }
             addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -107,6 +107,10 @@ class CollectionsViewModel(private val collectionsRepository: CollectionReposito
                 collectionsRepository.fetchAndSaveCollection(it)
             })
             .build()
+
+    fun deleteCollection(collection: Collection) {
+        collectionsRepository.deleteCollection(collection.id)
+    }
 }
 
 class CollectionsAdapter(
@@ -141,6 +145,9 @@ class CollectionVH(view: View, private val glide: RequestManager,
     init {
         itemView.imageCollectionCover.setOnClickListener {
             collection?.let { c -> action(What.PHOTOS, c) }
+        }
+        itemView.btnCollectionDelete.setOnClickListener {
+            collection?.let { c -> action(What.DELETE, c) }
         }
     }
 

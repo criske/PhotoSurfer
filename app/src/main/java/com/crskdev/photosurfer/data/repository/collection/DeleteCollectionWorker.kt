@@ -28,9 +28,9 @@ class DeleteCollectionWorker : TypedWorker() {
         try {
             val collectionsAPI = applicationContext.dependencyGraph().collectionsAPI
             collectionsAPI.deleteCollection(id).execute()
+            sendPlatformNotification("Collection deleted")
         } catch (ex: Exception) {
             ex.printStackTrace()
-
             return Result.FAILURE
         }
         return Result.SUCCESS
