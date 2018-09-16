@@ -13,7 +13,7 @@ class ChoosablePhotoDataSourceFactory(
         initialFilter: DataSourceFilter) : DataSource.Factory<Int, Photo>() {
 
     enum class Type {
-        LIKED_PHOTOS, SEARCH_PHOTOS, TRENDING_PHOTOS, USER_PHOTOS
+        LIKED_PHOTOS, SEARCH_PHOTOS, TRENDING_PHOTOS, USER_PHOTOS, SAVED_PHOTOS
     }
 
     var currentFilter: DataSourceFilter = initialFilter
@@ -25,6 +25,7 @@ class ChoosablePhotoDataSourceFactory(
             Type.USER_PHOTOS -> photoRepository.getPhotos(RepositoryAction(RepositoryAction.Type.USER_PHOTOS)).create()
             Type.LIKED_PHOTOS -> photoRepository.getPhotos(RepositoryAction(RepositoryAction.Type.LIKE)).create()
             Type.SEARCH_PHOTOS -> photoRepository.getPhotos(RepositoryAction(RepositoryAction.Type.SEARCH, currentFilter.extras)).create()
+            Type.SAVED_PHOTOS -> photoRepository.getSavedPhotos().create()
         }
     }
 
@@ -38,5 +39,6 @@ class ChoosablePhotoDataSourceFactory(
 class DataSourceFilter(val type: ChoosablePhotoDataSourceFactory.Type, vararg val extras: Any) {
     companion object {
         val RANDOM = DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.TRENDING_PHOTOS)
+        val SAVED = DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.SAVED_PHOTOS)
     }
 }

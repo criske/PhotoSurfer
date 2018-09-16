@@ -31,6 +31,7 @@ internal fun photosPageListConfigLiveData(
                     *choosablePhotoDataSourceFactory.currentFilter.extras)
             ChoosablePhotoDataSourceFactory.Type.USER_PHOTOS -> RepositoryAction(RepositoryAction.Type.USER_PHOTOS,
                     *choosablePhotoDataSourceFactory.currentFilter.extras)
+            ChoosablePhotoDataSourceFactory.Type.SAVED_PHOTOS -> RepositoryAction.NONE
         }
     }
 }
@@ -47,11 +48,14 @@ private fun createLiveData(dataSourceFactory: DataSource.Factory<Int, Photo>,
                     LivePagedListBuilder<Int, Photo>(dataSourceFactory, it)
                             .setFetchExecutor(diskExecutor)
                             .setBoundaryCallback(GenericBoundaryCallback<Photo> { page ->
-                                photoRepository.insertPhotos(repositoryActionProvider(), page, object : Repository.Callback<Unit> {
-                                    override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                                        errorLiveData.postValue(error)
-                                    }
-                                })
+                                val repositoryAction = repositoryActionProvider()
+                                if (repositoryAction.type != RepositoryAction.Type.NONE) {
+                                    photoRepository.insertPhotos(repositoryAction, page, object : Repository.Callback<Unit> {
+                                        override fun onError(error: Throwable, isAuthenticationError: Boolean) {
+                                            errorLiveData.postValue(error)
+                                        }
+                                    })
+                                }
                             })
                             .build()
                 }

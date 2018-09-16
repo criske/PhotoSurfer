@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.dependencies
 
 import android.content.Context
+import android.os.Environment
 import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.local.*
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
@@ -9,9 +10,8 @@ import com.crskdev.photosurfer.data.remote.NetworkClient
 import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAOImpl
-import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
+import com.crskdev.photosurfer.data.local.photo.external.*
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
 import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
@@ -46,7 +46,6 @@ object DependencyGraph {
     internal var isInit: Boolean = false
 
     //EXECUTORS
-    //util
     val threadCallChecker: ThreadCallChecker = AndroidThreadCallChecker()
     val uiThreadExecutor: KExecutor = UIThreadExecutor(threadCallChecker)
     val diskThreadExecutor: KExecutor = DiskThreadExecutor()
@@ -66,18 +65,19 @@ object DependencyGraph {
         private set
     lateinit var daoManager: DaoManager
         private set
-
-
+    lateinit var externalDb: ExternalPhotoGalleryDB
+        private set
     lateinit var externalPhotoGalleryDAO: ExternalPhotoGalleryDAO
         private set
+    lateinit var externalPhotosDirectory: ExternalDirectory
 
     //serialization
     //todo unify this moshi with the one from retrofit converter
     val moshi: Moshi = Moshi.Builder().build()
 
     //NETWORK
-    lateinit var apiCallDispatcher: APICallDispatcher
-        private set
+    val apiCallDispatcher: APICallDispatcher = APICallDispatcher(threadCallChecker)
+
     lateinit var networkCheckService: NetworkCheckService
         private set
     lateinit var authTokenStorage: AuthTokenStorage
@@ -122,7 +122,6 @@ object DependencyGraph {
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
         //NETWORK
-        apiCallDispatcher = APICallDispatcher(threadCallChecker)
         scheduledWorkService = ScheduledWorkServiceImpl()
         networkCheckService = NetworkCheckServiceImpl(context)
         authTokenStorage = AuthTokenStorageImpl(preferences).apply {
@@ -151,15 +150,23 @@ object DependencyGraph {
                         Contract.TABLE_COLLECTION_PHOTOS to db.collectionPhotoDAO()
                 ))
 
+
+        //external
+        externalPhotosDirectory = ExternalDirectory(Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES))
+        externalDb = ExternalPhotoGalleryDBImpl(context, externalPhotosDirectory)
+        externalPhotoGalleryDAO = externalDb.dao()
+
+
         //photo
         photoAPI = retrofit.create(PhotoAPI::class.java)
-        externalPhotoGalleryDAO = ExternalPhotoGalleryDAOImpl(context)
         photoDownloader = PhotoDownloaderImpl(apiCallDispatcher, photoAPI)
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         val daoPhotoFacade = PhotoDAOFacade(daoManager)
         photoRepository = PhotoRepositoryImpl(
                 executorManager,
                 daoPhotoFacade,
+                externalPhotoGalleryDAO,
                 authTokenStorage,
                 staleDataTrackSupervisor,
                 apiCallDispatcher,

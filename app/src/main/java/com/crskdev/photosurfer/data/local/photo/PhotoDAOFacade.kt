@@ -218,9 +218,10 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                 val table = it.key
                 updated += update(table, photo)
             }
-            if (!daoCollectionPhoto.isEmpty()) {
+            //add photo if current photo collection table has the collection.id
+            val lastCollectionPhoto = daoCollectionPhoto.getLastPhoto()
+            if (lastCollectionPhoto != null && lastCollectionPhoto.currentCollectionId == collection.id) {
                 val pickedPhoto = photosByTable.entries.first().value
-                val lastLiked = daoCollectionPhoto.getLastPhoto()
                 pickedPhoto.let {
                     val collectionPhoto = CollectionPhotoEntity().apply {
                         this.id = it.id
@@ -233,11 +234,11 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.likedByMe = it.likedByMe
                         this.authorUsername = it.authorUsername
                         this.authorId = it.authorId
-                        this.indexInResponse = lastLiked?.indexInResponse ?: 0 + 1
-                        this.curr = lastLiked?.curr
-                        this.next = lastLiked?.next
-                        this.prev = lastLiked?.prev
-                        this.total = lastLiked?.total ?: 1
+                        this.indexInResponse = lastCollectionPhoto.indexInResponse
+                        this.curr = lastCollectionPhoto.curr
+                        this.next = lastCollectionPhoto.next
+                        this.prev = lastCollectionPhoto.prev
+                        this.total = lastCollectionPhoto.total ?: 1
                         this.collections = it.collections
                         this.currentCollectionId = collection.id
                     }

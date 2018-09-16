@@ -15,21 +15,25 @@ import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 
 class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                         private val glide: RequestManager,
-                        private val action: (ActionWhat, Photo) -> Unit) : PagedListAdapter<Photo, ListPhotosVH>(
+                        private val action: (ActionWhat, Photo, Boolean) -> Unit) : PagedListAdapter<Photo, ListPhotosVH>(
         object : DiffUtil.ItemCallback<Photo>() {
             override fun areItemsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem.id == newItem.id
             override fun areContentsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem == newItem
         }) {
 
+
+    var enabledActions: Boolean = true
+
     companion object {
         inline fun actionHelper(navController: NavController, authNavigatorMiddleware: AuthNavigatorMiddleware,
                                 crossinline likeAction: (Photo) -> Unit):
-                (ActionWhat, Photo) -> Unit {
-            return { what, photo ->
+                (ActionWhat, Photo, Boolean) -> Unit {
+            return { what, photo, enabledActions ->
                 when (what) {
                     ActionWhat.PHOTO_DETAIL -> {
                         navController.navigate(R.id.fragment_photo_details, bundleOf(
-                                "photo" to photo.parcelize()
+                                "photo" to photo.parcelize(),
+                                "enabledActions" to enabledActions
                         ), defaultTransitionNavOptions())
 //                        navController.navigate(
 //                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentPhotoDetails(photo.parcelize()))
@@ -45,7 +49,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                         likeAction(photo)
                     }
                     ActionWhat.COLLECTION -> {
-                        navController.navigate(R.id.fragment_add_to_collection, bundleOf(
+                        authNavigatorMiddleware.navigate(navController, R.id.fragment_add_to_collection, bundleOf(
                                 "photo" to photo.parcelize()
                         ), defaultTransitionNavOptions())
 //                        authNavigatorMiddleware.navigate(
@@ -63,7 +67,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
 
     override fun onBindViewHolder(viewHolder: ListPhotosVH, position: Int) {
         getItem(position)
-                ?.let { viewHolder.bind(it) }
+                ?.let { viewHolder.bind(it, enabledActions) }
                 ?: viewHolder.clear()
     }
 

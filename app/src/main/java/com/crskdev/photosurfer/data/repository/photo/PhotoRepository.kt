@@ -4,6 +4,7 @@ import androidx.annotation.MainThread
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
+import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
@@ -30,6 +31,8 @@ interface PhotoRepository : Repository {
 
     fun getPhotos(repositoryAction: RepositoryAction): DataSource.Factory<Int, Photo>
 
+    fun getSavedPhotos(): DataSource.Factory<Int, Photo>
+
     fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>? = null)
 
     fun refresh(username: String? = null)
@@ -51,16 +54,18 @@ interface PhotoRepository : Repository {
 class RepositoryAction(val type: Type, vararg val extras: Any) {
     companion object {
         val TRENDING = RepositoryAction(Type.TRENDING)
+        val NONE = RepositoryAction(Type.NONE)
     }
 
     enum class Type {
-        LIKE, TRENDING, USER_PHOTOS, SEARCH
+        LIKE, TRENDING, USER_PHOTOS, SEARCH, NONE
     }
 }
 
 class PhotoRepositoryImpl(
         executorsManager: ExecutorsManager,
         private val daoPhotoFacade: PhotoDAOFacade,
+        private val daoExternalPhotoGalleryDAO: ExternalPhotoGalleryDAO,
         private val authTokenStorage: AuthTokenStorage,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val apiCallDispatcher: APICallDispatcher,
@@ -79,6 +84,7 @@ class PhotoRepositoryImpl(
             RepositoryAction.Type.TRENDING -> Contract.TABLE_PHOTOS
             RepositoryAction.Type.USER_PHOTOS -> Contract.TABLE_USER_PHOTOS
             RepositoryAction.Type.SEARCH -> Contract.TABLE_SEARCH_PHOTOS
+            else -> throw Exception("Unsupported Action")
         }
         return daoPhotoFacade.getPhotos(table).mapByPage { page ->
             staleDataTrackSupervisor.runStaleDataCheckForTable(table)
@@ -86,12 +92,18 @@ class PhotoRepositoryImpl(
         }
     }
 
+    override fun getSavedPhotos(): DataSource.Factory<Int, Photo> =
+            daoExternalPhotoGalleryDAO.getPhotos().mapByPage { page ->
+                page.map { it.toPhoto() }
+            }
+
+
     //this must be called on the io thread
     override fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>?) {
         uiExecutor {
             apiCallDispatcher.cancel()
         }
-        ioExecutor.execute{
+        ioExecutor.execute {
             try {
                 val response = if (repositoryAction.type == RepositoryAction.Type.SEARCH) {
                     apiCallDispatcher { api.getSearchedPhotos(repositoryAction.extras[0].toString(), page) }
@@ -101,7 +113,7 @@ class PhotoRepositoryImpl(
                             RepositoryAction.Type.LIKE -> api.getLikedPhotos(repositoryAction.extras[0].toString(), page)
                             RepositoryAction.Type.TRENDING -> api.getRandomPhotos(page)
                             RepositoryAction.Type.USER_PHOTOS -> api.getUserPhotos(repositoryAction.extras[0].toString(), page)
-                            RepositoryAction.Type.SEARCH -> throw Error()
+                            else -> throw Exception("Unsupported Action")
                         }
                     }
                 }
@@ -121,6 +133,7 @@ class PhotoRepositoryImpl(
                                     RepositoryAction.Type.TRENDING -> it.toDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_PHOTOS))
                                     RepositoryAction.Type.USER_PHOTOS -> it.toUserPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_USER_PHOTOS))
                                     RepositoryAction.Type.SEARCH -> it.toSearchPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_SEARCH_PHOTOS))
+                                    else -> throw Exception("Unsupported Action")
                                 }
                             }?.apply {
                                 when (repositoryAction.type) {
@@ -128,6 +141,7 @@ class PhotoRepositoryImpl(
                                     RepositoryAction.Type.TRENDING -> daoPhotoFacade.insertPhotos(Contract.TABLE_PHOTOS, this)
                                     RepositoryAction.Type.USER_PHOTOS -> daoPhotoFacade.insertPhotos(Contract.TABLE_USER_PHOTOS, this)
                                     RepositoryAction.Type.SEARCH -> daoPhotoFacade.insertPhotos(Contract.TABLE_SEARCH_PHOTOS, this)
+                                    else -> throw Exception("Unsupported Action")
                                 }
                             }
                             uiExecutor {
@@ -242,6 +256,7 @@ class PhotoRepositoryImpl(
                 RepositoryAction.Type.TRENDING -> Contract.TABLE_PHOTOS
                 RepositoryAction.Type.USER_PHOTOS -> Contract.TABLE_USER_PHOTOS
                 RepositoryAction.Type.SEARCH -> Contract.TABLE_SEARCH_PHOTOS
+                else -> throw Exception("Unsupported Action")
             }
             daoPhotoFacade.clear(table)
         }

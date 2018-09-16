@@ -1,28 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/menu_item_account"
-        android:orderInCategory="3"
-        android:icon="@drawable/ic_person_white_24dp"
-        android:title="@string/account"
-        app:showAsAction="always"/>
-
-    <item android:id="@+id/menu_item_search_users"
-        android:orderInCategory="3"
-        android:title="@string/search_users"
-        app:showAsAction="never"/>
 
     <item
-        android:orderInCategory="1"
+        android:id="@+id/menu_item_play_waves"
+        android:icon="@drawable/ic_music_note_white_24dp"
+        android:title="@string/playwaves"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_saved"
+        android:icon="@drawable/ic_photo_album_white_24dp"
+        android:title="@string/saved_photos"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_item_account"
+        android:icon="@drawable/ic_person_white_24dp"
+        android:orderInCategory="4"
+        android:title="@string/account"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_item_search_users"
+        android:orderInCategory="3"
+        android:title="@string/search_users"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_action_trending"
         android:icon="@drawable/ic_trending_up_white_24dp"
+        android:orderInCategory="1"
         android:title="@string/trending"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/menu_action_collections"
-        android:title="@string/collections"
         android:icon="@drawable/ic_collections_white_24dp"
         android:orderInCategory="5"
+        android:title="@string/collections"
         app:showAsAction="ifRoom" />
 </menu>

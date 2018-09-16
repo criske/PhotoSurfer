@@ -20,7 +20,7 @@
     </fragment>
     <fragment
         android:id="@+id/fragment_user_profile_photos"
-        android:name="com.crskdev.photosurfer.presentation.photo.UserListPhotosFragment"
+        android:name="com.crskdev.photosurfer.presentation.user.UserListPhotosFragment"
         android:label="@string/photos"
         app:clearTask="true"
         tools:layout="@layout/fragment_user_profile_list_photos">

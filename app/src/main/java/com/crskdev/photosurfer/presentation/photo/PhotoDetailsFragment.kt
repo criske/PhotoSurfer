@@ -55,7 +55,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = viewModelFromProvider(this){
+        viewModel = viewModelFromProvider(this) {
             PhotoDetailViewModel(context!!.dependencyGraph().photoRepository)
         }
         photo = PhotoDetailsFragmentArgs.fromBundle(arguments)
@@ -86,6 +86,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         subscribeToViewModel(view)
         displayPhoto()
+
         setLikeButton(photo.likedByMe)
 
         fabDownload.setOnClickListener { v ->
@@ -191,10 +192,11 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             }
         })
         viewModel.photoDisplayedLiveData.observe(this, Observer {
-            val isVisible = it != photo.id
-            progressBarLoading.isVisible = isVisible
-            (fabDownload as View).isVisible = !isVisible
-            btnPhotoLike.isVisible = !isVisible
+            val enabledActions = PhotoDetailsFragmentArgs.fromBundle(arguments).enabledActions
+            val showProgress = it != photo.id
+            progressBarLoading.isVisible = showProgress && enabledActions
+            (fabDownload as View).isVisible = !showProgress && enabledActions
+            btnPhotoLike.isVisible = !showProgress && enabledActions
         })
         viewModel.likeLiveData.observe(this, Observer { liked ->
             setLikeButton(liked)

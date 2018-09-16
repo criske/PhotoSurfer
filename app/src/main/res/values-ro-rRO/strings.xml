@@ -13,7 +13,7 @@
     <string name="trending">In Urcare</string>
     <string name="search">Cauta…</string>
     <string name="search_title">Cauta</string>
-    <string name="search_users">Cauta utilizatori…</string>
+    <string name="search_users">Cauta Utilizatori</string>
     <string name="collections">Colectii</string>
     <string name="no_description">Nu are descriere</string>
     <string name="add">Adauga</string>
@@ -25,4 +25,6 @@
     <string name="error_collection_title">Titlul Colectiei Lipseste!</string>
     <string name="edit_collection">Editeaza Colectia</string>
     <string name="message_collection_edited">Colectia a fost moddificata!</string>
+    <string name="playwaves">Playwaves</string>
+    <string name="saved_photos">Fotografii Salvate</string>
 </resources>

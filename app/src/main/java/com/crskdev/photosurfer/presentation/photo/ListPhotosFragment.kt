@@ -114,6 +114,9 @@ class ListPhotosFragment : Fragment() {
                     R.id.menu_action_trending -> {
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
+                    R.id.menu_saved -> {
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
+                    }
                     R.id.menu_item_search_users -> {
                         navController.navigate(R.id.fragment_search_users, null,
                                 defaultTransitionNavOptions())
@@ -129,7 +132,7 @@ class ListPhotosFragment : Fragment() {
         val glide = Glide.with(this)
         recyclerUserListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
             val actionHelper = ListPhotosAdapter.actionHelper(
                     view.findNavController(),
                     authNavigatorMiddleware) { viewModel.like(it) }
@@ -163,6 +166,8 @@ class ListPhotosFragment : Fragment() {
         })
 
         viewModel.filterLiveData.observe(this, Observer {
+            //if filter is set to saved we disable actions or navs for "like" or "collections"
+            (recyclerUserListPhotos.adapter as ListPhotosAdapter).enabledActions = it.type != FilterVM.Type.SAVED
             val title = if (it.type == FilterVM.Type.SEARCH) {
                 val term = if (it.data?.isNotEmpty() == true) " ${it.data}" else ""
                 getString(it.title) + term
@@ -197,7 +202,7 @@ class ListPhotosFragment : Fragment() {
 
 data class FilterVM(val type: FilterVM.Type, @StringRes val title: Int, val data: String? = null) {
     enum class Type {
-        TRENDING, LIKES, SEARCH
+        TRENDING, LIKES, SEARCH, SAVED
     }
 }
 
@@ -293,6 +298,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
                 FilterVM.Type.TRENDING -> DataSourceFilter.RANDOM
                 FilterVM.Type.LIKES -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS, vmFilter.data!!)
                 FilterVM.Type.SEARCH -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS, vmFilter.data!!)
+                FilterVM.Type.SAVED -> DataSourceFilter.SAVED
             }
 
 }

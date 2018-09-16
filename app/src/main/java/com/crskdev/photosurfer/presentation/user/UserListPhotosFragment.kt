@@ -1,4 +1,4 @@
-package com.crskdev.photosurfer.presentation.photo
+package com.crskdev.photosurfer.presentation.user
 
 
 import android.graphics.Rect
@@ -63,18 +63,13 @@ class UserListPhotosFragment : Fragment() {
         val glide = Glide.with(this)
 
         recyclerUserListPhotos.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide) { what, photo ->
-                val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
-                @Suppress("NON_EXHAUSTIVE_WHEN")
-                when (what) {
-                    ListPhotosAdapter.ActionWhat.PHOTO_DETAIL -> {
-                        navController.navigate(
-                                R.id.fragment_photo_details, bundleOf("photo" to photo.parcelize()),
-                                defaultTransitionNavOptions())
-                    }
-                }
-            }
+            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+            val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
+            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide, ListPhotosAdapter.actionHelper(
+                    navController, context.dependencyGraph().authNavigatorMiddleware
+            ){
+                //todo add like action
+            })
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
                     outRect.set(0, 4, 0, 4)

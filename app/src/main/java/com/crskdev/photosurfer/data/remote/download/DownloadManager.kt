@@ -1,12 +1,13 @@
 package com.crskdev.photosurfer.data.remote.download
 
+import androidx.paging.DataSource
+import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.util.safeSet
-import com.crskdev.photosurfer.data.local.photo.ExternalPhotoGalleryDAO
+import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import okio.Source
-import retrofit2.Call
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -63,6 +64,9 @@ class DownloadManager(
             override var progressListener: ProgressListener? = null
         }
         private val externalPhotoGalleryDAO = object : ExternalPhotoGalleryDAO {
+            override fun getPhotos(): DataSource.Factory<Int, PhotoEntity> {
+                TODO("not implemented")
+            }
             override fun isDownloaded(id: String): Boolean = false
             override fun save(photo: Photo, source: Source) = Unit
         }
