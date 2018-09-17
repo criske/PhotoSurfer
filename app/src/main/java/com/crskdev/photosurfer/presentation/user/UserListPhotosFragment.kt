@@ -29,6 +29,7 @@ import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.services.executors.KExecutor
+import com.crskdev.photosurfer.util.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import kotlinx.android.synthetic.main.fragment_list_photos.*
@@ -67,14 +68,10 @@ class UserListPhotosFragment : Fragment() {
             val navController = Navigation.findNavController(activity!!, R.id.nav_host_fragment)
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide, ListPhotosAdapter.actionHelper(
                     navController, context.dependencyGraph().authNavigatorMiddleware
-            ){
+            ) {
                 //todo add like action
             })
-            addItemDecoration(object : RecyclerView.ItemDecoration() {
-                override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
-                    outRect.set(0, 4, 0, 4)
-                }
-            })
+            addItemDecoration(HorizontalSpaceDivider.default(context))
         }
         viewModel.photosData.observe(this, Observer { it ->
             it?.let {

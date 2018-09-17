@@ -47,10 +47,18 @@ class ExternalPhotoGalleryDAOImpl(
         //we call this function here cause we assume the user has given permission to write files
         directory.createIfNotExists()
         source.use {
+            //write first on a temp file
+            val tempFile = File.createTempFile("phs", null, context.cacheDir)
+            Okio.buffer(Okio.sink(tempFile)).apply {
+                writeAll(it)
+            }
+            //then copy from temp to real file
             val file = File(photoSurferDir, "${photo.id}.jpg")
-            val sink = Okio.buffer(Okio.sink(file))
-            sink.writeAll(it)
-            //
+            Okio.buffer(Okio.sink(file)).apply {
+                writeAll(Okio.source(tempFile))
+            }
+            tempFile.delete()
+            //update system media database
             val galleryScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
                     .setData(Uri.fromFile(file))
             context.sendBroadcast(galleryScanIntent)

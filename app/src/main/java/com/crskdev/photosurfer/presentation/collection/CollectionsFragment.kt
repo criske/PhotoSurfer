@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -17,7 +16,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.GenericBoundaryCallback
@@ -25,6 +23,7 @@ import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
+import com.crskdev.photosurfer.util.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
@@ -68,12 +67,7 @@ class CollectionsFragment : Fragment() {
                     What.DELETE -> viewModel.deleteCollection(collection)
                 }
             }
-            addItemDecoration(object : RecyclerView.ItemDecoration() {
-                override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
-                    val margin = 8.dpToPx(resources).toInt()
-                    outRect.set(margin, margin, margin, margin)
-                }
-            })
+            addItemDecoration(HorizontalSpaceDivider.default(context))
         }
         toolbarCollections.apply {
             inflateMenu(R.menu.menu_collections)

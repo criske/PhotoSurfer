@@ -1,6 +1,5 @@
 package com.crskdev.photosurfer.presentation.photo
 
-import android.graphics.Rect
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
@@ -36,9 +35,9 @@ import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.KExecutor
+import com.crskdev.photosurfer.util.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
-import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
@@ -137,12 +136,7 @@ class ListPhotosFragment : Fragment() {
                     view.findNavController(),
                     authNavigatorMiddleware) { viewModel.like(it) }
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
-            addItemDecoration(object : RecyclerView.ItemDecoration() {
-                val margin = 2.dpToPx(resources).toInt()
-                override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
-                    outRect.set(margin, margin, margin, margin)
-                }
-            })
+            addItemDecoration(HorizontalSpaceDivider.withDpOf(2, context))
         }
 
         searchPhotosView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
