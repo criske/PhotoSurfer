@@ -2,12 +2,14 @@ package com.crskdev.photosurfer.data.local.photo.external
 
 import android.content.ContentResolver
 import android.database.Cursor
+import android.media.ExifInterface
 import android.provider.MediaStore
 import androidx.core.content.ContentResolverCompat
 import androidx.paging.PositionalDataSource
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.transformMapUrls
+import java.lang.Exception
 import java.util.*
 
 /**
@@ -116,6 +118,7 @@ class ExternalPhotoGalleryDataSource(
     lateinit var authorId: String
     lateinit var authorUsername: String
          */
+        val path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
         return PhotoEntity().apply {
             id = ""
             createdAt = ""
@@ -123,7 +126,7 @@ class ExternalPhotoGalleryDataSource(
             colorString = "#ffffff"
             urls = transformMapUrls(ImageType.values().fold(EnumMap<ImageType, String>(ImageType::class.java)) { acc, curr ->
                 acc.apply {
-                    acc[curr] = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
+                    acc[curr] = path
                 }
             })
             collections = emptyList()
