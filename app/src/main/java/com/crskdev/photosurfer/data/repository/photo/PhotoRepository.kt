@@ -22,6 +22,7 @@ import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.util.runOn
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 
 /**
@@ -171,7 +172,7 @@ class PhotoRepositoryImpl(
         ioExecutor {
             try {
                 val now = System.currentTimeMillis()
-                var start = true
+                val start = AtomicBoolean(true)
                 downloadManager.download(photo) { _, bytesRead, contentLength, done ->
                     val passed = System.currentTimeMillis() - now
                     if (passed < 500 && done) {
@@ -180,9 +181,10 @@ class PhotoRepositoryImpl(
                         }
                     } else {
                         if (contentLength == -1L) { //indeterminated
-                            if (start) {
+                            if (start.get()) {
                                 callback?.runOn(uiExecutor) {
                                     onSuccess(DownloadProgress.INDETERMINATED_START)
+                                    start.compareAndSet(true, false)
                                 }
                             } else if (done) {
                                 callback?.runOn(uiExecutor) {
@@ -193,11 +195,11 @@ class PhotoRepositoryImpl(
                             val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
                             if (percent % 10 == 0 || percent == 100 || done) {// backpressure relief
                                 callback?.runOn(uiExecutor) {
-                                    onSuccess(DownloadProgress(percent, start, percent == 100 || done))
+                                    onSuccess(DownloadProgress(percent, start.get(), percent == 100 || done))
+                                    start.compareAndSet(true, false)
                                 }
                             }
                         }
-                        start = false
                     }
                 }
                 callback?.runOn(uiExecutor) {
@@ -221,12 +223,6 @@ class PhotoRepositoryImpl(
     }
 
     override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
-        if (!authTokenStorage.hasToken()) {
-            callback.runOn(uiExecutor) {
-                onError(Error("You need to login"), true)
-            }
-            return
-        }
         diskExecutor {
             daoPhotoFacade.like(photo.id, photo.likedByMe)
             callback.runOn(uiExecutor) { onSuccess(photo.likedByMe) }

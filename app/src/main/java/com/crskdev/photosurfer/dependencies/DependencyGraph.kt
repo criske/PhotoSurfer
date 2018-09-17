@@ -161,6 +161,7 @@ object DependencyGraph {
         //photo
         photoAPI = retrofit.create(PhotoAPI::class.java)
         photoDownloader = PhotoDownloaderImpl(apiCallDispatcher, photoAPI)
+//        downloadManager = DownloadManager.MOCK
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
         val daoPhotoFacade = PhotoDAOFacade(daoManager)
         photoRepository = PhotoRepositoryImpl(

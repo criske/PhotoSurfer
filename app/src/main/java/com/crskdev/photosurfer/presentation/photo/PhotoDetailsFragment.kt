@@ -124,7 +124,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                                                  dataSource: DataSource?,
                                                  isFirstResource: Boolean): Boolean {
                         setPalette(this@PhotoDetailsFragment.photo.id, resource)
-                        viewModel.photoDisplayedLiveData.value = photo.id
+                        viewModel.photoDisplayedLiveData.value = true
                         return false
                     }
 
@@ -132,11 +132,11 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                                               target: Target<Bitmap>?,
                                               isFirstResource: Boolean): Boolean {
                         view?.let {
-                            viewModel.photoDisplayedLiveData.value = photo.id
+                            viewModel.photoDisplayedLiveData.value = true
                             Snackbar.make(it, e?.message
                                     ?: "Unknown Error", Snackbar.LENGTH_INDEFINITE)
                                     .setAction("Retry") { _ ->
-                                        viewModel.photoDisplayedLiveData.value = ""
+                                        viewModel.photoDisplayedLiveData.value = false
                                         displayPhoto()
                                     }
                                     .show()
@@ -163,6 +163,12 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 textDownloadProgress.setTextColor(darkVibrantColor)
             }
         })
+        viewModel.isDownloadedLiveData.observe(this, Observer {
+            Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
+        })
+        viewModel.errorLiveData.observe(this, Observer {
+            Toast.makeText(this.context, it.message, Toast.LENGTH_SHORT).show()
+        })
         viewModel.downloadLiveData
                 .filter { it != DownloadProgress.NONE }
                 .observe(this, Observer {
@@ -175,28 +181,26 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                         textDownloadProgress.text = "${it.percent}%"
                     }
                 })
-        viewModel.isDownloadedLiveData.observe(this, Observer {
-            Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
-        })
-        viewModel.errorLiveData.observe(this, Observer {
-            Toast.makeText(this.context, it.message, Toast.LENGTH_SHORT).show()
-        })
         viewModel.downloadStateLiveData.observe(this, Observer {
             if (it == PhotoDetailViewModel.DOWNLOADING) {
                 progSlideDownAnimation = cardProgressDownload.animate().translationY(50f.dpToPx(resources)).apply { start() }
-                (fabDownload as View).visibility = View.GONE
             } else if (cardProgressDownload.y > 0) {
                 progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
                         .apply { start() }
-                (fabDownload as View).visibility = View.VISIBLE
             }
+            with(it!= PhotoDetailViewModel.DOWNLOADING){
+                (fabDownload as View).isVisible = this
+                btnPhotoLike.isVisible = this
+            }
+
         })
-        viewModel.photoDisplayedLiveData.observe(this, Observer {
+        viewModel.photoDisplayedLiveData.observe(this, Observer { displayed ->
             val enabledActions = PhotoDetailsFragmentArgs.fromBundle(arguments).enabledActions
-            val showProgress = it != photo.id
-            progressBarLoading.isVisible = showProgress && enabledActions
-            (fabDownload as View).isVisible = !showProgress && enabledActions
-            btnPhotoLike.isVisible = !showProgress && enabledActions
+            with(displayed && enabledActions) {
+                progressBarLoading.isVisible = !this
+                (fabDownload as View).isVisible = this
+                btnPhotoLike.isVisible = this
+            }
         })
         viewModel.likeLiveData.observe(this, Observer { liked ->
             setLikeButton(liked)
@@ -248,13 +252,11 @@ class PhotoDetailViewModel(
         value = emptyMap()
     }
 
-    val downloadLiveData = MutableLiveData<DownloadProgress>().apply {
-        value = DownloadProgress.NONE
-    }
+    val downloadLiveData = MutableLiveData<DownloadProgress>()
 
     //photo id
-    val photoDisplayedLiveData = MutableLiveData<String>().apply {
-        value = ""
+    val photoDisplayedLiveData = MutableLiveData<Boolean>().apply {
+        value = false
     }
 
     val downloadStateLiveData = MediatorLiveData<Int>().apply {
@@ -286,12 +288,7 @@ class PhotoDetailViewModel(
         } else {
             photoRepository.download(photo, object : Repository.Callback<DownloadProgress> {
                 override fun onSuccess(data: DownloadProgress, extras: Any?) {
-                    val downloadProgress = data
-                    if (downloadProgress.doneOrCanceled) {
-                        downloadLiveData.value = downloadProgress
-                    } else {
-                        downloadLiveData.value = downloadProgress
-                    }
+                    downloadLiveData.value = data
                 }
 
                 override fun onError(error: Throwable, isAuthenticationError: Boolean) {

@@ -190,6 +190,8 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.likedByMe = it.likedByMe
                         this.authorUsername = it.authorUsername
                         this.authorId = it.authorId
+                        this.collections = it.collections
+                        this.categories = it.categories
                         this.indexInResponse = lastLiked?.indexInResponse ?: 0 + 1
                         this.curr = lastLiked?.curr
                         this.next = lastLiked?.next

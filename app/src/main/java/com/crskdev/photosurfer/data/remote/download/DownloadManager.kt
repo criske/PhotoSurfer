@@ -22,7 +22,7 @@ class DownloadManager(
     private class MockPhotoDownloader(private val reg: ProgressListenerRegistrar) : PhotoDownloader {
 
         private val isCanceled = AtomicBoolean(false)
-        private var isIndeterminate = true
+        private var isIndeterminate = false
 
         override fun data(photo: Photo): Source? {
             //prepare
@@ -63,7 +63,7 @@ class DownloadManager(
         private val registrar = object : ProgressListenerRegistrar {
             override var progressListener: ProgressListener? = null
         }
-        private val externalPhotoGalleryDAO = object : ExternalPhotoGalleryDAO {
+        private val mockedExternalPhotoGalleryDAO = object : ExternalPhotoGalleryDAO {
             override fun getPhotos(): DataSource.Factory<Int, PhotoEntity> {
                 TODO("not implemented")
             }
@@ -73,7 +73,7 @@ class DownloadManager(
         val MOCK = DownloadManager(
                 registrar,
                 MockPhotoDownloader(registrar),
-                externalPhotoGalleryDAO
+                mockedExternalPhotoGalleryDAO
         )
     }
 

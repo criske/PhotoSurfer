@@ -223,11 +223,9 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
 
     init {
         searchTermTrackerLiveData.observeForever {
-            //we have a new user in accessed so we clear the old uset photos table
+            //clear the search table when user changes the query term
             if (it.first != it.second && it.second != null) {
-                diskExecutor {
-                    photoRepository.clear(RepositoryAction(RepositoryAction.Type.SEARCH))
-                }
+                photoRepository.clear(RepositoryAction(RepositoryAction.Type.SEARCH))
             }
         }
     }
