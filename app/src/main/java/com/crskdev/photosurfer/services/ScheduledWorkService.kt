@@ -11,6 +11,7 @@ import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import java.util.concurrent.TimeUnit
 
+//TODO rework the Scheduled Work API to allow chaining work manager requests
 
 /**
  * Created by Cristian Pela on 18.08.2018.

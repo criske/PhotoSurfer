@@ -7,15 +7,9 @@
     android:orientation="vertical"
     tools:context=".presentation.collection.NewCollectionFragment">
 
-
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbarCollection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
-        android:minHeight="?attr/actionBarSize"
-        android:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:navigationIcon="@drawable/ic_arrow_back_white_24dp" />
+        style="@style/BasicAppToolbar.Common.Nav" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

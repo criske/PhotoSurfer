@@ -81,6 +81,9 @@
         <action
             android:id="@+id/action_fragment_add_to_collection_to_newCollectionFragment"
             app:destination="@id/newCollectionFragment" />
+        <action
+            android:id="@+id/action_fragment_add_to_collection_to_collectionListPhotosFragment"
+            app:destination="@id/collectionListPhotosFragment" />
     </fragment>
     <fragment
         android:id="@+id/collectionListPhotosFragment"

@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
@@ -17,6 +18,7 @@ import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.setAlphaComponent
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -27,13 +29,19 @@ class MainActivity : AppCompatActivity() {
         val viewModel = viewModelFromProvider(this) {
             MainActivityViewModel(dependencyGraph().apiCallDispatcher)
         }
-//        if (BuildConfig.DEBUG) {
-//            viewModel.apiCallStateLiveData.observe(this, Observer {
-//                if (!(savedInstanceState != null && it == APICallDispatcher.State.EXECUTED)) {
-//                    Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
-//                }
-//            })
-//        }
+        progressBarLoadingGlobal.hide()
+        viewModel.apiCallStateLiveData.observe(this, Observer {
+            when (it) {
+                APICallDispatcher.State.EXECUTING -> progressBarLoadingGlobal.show()
+                APICallDispatcher.State.EXECUTED,
+                APICallDispatcher.State.CANCELED,
+                APICallDispatcher.State.ERROR -> progressBarLoadingGlobal.hide()
+            }
+//            if (!(savedInstanceState != null && it == APICallDispatcher.State.EXECUTED)) {
+//                Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
+//            }
+        })
+
     }
 
     override fun onSupportNavigateUp() = findNavController(R.id.nav_host_fragment).navigateUp()

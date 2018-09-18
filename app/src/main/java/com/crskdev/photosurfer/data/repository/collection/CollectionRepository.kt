@@ -25,7 +25,7 @@ import com.crskdev.photosurfer.util.runOn
  */
 interface CollectionRepository : Repository {
 
-    fun createCollection(collection: Collection, withPhoto: Photo? = null)
+    fun createCollection(collection: Collection, withPhotoId: String? = null)
 
     fun editCollection(collection: Collection)
 
@@ -69,13 +69,13 @@ class CollectionRepositoryImpl(
     private val diskExecutor = executorsManager.types[ExecutorsManager.Type.DISK]!!
     private val uiExecutor = executorsManager.types[ExecutorsManager.Type.UI]!!
 
-    override fun createCollection(collection: Collection, withPhoto: Photo?) {
+    override fun createCollection(collection: Collection, withPhotoId: String?) {
         scheduledWorkService.schedule(CreateCollectionWorker
                 .createWorkData(
                         collection.title,
                         collection.description ?: "",
                         collection.private,
-                        withPhoto?.id))
+                        withPhotoId))
     }
 
     override fun editCollection(collection: Collection) {

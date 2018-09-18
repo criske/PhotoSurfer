@@ -18,7 +18,7 @@ class UpsertCollectionPresentationDelegate(
     } else
         SingleLiveEvent<Collection>()
 
-    fun submit(title: String?, description: String? = null, private: Boolean, edit: Boolean = false) {
+    private fun submit(title: String?, description: String? = null, private: Boolean, edit: Boolean, withPhotoId: String?) {
         val cleanTitle = title?.trim()
         if (cleanTitle == null || cleanTitle.isEmpty()) {
             (errorLiveData as SingleLiveEvent).value = Error("Empty Title")
@@ -27,10 +27,18 @@ class UpsertCollectionPresentationDelegate(
             if (edit && editingCollectionId != null) {
                 collectionRepository.editCollection(collection.copy(id = editingCollectionId))
             } else {
-                collectionRepository.createCollection(collection)
+                collectionRepository.createCollection(collection, withPhotoId)
             }
             (successLiveData as SingleLiveEvent<Unit>).value = Unit
         }
+    }
+
+    fun create(title: String?, description: String? = null, private: Boolean, withPhotoId: String?) {
+        submit(title, description, private, false, withPhotoId)
+    }
+
+    fun update(title: String?, description: String? = null, private: Boolean) {
+        submit(title, description, private, true, null)
     }
 
 }

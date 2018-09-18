@@ -103,6 +103,8 @@ fun CollectionEntity.toCollection(): Collection {
     )
 }
 
+fun CollectionJSON.toCollectionLite(): CollectionLite = CollectionLite(id, title)
+
 fun CollectionLiteJSON.toCollectionLite(): CollectionLite = CollectionLite(id, title)
 fun CollectionLite.toCollectionLiteJSON(): CollectionLiteJSON = CollectionLiteJSON().apply {
     id = this@toCollectionLiteJSON.id

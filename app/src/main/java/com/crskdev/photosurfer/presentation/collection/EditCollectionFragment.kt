@@ -93,7 +93,7 @@ class EditCollectionViewModel(
     val editCollectionLiveData = upsertCollectionDelegate.editingCollectionLiveData
 
     fun submit(title: String?, description: String? = null, private: Boolean) {
-        upsertCollectionDelegate.submit(title, description, private, true)
+        upsertCollectionDelegate.update(title, description, private)
     }
 
 }

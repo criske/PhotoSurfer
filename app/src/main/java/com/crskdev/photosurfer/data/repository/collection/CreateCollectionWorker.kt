@@ -3,14 +3,13 @@ package com.crskdev.photosurfer.data.repository.collection
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
-import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
-import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.repository.scheduled.Tag
 import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.toCollectionDB
+import com.crskdev.photosurfer.entities.toCollectionLite
 import com.crskdev.photosurfer.services.TypedWorker
 
 /**
@@ -50,12 +49,13 @@ class CreateCollectionWorker : TypedWorker() {
         val description: String = inputData.getString(DESCRIPTION) ?: ""
         val private: Boolean = inputData.getBoolean(PRIVATE, true)
 
-        val withPhotoId = inputData.getString(PHOTO)
+        val withPhotoId = inputData.getString(PHOTO)?.takeIf { it.isNotEmpty() }
 
         val collectionsDAO: CollectionsDAO = graph.daoManager.getDao(Contract.TABLE_COLLECTIONS)
         val collectionsAPI: CollectionsAPI = graph.collectionsAPI
         val transactional = graph.daoManager.transactionRunner()
 
+        //TODO this really need to be chained
         try {
             val response = collectionsAPI
                     .createCollection(title, description, private)
@@ -69,6 +69,28 @@ class CreateCollectionWorker : TypedWorker() {
                             PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
                         } ?: PagingData(1, 1, null, null)
                         collectionsDAO.createCollection(cjson.toCollectionDB(pagingData))
+                        //add the photo to collection
+                        if (withPhotoId != null) {
+                            val collectionId = cjson.id
+                            val addToCollectionResponse = collectionsAPI
+                                    .addPhotoToCollection(collectionId, collectionId, withPhotoId)
+                                    .execute()
+                            if (addToCollectionResponse.isSuccessful) {
+                                val photoDAOFacade = graph.photoDAOFacade
+                                val photoDB = photoDAOFacade.getPhotoFromEitherTable(withPhotoId)
+                                if (photoDB != null) {
+                                    val collectionDB = collectionsDAO.getCollection(collectionId)?.apply {
+                                        totalPhotos += 1
+                                        coverPhotoUrls = photoDB.urls
+                                        coverPhotoId = photoDB.id
+                                    }
+                                    if (collectionDB != null) {
+                                        collectionsDAO.updateCollection(collectionDB)
+                                        photoDAOFacade.addPhotoToCollection(withPhotoId, cjson.toCollectionLite())
+                                    }
+                                }
+                            }
+                        }
                     }
                     sendPlatformNotification("Collection created")
                 }

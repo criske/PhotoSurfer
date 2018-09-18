@@ -3,13 +3,12 @@ package com.crskdev.photosurfer.presentation.collection
 
 import android.graphics.PorterDuff
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.core.graphics.toColorFilter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
+import androidx.navigation.findNavController
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -21,10 +20,9 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.GenericBoundaryCallback
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
+import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.entities.Collection
-import com.crskdev.photosurfer.entities.PairBE
-import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.entities.deparcelize
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_add_to_collection.*
@@ -53,18 +51,34 @@ class AddToCollectionFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
         recyclerCollectionAddCreate.apply {
+
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
-            adapter = CollectionsLiteAdapter(LayoutInflater.from(context), Glide.with(this@AddToCollectionFragment)) {
-                val adding = it.right
-                val collection = it.left
-                if (adding) {
-                    viewModel.addToCollection(collection)
-                } else {
-                    viewModel.removeFromCollection(collection)
+
+            adapter = CollectionsLiteAdapter(LayoutInflater.from(context), Glide.with(this@AddToCollectionFragment)) { action ->
+                when (action) {
+                    is CollectionLiteVHAction.DisplayWholeCollection -> findNavController().navigate(
+                            AddToCollectionFragmentDirections
+                                    .actionFragmentAddToCollectionToCollectionListPhotosFragment(action.collection.id),
+                            defaultTransitionNavOptions())
+                    is CollectionLiteVHAction.AddRemoveToCollection -> {
+                        if (action.adding) {
+                            viewModel.addToCollection(action.collection)
+                        } else {
+                            viewModel.removeFromCollection(action.collection)
+                        }
+                    }
                 }
             }
         }
+
+        btnCollectionAddCreate.setOnClickListener {
+            val photo = AddToCollectionFragmentArgs.fromBundle(arguments).photo
+            it.findNavController().navigate(
+                    AddToCollectionFragmentDirections.ActionFragmentAddToCollectionToNewCollectionFragment(photo.id), defaultTransitionNavOptions())
+        }
+
         viewModel.collectionsLiveData.observe(this, Observer {
             (recyclerCollectionAddCreate.adapter as CollectionsLiteAdapter).submitList(it)
         })
@@ -95,7 +109,7 @@ class AddToCollectionViewModel(private val collectionsRepository: CollectionRepo
 class CollectionsLiteAdapter(
         private val inflater: LayoutInflater,
         private val glide: RequestManager,
-        private val action: (PairBE<Collection, Boolean>) -> Unit) : PagedListAdapter<PairBE<Collection, Boolean>, CollectionLiteVH>(
+        private val action: (CollectionLiteVHAction) -> Unit) : PagedListAdapter<PairBE<Collection, Boolean>, CollectionLiteVH>(
         object : DiffUtil.ItemCallback<PairBE<Collection, Boolean>>() {
             override fun areItemsTheSame(oldItem: PairBE<Collection, Boolean>, newItem: PairBE<Collection, Boolean>): Boolean {
                 return oldItem.left.id == newItem.left.id
@@ -123,27 +137,33 @@ class CollectionsLiteAdapter(
 
 class CollectionLiteVH(view: View,
                        private val glide: RequestManager,
-                       private val action: (PairBE<Collection, Boolean>) -> Unit) : RecyclerView.ViewHolder(view) {
+                       private val action: (CollectionLiteVHAction) -> Unit) : RecyclerView.ViewHolder(view) {
 
-    private var collection: PairBE<Collection, Boolean>? = null
+    var collection: PairBE<Collection, Boolean>? = null
 
     init {
         itemView.btnAddToCollection.setOnClickListener {
             collection?.let { p ->
-                val updatePair = PairBE(p.left, !p.right)
-                action(updatePair)
+                action(CollectionLiteVHAction.AddRemoveToCollection(p.left, !p.right))
             }
         }
+
+        val displayCollectionClickListener: (View) -> Unit = {
+            collection?.let { p ->
+                action(CollectionLiteVHAction.DisplayWholeCollection(p.left))
+            }
+        }
+        itemView.textAddToCollectionTitle.setOnClickListener(displayCollectionClickListener)
+        itemView.textAddToCollectionCount.setOnClickListener(displayCollectionClickListener)
     }
 
     fun bind(collection: PairBE<Collection, Boolean>) {
         this.collection = collection
-//        collection.coverPhotoUrls?.get(ImageType.REGULAR)?.let {
+//        collection.left.coverPhotoUrls?.get(ImageType.REGULAR)?.let {
 //            glide.load(it)
 //                    .apply(RequestOptions()
-//                            .placeholder(R.drawable.ic_avatar_placeholder)
 //                            .centerCrop())
-//                    .into(itemView.imageCollectionCover)
+//                    .into(itemView.imageAddToCollectionCover)
 //        }
         itemView.textAddToCollectionTitle.text = collection.left.title
         itemView.textAddToCollectionCount.text = collection.left.totalPhotos.toString()
@@ -152,7 +172,12 @@ class CollectionLiteVH(view: View,
     }
 
     fun clear() {
-        //glide.clear(itemView.imageCollectionCover)
+        //glide.clear(itemView.imageAddToCollectionCover)
     }
 
+}
+
+sealed class CollectionLiteVHAction {
+    class DisplayWholeCollection(val collection: Collection) : CollectionLiteVHAction()
+    class AddRemoveToCollection(val collection: Collection, val adding: Boolean) : CollectionLiteVHAction()
 }

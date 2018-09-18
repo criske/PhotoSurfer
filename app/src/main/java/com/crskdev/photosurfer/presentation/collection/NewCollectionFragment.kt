@@ -24,7 +24,8 @@ class NewCollectionFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = viewModelFromProvider(this) {
-            NewCollectionViewModel(context!!.dependencyGraph().collectionsRepository)
+            val withPhotoId = NewCollectionFragmentArgs.fromBundle(arguments).withPhotoId
+            NewCollectionViewModel(withPhotoId, context!!.dependencyGraph().collectionsRepository)
         }
     }
 
@@ -68,7 +69,9 @@ class NewCollectionFragment : Fragment() {
     }
 }
 
-class NewCollectionViewModel(collectionRepository: CollectionRepository) : ViewModel() {
+class NewCollectionViewModel(
+        private val withPhotoId: String?,
+        collectionRepository: CollectionRepository) : ViewModel() {
 
     private val upsertCollectionDelegate = UpsertCollectionPresentationDelegate(collectionRepository)
 
@@ -77,7 +80,7 @@ class NewCollectionViewModel(collectionRepository: CollectionRepository) : ViewM
     val errorLiveData = upsertCollectionDelegate.errorLiveData
 
     fun submit(title: String?, description: String? = null, private: Boolean) {
-        upsertCollectionDelegate.submit(title, description, private)
+        upsertCollectionDelegate.create(title, description, private, withPhotoId)
     }
 
 }

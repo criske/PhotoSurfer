@@ -3,10 +3,15 @@ package com.crskdev.photosurfer.util
 import android.animation.Animator
 import android.content.res.Resources
 import android.util.TypedValue
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewPropertyAnimator
 import androidx.annotation.FloatRange
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.NavOptions
+import androidx.recyclerview.widget.RecyclerView
 import com.crskdev.photosurfer.R
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
@@ -85,3 +90,16 @@ inline fun <T> T.runOn(executor: Executor, crossinline block: T.() -> Unit) {
         this@runOn.block()
     }
 }
+
+fun RecyclerView.addOnItemGestureDetectListener(gestureListener: SimpleOnGestureListener2<RecyclerView>) {
+
+    val gestureDetector = GestureDetectorCompat(context, gestureListener)
+
+    addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+        override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+            return gestureDetector.onTouchEvent(e)
+        }
+    })
+}
+
+abstract class SimpleOnGestureListener2<V>(val gesturedView: V) : GestureDetector.SimpleOnGestureListener()

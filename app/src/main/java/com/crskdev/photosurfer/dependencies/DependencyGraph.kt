@@ -110,6 +110,8 @@ object DependencyGraph {
         private set
     lateinit var searchTermTracker: SearchTermTracker
         private set
+    lateinit var photoDAOFacade: PhotoDAOFacade
+        private set
 
     //nav
     lateinit var authNavigatorMiddleware: AuthNavigatorMiddleware
@@ -163,10 +165,10 @@ object DependencyGraph {
         photoDownloader = PhotoDownloaderImpl(apiCallDispatcher, photoAPI)
 //        downloadManager = DownloadManager.MOCK
         downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
-        val daoPhotoFacade = PhotoDAOFacade(daoManager)
+        photoDAOFacade = PhotoDAOFacade(daoManager)
         photoRepository = PhotoRepositoryImpl(
                 executorManager,
-                daoPhotoFacade,
+                photoDAOFacade,
                 externalPhotoGalleryDAO,
                 authTokenStorage,
                 staleDataTrackSupervisor,
@@ -180,7 +182,7 @@ object DependencyGraph {
         collectionsRepository = CollectionRepositoryImpl(
                 executorManager,
                 daoManager,
-                daoPhotoFacade,
+                photoDAOFacade,
                 scheduledWorkService,
                 apiCallDispatcher,
                 collectionsAPI,

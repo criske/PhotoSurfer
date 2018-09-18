@@ -7,37 +7,29 @@
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        style="@style/BasicAppBarLayout">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbarListPhotos"
             android:layout_width="match_parent"
             android:layout_height="112dp"
-            app:titleEnabled="false"
-            app:layout_scrollFlags="scroll|enterAlways">
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:titleEnabled="false">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbarListPhotos"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="@color/colorPrimary"
-                android:elevation="5dp"
-                app:layout_collapseMode="pin"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                style="@style/BasicAppToolbar.Common"
                 app:title="@string/app_name" />
 
             <androidx.appcompat.widget.SearchView
-                app:iconifiedByDefault="false"
-                android:focusable="false"
-                app:defaultQueryHint="@string/search"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                 android:id="@+id/searchPhotosView"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="56dp" />
+                android:layout_marginTop="56dp"
+                android:focusable="false"
+                app:defaultQueryHint="@string/search"
+                app:iconifiedByDefault="false"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 

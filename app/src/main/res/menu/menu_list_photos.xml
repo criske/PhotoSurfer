@@ -17,9 +17,9 @@
     <item
         android:id="@+id/menu_item_account"
         android:icon="@drawable/ic_person_white_24dp"
-        android:orderInCategory="4"
+        android:orderInCategory="999"
         android:title="@string/account"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/menu_item_search_users"

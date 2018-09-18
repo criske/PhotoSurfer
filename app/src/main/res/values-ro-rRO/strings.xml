@@ -27,4 +27,5 @@
     <string name="message_collection_edited">Colectia a fost moddificata!</string>
     <string name="playwaves">Playwaves</string>
     <string name="saved_photos">Fotografii Salvate</string>
+    <string name="create_new_collection_with_photo">Noua Colectie cu Fotografia</string>
 </resources>

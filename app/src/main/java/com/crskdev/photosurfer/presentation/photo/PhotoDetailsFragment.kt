@@ -196,8 +196,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         })
         viewModel.photoDisplayedLiveData.observe(this, Observer { displayed ->
             val enabledActions = PhotoDetailsFragmentArgs.fromBundle(arguments).enabledActions
+            progressBarLoading.isVisible = !displayed
             with(displayed && enabledActions) {
-                progressBarLoading.isVisible = !this
                 (fabDownload as View).isVisible = this
                 btnPhotoLike.isVisible = this
             }
@@ -254,7 +254,6 @@ class PhotoDetailViewModel(
 
     val downloadLiveData = MutableLiveData<DownloadProgress>()
 
-    //photo id
     val photoDisplayedLiveData = MutableLiveData<Boolean>().apply {
         value = false
     }
