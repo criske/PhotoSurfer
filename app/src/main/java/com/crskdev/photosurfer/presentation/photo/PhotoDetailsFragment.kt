@@ -73,7 +73,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
     }
 
-    override fun onPermissionsGranted(permissions: List<String>) {
+    override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
         viewModel.download(photo)
     }
 
