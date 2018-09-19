@@ -3,7 +3,6 @@ package com.crskdev.photosurfer
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Bundle
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -14,12 +13,9 @@ import com.crskdev.photosurfer.presentation.HasAppPermissionAwareness
 /**
  * Created by Cristian Pela on 07.08.2018.
  */
-//TODO better permissions helper system
 object AppPermissionsHelper {
 
     private const val STORAGE_PERMISSION_CODE = 1337
-
-    private const val ENQUEUED_ACTION_ARGS_STORE = "app_permissions_enqueued_action_args_store"
 
     fun hasStoragePermission(context: Context): Boolean =
             ContextCompat.checkSelfPermission(context,
@@ -27,32 +23,20 @@ object AppPermissionsHelper {
                     && ContextCompat.checkSelfPermission(context,
                     Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
 
-    fun requestStoragePermission(activity: FragmentActivity, enqueueActionArg: String? = null) {
+    fun requestStoragePermission(activity: FragmentActivity) {
         val perms = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
         ActivityCompat.requestPermissions(activity, perms, STORAGE_PERMISSION_CODE)
-        if (enqueueActionArg != null) {
-            val queueStore = activity.getSharedPreferences(ENQUEUED_ACTION_ARGS_STORE, Context.MODE_PRIVATE)
-            queueStore.edit()
-                    .putString(STORAGE_PERMISSION_CODE.toString(), enqueueActionArg).apply()
-        }
     }
 
-    fun notifyPermissionGranted(activity: FragmentActivity, requestCode: Int, permissions: Array<out String>,
+    fun notifyPermissionGranted(activity: FragmentActivity, permissions: Array<out String>,
                                 grantResults: IntArray) {
         val grantedPermissions = permissions.zip(grantResults.asList()) { l, r -> l to r }
-                .asSequence()
                 .filter { it.second == PackageManager.PERMISSION_GRANTED }
                 .map { it.first }
-                .toList()
-        val queueStore = activity.getSharedPreferences(ENQUEUED_ACTION_ARGS_STORE, Context.MODE_PRIVATE)
-
-        var argDispatched = false
-
         //recursively notify all the interested fragments and child fragments
-        fun notifyAwareFragments(f: Fragment) {
-            if (f is HasAppPermissionAwareness) {
-                argDispatched = true
-                f.onPermissionsGranted(grantedPermissions, queueStore.getString(requestCode.toString(), null))
+        fun notifyAwareFragments(f: Fragment){
+            if(f is HasAppPermissionAwareness){
+                f.onPermissionsGranted(grantedPermissions)
             }
             f.childFragmentManager.fragments.forEach {
                 notifyAwareFragments(it)
@@ -60,10 +44,6 @@ object AppPermissionsHelper {
         }
         activity.supportFragmentManager.fragments.forEach {
             notifyAwareFragments(it)
-        }
-
-        if (argDispatched) {
-            queueStore.edit().remove(requestCode.toString()).apply()
         }
     }
 

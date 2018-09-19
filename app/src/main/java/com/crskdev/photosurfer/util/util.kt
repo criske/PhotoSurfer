@@ -16,7 +16,6 @@ import com.crskdev.photosurfer.R
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Created by Cristian Pela on 05.08.2018.
@@ -30,12 +29,7 @@ fun AtomicInteger.safeSet(value: Int) {
 fun AtomicBoolean.safeSet(value: Boolean) {
     do {
         val lastValue = get()
-    } while (!compareAndSet(lastValue, value))
-}
-
-fun <R> AtomicReference<R>.safeSet(value: R) {
-    do {
-        val lastValue = get()
+        println(lastValue)
     } while (!compareAndSet(lastValue, value))
 }
 

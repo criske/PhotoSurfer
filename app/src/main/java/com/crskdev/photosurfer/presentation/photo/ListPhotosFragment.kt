@@ -1,6 +1,5 @@
 package com.crskdev.photosurfer.presentation.photo
 
-import android.Manifest
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
@@ -19,7 +18,6 @@ import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.crskdev.photosurfer.AppPermissionsHelper
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
@@ -33,7 +31,6 @@ import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveDat
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.presentation.HasAppPermissionAwareness
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.services.ScheduledWorkService
@@ -52,7 +49,7 @@ import kotlinx.android.synthetic.main.fragment_list_photos.*
 /**
  * Created by Cristian Pela on 01.08.2018.
  */
-class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
+class ListPhotosFragment : Fragment() {
 
     companion object {
         private const val KEY_CURRENT_FILTER = "KEY_CURRENT_FILTER"
@@ -117,12 +114,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
                     R.id.menu_saved -> {
-                        //we need disk reading permissions first
-                        if (AppPermissionsHelper.hasStoragePermission(context)) {
-                            viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
-                        } else {
-                            AppPermissionsHelper.requestStoragePermission(activity!!, FilterVM.Type.SAVED.toString())
-                        }
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
                     }
                     R.id.menu_item_search_users -> {
                         navController.navigate(R.id.fragment_search_users, null,
@@ -195,15 +187,6 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
         })
 
     }
-
-    override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
-        val hasAllPermissions = permissions
-                .containsAll(listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE))
-        if (hasAllPermissions) {
-            viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
-        }
-    }
-
 
     private fun FilterVM.parcelize(): ParcelableFilter = ParcelableFilter(type.ordinal, title, data)
 

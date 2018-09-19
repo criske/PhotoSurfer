@@ -29,9 +29,6 @@ import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.*
-import com.crskdev.photosurfer.services.messaging.DeviceIdProviderImpl
-import com.crskdev.photosurfer.services.messaging.PhotoSurferMessageManagerImpl
-import com.crskdev.photosurfer.services.messaging.PhotoSurferMessagingManager
 import com.crskdev.photosurfer.util.Listenable
 import retrofit2.Retrofit
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -39,7 +36,6 @@ import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
 import com.squareup.moshi.Moshi
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 
 
 /**
@@ -47,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 object DependencyGraph {
 
-    internal var isInit: AtomicBoolean = AtomicBoolean(false)
+    internal var isInit: Boolean = false
 
     //EXECUTORS
     val threadCallChecker: ThreadCallChecker = AndroidThreadCallChecker()
@@ -99,10 +95,6 @@ object DependencyGraph {
     lateinit var scheduledWorkService: ScheduledWorkService
         private set
 
-    //MESSAGING
-    lateinit var photoSurferMessagingManager: PhotoSurferMessagingManager
-        private set
-
     //APIs
     lateinit var photoAPI: PhotoAPI
         private set
@@ -127,7 +119,7 @@ object DependencyGraph {
 
 
     fun init(context: Context) {
-        if (isInit.get()) return
+        if (isInit) return
 
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
@@ -216,15 +208,12 @@ object DependencyGraph {
 
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 
-        //messaging
-        photoSurferMessagingManager = PhotoSurferMessageManagerImpl(DeviceIdProviderImpl(context),
-                context, authTokenStorage as ObservableAuthTokenStorage)
-
-        isInit.compareAndSet(false, true)
+        isInit = true
     }
 
 }
 
 fun Context.injectDependencyGraph() = DependencyGraph.init(this)
 
-fun Context.dependencyGraph(): DependencyGraph = DependencyGraph
+fun Context.dependencyGraph(): DependencyGraph = if (DependencyGraph.isInit)
+    DependencyGraph else DependencyGraph.apply { init(this@dependencyGraph) }
