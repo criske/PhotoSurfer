@@ -1,5 +1,7 @@
 package com.crskdev.photosurfer.data.remote
 
+import com.crskdev.photosurfer.data.remote.download.ProgressListener
+
 /**
  * Created by Cristian Pela on 11.08.2018.
  */
