@@ -1,15 +1,14 @@
-package com.crskdev.photosurfer
+package com.crskdev.photosurfer.services.permission
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Bundle
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import com.crskdev.photosurfer.presentation.HasAppPermissionAwareness
 
 /**
  * Created by Cristian Pela on 07.08.2018.
@@ -26,6 +25,15 @@ object AppPermissionsHelper {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
                     && ContextCompat.checkSelfPermission(context,
                     Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+
+    fun hasPermissions(context: Context, requiredPermissions: List<String>): Boolean =
+            requiredPermissions.fold(true) { acc, curr ->
+                acc && ContextCompat.checkSelfPermission(context, curr) == PackageManager.PERMISSION_GRANTED
+            }
+
+    fun requestPermission(activity: Activity, requiredPermissions: List<String>, requestCode: Int) {
+        ActivityCompat.requestPermissions(activity, requiredPermissions.toTypedArray(), requestCode)
+    }
 
     fun requestStoragePermission(activity: FragmentActivity, enqueueActionArg: String? = null) {
         val perms = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)

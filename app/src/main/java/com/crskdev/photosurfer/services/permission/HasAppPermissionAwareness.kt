@@ -1,4 +1,4 @@
-package com.crskdev.photosurfer.presentation
+package com.crskdev.photosurfer.services.permission
 
 import android.os.Bundle
 

@@ -10,6 +10,7 @@ import com.crskdev.photosurfer.services.messaging.command.Command
 import com.crskdev.photosurfer.services.messaging.command.UnknownCommand
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.messaging.messages.Topic
+import com.crskdev.photosurfer.services.permission.HasAppPermissionAwarenessGlobalComponent
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.safeSet
 import com.google.firebase.iid.FirebaseInstanceId
@@ -31,7 +32,7 @@ interface PhotoSurferMessagingManager {
 
 }
 
-interface DeviceIdProvider {
+interface DeviceIdProvider: HasAppPermissionAwarenessGlobalComponent {
     fun getId(): String
 }
 
