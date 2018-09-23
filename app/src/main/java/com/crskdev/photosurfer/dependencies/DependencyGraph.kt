@@ -29,7 +29,6 @@ import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.*
-import com.crskdev.photosurfer.services.messaging.DeviceIdProviderImpl
 import com.crskdev.photosurfer.services.messaging.PhotoSurferMessageManagerImpl
 import com.crskdev.photosurfer.services.messaging.PhotoSurferMessagingManager
 import com.crskdev.photosurfer.util.Listenable
@@ -217,8 +216,7 @@ object DependencyGraph {
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 
         //messaging
-        photoSurferMessagingManager = PhotoSurferMessageManagerImpl(DeviceIdProviderImpl(context),
-                context, authTokenStorage as ObservableAuthTokenStorage)
+        photoSurferMessagingManager = PhotoSurferMessageManagerImpl(context, authTokenStorage as ObservableAuthTokenStorage)
 
         isInit.compareAndSet(false, true)
     }

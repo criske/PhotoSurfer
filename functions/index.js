@@ -37,7 +37,10 @@ exports.registerDevice = functions.https.onRequest((request, response) => {
     if (username && token) {
         dbOps.addTokenToGroupDevice(username, token)
             .then((value) => {
-                return response.send(`Added device-token "${token}" for user "${username}" `)
+                return response.json({
+                    username: username,
+                    token: token
+                })
             })
             .catch(error => {
                 return response.status(500).send("Error " + error)

@@ -10,7 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Created by Cristian Pela on 19.09.2018.
  */
-class AppPermissionsGlobalComponentManager(application: Application) {
+//TODO better app permission api in development
+internal class AppPermissionsGlobalComponentManager(application: Application) {
 
     private val requestCodeGenerator = AtomicInteger(1000)
 
@@ -43,7 +44,7 @@ class AppPermissionsGlobalComponentManager(application: Application) {
 
 }
 
-interface HasAppPermissionAwarenessGlobalComponent : HasAppPermissionAwareness {
+internal interface HasAppPermissionAwarenessGlobalComponent : HasAppPermissionAwareness {
 
     val requiredPermissions: List<String>
 

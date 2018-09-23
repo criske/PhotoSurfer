@@ -11,10 +11,12 @@
     "test": "mocha --reporter spec"
   },
   "dependencies": {
-    "firebase-functions": "^2.0.3",
-    "firebase-admin": "^6.0.0"
+    "firebase-admin": "^6.0.0",
+    "firebase-functions": "^2.0.3"
   },
   "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-http": "^4.2.0",
     "eslint": "^4.12.0",
     "eslint-plugin-promise": "^3.6.0",
     "firebase-functions-test": "^0.1.3",

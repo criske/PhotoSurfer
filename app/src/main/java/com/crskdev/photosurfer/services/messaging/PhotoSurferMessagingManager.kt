@@ -32,20 +32,8 @@ interface PhotoSurferMessagingManager {
 
 }
 
-interface DeviceIdProvider: HasAppPermissionAwarenessGlobalComponent {
-    fun getId(): String
-}
-
-class DeviceIdProviderImpl(private val context: Context) : DeviceIdProvider {
-
-    //TODO Find a way to implement this using app permissions
-    private val id = ""
-
-    override fun getId(): String = id
-}
 
 class PhotoSurferMessageManagerImpl(
-        deviceIdProvider: DeviceIdProvider,
         private val context: Context,
         private val authTokenStorage: ObservableAuthTokenStorage,
         providedCommands: Map<Topic, Command> = emptyMap()) : PhotoSurferMessagingManager {
@@ -55,8 +43,6 @@ class PhotoSurferMessageManagerImpl(
     private val messaging = FirebaseMessaging.getInstance()
 
     private val instanceId = FirebaseInstanceId.getInstance()
-
-    private val deviceId = deviceIdProvider.getId()
 
     private val TAG = PhotoSurferMessageManagerImpl::class.java.simpleName
 
