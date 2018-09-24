@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.data.remote
 
 import okhttp3.*
+import retrofit2.Retrofit
 
 /**
  * Created by Cristian Pela on 16.08.2018.
@@ -16,3 +17,5 @@ fun errorResponse(request: Request, code: Int,
             .protocol(Protocol.HTTP_1_1)
             .build()
 }
+
+inline fun <reified T> Retrofit.create(): T = create(T::class.java)

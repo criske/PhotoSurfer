@@ -1,5 +1,8 @@
 package com.crskdev.photosurfer.services.messaging.remote
 
+import com.crskdev.photosurfer.data.remote.auth.AuthToken
+import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
+import com.crskdev.photosurfer.data.remote.create
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -10,13 +13,24 @@ import org.junit.Test
  */
 class MessagingAPIImplTest {
 
-    lateinit var api: MessagingAPI
+    private lateinit var api: MessagingAPI
 
     private val mockedFCMTokenProvider = MockedFCMTokenProvider()
 
+    private val  username = "foo"
+
+    private val authTokenStorage = object: AuthTokenStorage {
+
+        override fun saveToken(token: AuthToken) = Unit
+
+        override fun token(): AuthToken? =
+                AuthToken("","","","",0L,username)
+
+    }
+
     @Before
     fun before() {
-        api = messagingRetrofit(true, mockedFCMTokenProvider).create(MessagingAPI::class.java)
+        api = messagingRetrofit(true, mockedFCMTokenProvider, authTokenStorage).create()
         api.clear().execute()
     }
 
@@ -27,15 +41,14 @@ class MessagingAPIImplTest {
 
     @Test
     fun shouldRegisterDeviceWithToken() {
-        val username = "foo"
-        api.registerDevice(username).execute()
-        api.obtainUserDevices(username).execute().body().apply {
+        api.registerDevice().execute()
+        api.obtainUserDevices().execute().body().apply {
             assertEquals("foo", this?.username)
             assertEquals(listOf("token1"), this?.tokens)
         }
         mockedFCMTokenProvider.generateNextToken()
-        api.registerDevice(username).execute()
-        api.obtainUserDevices(username).execute().body().apply {
+        api.registerDevice().execute()
+        api.obtainUserDevices().execute().body().apply {
             assertEquals("foo", this?.username)
             assertEquals(listOf("token1", "token2"), this?.tokens)
         }

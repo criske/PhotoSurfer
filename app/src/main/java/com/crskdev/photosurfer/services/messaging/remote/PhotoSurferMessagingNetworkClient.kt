@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.services.messaging.remote
 
+import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.errorResponse
 import com.google.firebase.iid.FirebaseInstanceId
 import com.squareup.moshi.Moshi
@@ -25,7 +26,7 @@ internal fun messagingURL(inTestMode: Boolean = false): String =
             MessagingContract.TEST_URL
         }
 
-fun messagingRetrofit(inTestMode: Boolean, fcmTokenProvider: FCMTokenProvider): Retrofit =
+fun messagingRetrofit(inTestMode: Boolean, fcmTokenProvider: FCMTokenProvider, authTokenStorage: AuthTokenStorage): Retrofit =
         Retrofit.Builder()
                 .baseUrl(messagingURL(inTestMode))
                 .addConverterFactory(MoshiConverterFactory.create(
@@ -34,19 +35,24 @@ fun messagingRetrofit(inTestMode: Boolean, fcmTokenProvider: FCMTokenProvider): 
                                 .build())
                         .asLenient())
                 .client(OkHttpClient.Builder()
-                        .addInterceptor(FCMTokenInterceptor(fcmTokenProvider))
+                        .addInterceptor(FCMTokenInterceptor(fcmTokenProvider, authTokenStorage))
                         .build())
                 .build()
 
 
-class FCMTokenInterceptor(private val fcmTokenProvider: FCMTokenProvider) : Interceptor {
+class FCMTokenInterceptor(private val fcmTokenProvider: FCMTokenProvider,
+                          private val authTokenStorage: AuthTokenStorage) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response =
-            fcmTokenProvider.token()
-                    ?.let {
+            (fcmTokenProvider.token() to authTokenStorage.token())
+                    .takeIf {
+                        it.first != null && it.second != null
+                    }?.let {
                         val originalRequest = chain.request()
+                        val (fcmToken, authToken) = it
                         val requestWithToken = originalRequest.newBuilder()
                                 .url(originalRequest.url().newBuilder()
-                                        .addQueryParameter("token", it)
+                                        .addQueryParameter("username", authToken!!.username)
+                                        .addQueryParameter("token", fcmToken!!)
                                         .build())
                                 .build()
                         chain.proceed(requestWithToken)

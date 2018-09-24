@@ -1,23 +1,41 @@
 const admin = require('firebase-admin');
 const FCM_USER_GROUP_DEVICES = "fcm_user_group_devices"
+const ACTION_OPERATION = "action_operation"
 
 
 const fcmCollectionRef = admin.database().ref(FCM_USER_GROUP_DEVICES)
+
+const actionOP = admin.database().ref(ACTION_OPERATION)
 
 var getUser = function (username) {
     return fcmCollectionRef.child(username)
         .once('value')
         .then((snap) => {
-            let tokens = snap.val() || []
-            let user = {
-                username: username,
-                tokens: tokens
+            let snapVal = snap.val();
+            if (snapVal !== null) {
+                let tokens = snapVal || [];
+                let user = {
+                    username: username,
+                    tokens: tokens
+                };
+                return Promise.resolve(user);
+            } else {
+                return Promise.reject(Error(`User with username '${username}' not found`));
             }
-            return Promise.resolve(user)
         })
-        .catch(() => {
-            return Promise.reject(Error("User not found"))
+        .catch((err) => {
+            return Promise.reject(err)
         })
+}
+
+exports.queueAction = function (username, token, actionType, id) {
+    return actionOP.set({
+        username: username,
+        token: token,
+        actionType: actionType,
+        id: id,
+        date: new Date().getTime()
+    })
 }
 
 exports.addTokenToGroupDevice = function (username, token) {
@@ -44,7 +62,7 @@ exports.removeTokenFromGroupDevice = function (username, token) {
             if (index !== -1) {
                 tokens.splice(index, 1)
                 return fcmCollectionRef.child(username).set(tokens)
-            }else{
+            } else {
                 return Promise.reject(Error("Token " + token + " doesn't exists"))
             }
         })
@@ -63,3 +81,4 @@ exports.initRoot = function () {
 }
 
 exports.FCM_USER_GROUP_DEVICES = FCM_USER_GROUP_DEVICES;
+exports.QUEUE = ACTION_OPERATION

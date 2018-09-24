@@ -1,5 +1,7 @@
 package com.crskdev.photosurfer.services.messaging.remote
 
+import com.crskdev.photosurfer.data.remote.auth.AuthToken
+import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import okhttp3.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -10,6 +12,15 @@ import java.util.concurrent.TimeUnit
  */
 class FCMTokenInterceptorTest {
 
+    private val authTokenStorage = object: AuthTokenStorage{
+
+        override fun saveToken(token: AuthToken) = Unit
+
+        override fun token(): AuthToken? =
+                AuthToken("","","","",0L,"foo")
+
+    }
+
     @Test
     fun shouldInterceptWhenThereIsMessageToken() {
         val tokenProvider = object : FCMTokenProvider {
@@ -17,12 +28,9 @@ class FCMTokenInterceptorTest {
 
         }
         val testingRequest = Request.Builder()
-                .url(HttpUrl.parse(MessagingContract.TEST_URL)!!
-                        .newBuilder()
-                        .addQueryParameter("username", "foo")
-                        .build())
+                .url(MessagingContract.TEST_URL)
                 .build()
-        val interceptor = FCMTokenInterceptor(tokenProvider)
+        val interceptor = FCMTokenInterceptor(tokenProvider, authTokenStorage)
         val response = interceptor.intercept(MockedChain(testingRequest))
         assertEquals("http://localhost:5000/photosurfer-aa0ff/us-central1/?username=foo&token=mocked-token",
                 response.request().url().toString())
@@ -32,15 +40,11 @@ class FCMTokenInterceptorTest {
     fun shouldReturnErrorResponseWhenTokenNotProvided() {
         val tokenProvider = object : FCMTokenProvider {
             override fun token(): String? = null
-
         }
         val testingRequest = Request.Builder()
-                .url(HttpUrl.parse(MessagingContract.TEST_URL)!!
-                        .newBuilder()
-                        .addQueryParameter("username", "foo")
-                        .build())
+                .url(MessagingContract.TEST_URL)
                 .build()
-        val interceptor = FCMTokenInterceptor(tokenProvider)
+        val interceptor = FCMTokenInterceptor(tokenProvider, authTokenStorage)
         val response = interceptor.intercept(MockedChain(testingRequest))
         assertEquals(500, response.code())
     }
