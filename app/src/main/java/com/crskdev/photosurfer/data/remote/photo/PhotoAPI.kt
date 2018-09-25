@@ -10,6 +10,9 @@ interface PhotoAPI {
     @GET("photos/random")
     fun getRandom(): Call<PhotoJSON>
 
+    @GET("photos/{id}")
+    fun getPhoto(@Path("id")photoId: String): Call<PhotoJSON>
+
     @GET("photos")
     fun getRandomPhotos(@Query("page") page: Int = 1): Call<List<PhotoJSON>>
 
@@ -33,5 +36,7 @@ interface PhotoAPI {
     @DELETE("photos/{id}/like")
     @Headers(REQUIRE_AUTH)
     fun unlike(@Path("id") id: String): Call<ResponseBody>
+
+
 
 }

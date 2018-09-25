@@ -19,6 +19,8 @@ import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.services.executors.ExecutorType
+import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
+import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.util.runOn
 
 /**
@@ -58,7 +60,8 @@ class CollectionRepositoryImpl(
         private val apiCallDispatcher: APICallDispatcher,
         private val collectionAPI: CollectionsAPI,
         private val authTokenStorage: AuthTokenStorage,
-        private val staleDataTrackSupervisor: StaleDataTrackSupervisor
+        private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
+        private val pushMessagingManager: DevicePushMessagingManager
 ) : CollectionRepository {
 
     private val collectionDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
@@ -220,7 +223,11 @@ class CollectionRepositoryImpl(
     override fun addPhotoToCollection(collection: Collection, photo: Photo) {
         //todo schedule api call
         ioExecutor {
-            collectionAPI.addPhotoToCollection(collection.id, collection.id, photo.id).execute()
+            val response = collectionAPI.addPhotoToCollection(collection.id,
+                    collection.id, photo.id).execute()
+            if(response.isSuccessful){
+                pushMessagingManager.sendMessage(Message.CollectionAddedPhoto(collection.id, photo.id))
+            }
         }
         diskExecutor {
             transactional {

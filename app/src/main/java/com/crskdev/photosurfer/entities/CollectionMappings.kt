@@ -111,6 +111,7 @@ fun CollectionLite.toCollectionLiteJSON(): CollectionLiteJSON = CollectionLiteJS
     title = this@toCollectionLiteJSON.title
 }
 fun Collection.asLite(): CollectionLite = CollectionLite(id, title)
+fun CollectionEntity.asLite(): CollectionLite = CollectionLite(id, title)
 
 //fun CollectionLiteJSON.asLiteStr(): String = "$id#$title"
 

@@ -152,6 +152,12 @@ object DependencyGraph {
         retrofit = retrofitClient.retrofit
         progressListenerRegistrar = ProgressListenerRegistrarImpl(retrofitClient)
 
+        //messaging
+        messagingAPI = messagingRetrofit(false, FCMTokeProviderImpl(FirebaseInstanceId.getInstance()),
+                authTokenStorage).create()
+        devicePushMessagingManager = DevicePushMessageManagerImpl(context, messagingAPI,
+                authTokenStorage as ObservableAuthTokenStorage)
+
         //db
         db = PhotoSurferDB.create(context, false)
         staleDataTrackSupervisor = StaleDataTrackSupervisor.install(networkCheckService, db)
@@ -201,7 +207,8 @@ object DependencyGraph {
                 apiCallDispatcher,
                 collectionsAPI,
                 authTokenStorage,
-                staleDataTrackSupervisor
+                staleDataTrackSupervisor,
+                devicePushMessagingManager
         )
 
 
@@ -222,11 +229,7 @@ object DependencyGraph {
 
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 
-        //messaging
-        messagingAPI = messagingRetrofit(false, FCMTokeProviderImpl(FirebaseInstanceId.getInstance()),
-                authTokenStorage).create()
-        devicePushMessagingManager = DevicePushMessageManagerImpl(context, messagingAPI,
-                authTokenStorage as ObservableAuthTokenStorage)
+
 
         isInit.compareAndSet(false, true)
     }

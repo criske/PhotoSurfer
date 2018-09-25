@@ -210,7 +210,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
     }
 
 
-    fun addPhotoToCollection(id: String, collection: CollectionLite): Int {
+    fun addPhotoToCollection(id: String, collection: CollectionLite, providedPhoto: PhotoEntity? = null): Int {
         var updated = 0
         transactional {
             val photosByTable = getPhotoMappedByTable(id)
@@ -223,7 +223,8 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
             //add photo if current photo collection table has the collection.id
             val lastCollectionPhoto = daoCollectionPhoto.getLastPhoto()
             if (lastCollectionPhoto != null && lastCollectionPhoto.currentCollectionId == collection.id) {
-                val pickedPhoto = photosByTable.entries.first().value
+                val pickedPhoto = if(providedPhoto!= null) providedPhoto else
+                    photosByTable.entries.first().value
                 pickedPhoto.let {
                     val collectionPhoto = CollectionPhotoEntity().apply {
                         this.id = it.id

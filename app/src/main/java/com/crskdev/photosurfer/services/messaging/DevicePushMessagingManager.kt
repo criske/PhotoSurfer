@@ -4,10 +4,7 @@ import android.content.Context
 import com.crskdev.photosurfer.data.remote.auth.AuthToken
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthTokenStorage
 import com.crskdev.photosurfer.dependencies.dependencyGraph
-import com.crskdev.photosurfer.services.messaging.command.CollectionCreatedCommand
-import com.crskdev.photosurfer.services.messaging.command.CollectionDeletedCommand
-import com.crskdev.photosurfer.services.messaging.command.Command
-import com.crskdev.photosurfer.services.messaging.command.UnknownCommand
+import com.crskdev.photosurfer.services.messaging.command.*
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.messaging.messages.Topic
 import com.crskdev.photosurfer.services.messaging.remote.FCMMessage
@@ -65,10 +62,13 @@ class DevicePushMessageManagerImpl(
     fun isRegistered() = instanceId.token != null
 
 
-    private val commands = providedCommands.takeIf { it.isNotEmpty() } ?: mapOf(
-            Topic.COLLECTION_CREATED to CollectionCreatedCommand(context),
-            Topic.COLLECTION_DELETED to CollectionDeletedCommand(context)
-    )
+    private val commands by lazy {
+        providedCommands.takeIf { it.isNotEmpty() } ?: mapOf(
+                Topic.COLLECTION_CREATED to CollectionCreatedCommand(context),
+                Topic.COLLECTION_DELETED to CollectionDeletedCommand(context),
+                Topic.COLLECTION_ADDED_PHOTO to CollectionAddedPhotoCommand(context)
+        )
+    }
 
     override fun sendMessage(message: Message) {
         getCommandByTopic(message.topic).sendMessage(message)
