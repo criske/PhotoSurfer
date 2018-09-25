@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.crskdev.photosurfer.data.remote.auth.AuthToken.Companion.NONE
 import com.crskdev.photosurfer.util.Listenable
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
 interface AuthTokenStorage {
@@ -32,14 +31,14 @@ abstract class ObservableAuthTokenStorage : AuthTokenStorage, Listenable<AuthTok
 
     override fun addListener(listener: Listener<AuthToken>) {
         super.addListener(listener)
-        listener.onNotified(token()?: NONE) // emit on subscribe
+        listener.onNotified(null, token()?: NONE) // emit on subscribe
     }
 }
 
 class InMemoryAuthTokenStorage : ObservableAuthTokenStorage() {
 
-    private var token: AuthToken by Delegates.observable(NONE) { _, _, new ->
-        notifyListeners(new)
+    private var token: AuthToken by Delegates.observable(NONE) { _, old, new ->
+        notifyListeners(old, new)
     }
 
     override fun token(): AuthToken? = if (token == NONE) null else token
@@ -88,6 +87,7 @@ class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAut
     }
 
     override fun saveToken(token: AuthToken) {
+        val old = token()
         prefs.edit {
             putString(KEY_AUTH_TOKEN, buildString {
                 append(token.access)
@@ -103,15 +103,16 @@ class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAut
                 append(token.username)
             })
         }
-        notifyListeners(token)
+        notifyListeners(old, token)
     }
 
     override fun hasToken(): Boolean = token() != null
 
     override fun clearToken() {
+        val old = token()
         prefs.edit {
             remove(KEY_AUTH_TOKEN)
         }
-        notifyListeners(NONE)
+        notifyListeners(old, NONE)
     }
 }

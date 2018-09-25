@@ -5,6 +5,7 @@ import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 /**
  *
@@ -21,16 +22,16 @@ import retrofit2.http.POST
 interface MessagingAPI {
 
     @GET("/registerDevice")
-    fun registerDevice(): Call<ResponseBody>
+    fun registerDevice(@Query("username") username: String): Call<ResponseBody>
 
     @GET("/unregisterDevice")
-    fun unregisterDevice(): Call<ResponseBody>
+    fun unregisterDevice(@Query("username") username: String): Call<ResponseBody>
 
     @GET("/obtainUserDevices")
     fun obtainUserDevices(): Call<UserDevices>
 
     @POST("/createCollection")
-    fun createCollection(@Body message: SendFCMMessage)
+    fun createCollection(@Body message: FCMMessage)
 
     @GET("/clear")
     fun clear(): Call<ResponseBody>
@@ -42,7 +43,7 @@ class UserDevices {
     var tokens: List<String> = emptyList()
 }
 
-class SendFCMMessage{
+class FCMMessage{
     lateinit var actionType: String
     lateinit var id: String
 }

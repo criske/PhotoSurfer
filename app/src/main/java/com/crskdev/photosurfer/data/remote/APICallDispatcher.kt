@@ -46,11 +46,11 @@ class APICallDispatcher(@PublishedApi internal val threadCallChecker: ThreadCall
                 ?.takeIf { !it.isExecuted }
                 ?.let {
                     it.cancel()
-                    notifyListeners(State.CANCELED)
+                    notifyListeners(null, State.CANCELED)
                 }
     }
 
     @PublishedApi
-    internal fun publishedAPInotifyListeners(state: State) = notifyListeners(state)
+    internal fun publishedAPInotifyListeners(state: State) = notifyListeners(null, state)
 
 }

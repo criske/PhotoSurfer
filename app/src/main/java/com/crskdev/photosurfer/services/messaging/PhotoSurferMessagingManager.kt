@@ -1,8 +1,6 @@
 package com.crskdev.photosurfer.services.messaging
 
 import android.content.Context
-import android.telephony.TelephonyManager
-import androidx.core.content.getSystemService
 import com.crskdev.photosurfer.data.remote.auth.AuthToken
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthTokenStorage
 import com.crskdev.photosurfer.services.messaging.command.CollectionCreatedCommand
@@ -10,13 +8,10 @@ import com.crskdev.photosurfer.services.messaging.command.Command
 import com.crskdev.photosurfer.services.messaging.command.UnknownCommand
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.messaging.messages.Topic
-import com.crskdev.photosurfer.services.permission.HasAppPermissionAwarenessGlobalComponent
+import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
 import com.crskdev.photosurfer.util.Listenable
-import com.crskdev.photosurfer.util.safeSet
 import com.google.firebase.iid.FirebaseInstanceId
-import com.google.firebase.messaging.FirebaseMessaging
 import java.lang.Exception
-import java.util.concurrent.atomic.AtomicReference
 
 
 /**
@@ -32,30 +27,23 @@ interface PhotoSurferMessagingManager {
 
 }
 
-
 class PhotoSurferMessageManagerImpl(
-        private val context: Context,
+        context: Context,
+        private val messagingAPI: MessagingAPI,
         private val authTokenStorage: ObservableAuthTokenStorage,
         providedCommands: Map<Topic, Command> = emptyMap()) : PhotoSurferMessagingManager {
 
-    private val lastUserName = AtomicReference<String>("")
-
-    private val messaging = FirebaseMessaging.getInstance()
-
     private val instanceId = FirebaseInstanceId.getInstance()
-
-    private val TAG = PhotoSurferMessageManagerImpl::class.java.simpleName
 
     init {
         authTokenStorage.addListener(object : Listenable.Listener<AuthToken> {
-            override fun onNotified(data: AuthToken) {
-                val name = data.username
+            override fun onNotified(oldData: AuthToken?, newData: AuthToken) {
+                val name = newData.username
                 if (isRegistered()) {
-                    val token = instanceId.token!!
                     if (name.isNotEmpty()) {
-                        addDeviceToUserDeviceGroup(token, name)
-                    } else if (lastUserName.get().isNotEmpty()) {
-                        removeDeviceFromUserDeviceGroup(token, name)
+                        messagingAPI.registerDevice(name)
+                    } else if (oldData != null) {
+                        messagingAPI.unregisterDevice(oldData.username)
                     }
                 }
             }
@@ -71,40 +59,31 @@ class PhotoSurferMessageManagerImpl(
 
 
     override fun sendMessage(message: Message) {
-
+        getCommandByTopic(message.topic).sendMessage(message)
     }
 
-    private fun getCommand(topicStr: String): Command {
+    private fun getCommandByTopicString(topicStr: String): Command {
         if (topicStr.isEmpty()) return UnknownCommand
         val topic = topicStr.substring(topicStr.lastIndexOf("/") + 1)
         return try {
-            commands[Topic.valueOf(topic)] ?: UnknownCommand
+            getCommandByTopic(Topic.valueOf(topic))
         } catch (ex: Exception) {
             UnknownCommand
         }
     }
 
+    private fun getCommandByTopic(topic: Topic) = commands[topic] ?: UnknownCommand
+
 
     override fun onReceiveMessage(topicStr: String, data: Map<String, String>) {
-        getCommand(topicStr).onReceiveMessage(data)
+        getCommandByTopicString(topicStr).onReceiveMessage(data)
     }
 
     override fun onRegister(token: String) {
         val loggedUsername = authTokenStorage.token()?.username
         if (loggedUsername != null) {
-            addDeviceToUserDeviceGroup(token, loggedUsername)
+            messagingAPI.registerDevice(loggedUsername)
         }
-        Topic.values().forEach { topic ->
-            messaging.subscribeToTopic(topic.toString()).result
-        }
-    }
-
-    private fun addDeviceToUserDeviceGroup(deviceId: String, username: String) {
-
-    }
-
-    private fun removeDeviceFromUserDeviceGroup(deviceId: String, username: String) {
-
     }
 
 

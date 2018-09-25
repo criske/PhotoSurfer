@@ -18,6 +18,7 @@ import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
+import com.crskdev.photosurfer.data.remote.create
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepositoryImpl
@@ -31,11 +32,15 @@ import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.*
 import com.crskdev.photosurfer.services.messaging.PhotoSurferMessageManagerImpl
 import com.crskdev.photosurfer.services.messaging.PhotoSurferMessagingManager
+import com.crskdev.photosurfer.services.messaging.remote.FCMTokeProviderImpl
+import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
+import com.crskdev.photosurfer.services.messaging.remote.messagingRetrofit
 import com.crskdev.photosurfer.util.Listenable
 import retrofit2.Retrofit
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
+import com.google.firebase.iid.FirebaseInstanceId
 import com.squareup.moshi.Moshi
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -106,6 +111,8 @@ object DependencyGraph {
     lateinit var photoAPI: PhotoAPI
         private set
     lateinit var collectionsAPI: CollectionsAPI
+        private set
+    lateinit var messagingAPI: MessagingAPI
         private set
 
     //repositories
@@ -216,7 +223,10 @@ object DependencyGraph {
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
 
         //messaging
-        photoSurferMessagingManager = PhotoSurferMessageManagerImpl(context, authTokenStorage as ObservableAuthTokenStorage)
+        messagingAPI = messagingRetrofit(false, FCMTokeProviderImpl(FirebaseInstanceId.getInstance()),
+                authTokenStorage).create()
+        photoSurferMessagingManager = PhotoSurferMessageManagerImpl(context, messagingAPI,
+                authTokenStorage as ObservableAuthTokenStorage)
 
         isInit.compareAndSet(false, true)
     }

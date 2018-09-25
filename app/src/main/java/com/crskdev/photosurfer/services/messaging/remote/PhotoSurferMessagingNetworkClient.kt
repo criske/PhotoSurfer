@@ -42,22 +42,31 @@ fun messagingRetrofit(inTestMode: Boolean, fcmTokenProvider: FCMTokenProvider, a
 
 class FCMTokenInterceptor(private val fcmTokenProvider: FCMTokenProvider,
                           private val authTokenStorage: AuthTokenStorage) : Interceptor {
+
     override fun intercept(chain: Interceptor.Chain): Response =
-            (fcmTokenProvider.token() to authTokenStorage.token())
-                    .takeIf {
-                        it.first != null && it.second != null
-                    }?.let {
-                        val originalRequest = chain.request()
-                        val (fcmToken, authToken) = it
-                        val requestWithToken = originalRequest.newBuilder()
-                                .url(originalRequest.url().newBuilder()
-                                        .addQueryParameter("username", authToken!!.username)
-                                        .addQueryParameter("token", fcmToken!!)
-                                        .build())
-                                .build()
-                        chain.proceed(requestWithToken)
+            fcmTokenProvider.token()?.let {
+                val originalRequest = chain.request()
+                var urlBuilder = originalRequest.url().newBuilder()
+                        .addQueryParameter("token", it)
+                val queryUsername = originalRequest.url().queryParameter("username")
+                if (queryUsername == null) {
+                    val authUsername = authTokenStorage.token()?.username
+                    if (authUsername != null) {
+                        urlBuilder = urlBuilder.addQueryParameter("username", authUsername)
+                    } else {
+                        return@let errorResponse(chain.request(),
+                                500,
+                                "Can't send registration request. Logged username is not present")
                     }
-                    ?: errorResponse(chain.request(), 500, "Device is not registered with a token to Firebase Messaging")
+                }
+                val requestWithToken = originalRequest.newBuilder()
+                        .url(urlBuilder.build())
+                        .build()
+                chain.proceed(requestWithToken)
+            } ?: errorResponse(chain.request(),
+                    500,
+                    "Can't send registration request. Firebase Messaging token id is not present")
+
 }
 
 interface FCMTokenProvider {

@@ -10,7 +10,7 @@ open class Listenable<T> {
     private val listeners = CopyOnWriteArrayList<Listener<T>>()
 
     interface Listener<T> {
-        fun onNotified(data: T)
+        fun onNotified(oldData: T?, newData: T)
     }
 
     open fun addListener(listener: Listener<T>) {
@@ -21,9 +21,9 @@ open class Listenable<T> {
         listeners.remove(listener)
     }
 
-    protected fun notifyListeners(data: T) {
+    protected fun notifyListeners(oldData: T?, newData: T) {
         listeners.forEach {
-            it.onNotified(data)
+            it.onNotified(oldData, newData)
         }
     }
 
