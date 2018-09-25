@@ -1,13 +1,18 @@
 package com.crskdev.photosurfer.services.executors
 
-import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 class IOThreadExecutor : KExecutor {
 
-    private val executorService = Executors.newSingleThreadExecutor { r -> Thread(r, "PhotoSurfer - IO Thread") }
+    override val name: String = ExecutorType.NETWORK.toString()
+
+    private val executorService = Executors.newSingleThreadExecutor { r -> Thread(r, name) }
 
     override fun execute(command: Runnable) {
-        executorService.execute(command)
+        if (Thread.currentThread().name != name) {
+            executorService.execute(command)
+        } else {
+            command.run()
+        }
     }
 }

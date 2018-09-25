@@ -1,13 +1,19 @@
 package com.crskdev.photosurfer.util
 
 import android.animation.Animator
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.res.Resources
+import android.os.Build
 import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewPropertyAnimator
 import androidx.annotation.FloatRange
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.GestureDetectorCompat
 import androidx.navigation.NavOptions
@@ -103,3 +109,27 @@ fun RecyclerView.addOnItemGestureDetectListener(gestureListener: SimpleOnGesture
 }
 
 abstract class SimpleOnGestureListener2<V>(val gesturedView: V) : GestureDetector.SimpleOnGestureListener()
+
+
+fun Context.systemNotification(message: String) {
+    val context = applicationContext
+    val channelID = "PhotoSurfer-Notification"
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val name = channelID
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelID, name, importance)
+        channel.description = channelID
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
+    }
+    val notification = NotificationCompat
+            .Builder(context, channelID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("Photo Surfer")
+            .setContentText(message)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+    val notificationManager = NotificationManagerCompat.from(context)
+    notificationManager.notify(1337, notification)
+}

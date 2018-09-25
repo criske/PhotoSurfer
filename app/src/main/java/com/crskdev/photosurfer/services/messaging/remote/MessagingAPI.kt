@@ -30,8 +30,8 @@ interface MessagingAPI {
     @GET("/obtainUserDevices")
     fun obtainUserDevices(): Call<UserDevices>
 
-    @POST("/createCollection")
-    fun createCollection(@Body message: FCMMessage)
+    @POST("/sendPushMessage")
+    fun sendPushMessage(@Body message: FCMMessage): Call<ResponseBody>
 
     @GET("/clear")
     fun clear(): Call<ResponseBody>
@@ -43,7 +43,8 @@ class UserDevices {
     var tokens: List<String> = emptyList()
 }
 
-class FCMMessage{
+class FCMMessage {
     lateinit var actionType: String
     lateinit var id: String
+    var extraId: String = ""
 }

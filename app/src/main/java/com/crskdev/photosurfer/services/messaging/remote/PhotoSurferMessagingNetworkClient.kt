@@ -21,9 +21,9 @@ object MessagingContract {
 
 internal fun messagingURL(inTestMode: Boolean = false): String =
         if (inTestMode) {
-            MessagingContract.REMOTE_URL
-        } else {
             MessagingContract.TEST_URL
+        } else {
+            MessagingContract.REMOTE_URL
         }
 
 fun messagingRetrofit(inTestMode: Boolean, fcmTokenProvider: FCMTokenProvider, authTokenStorage: AuthTokenStorage): Retrofit =

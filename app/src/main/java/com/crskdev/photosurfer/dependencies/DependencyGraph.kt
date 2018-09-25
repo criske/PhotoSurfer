@@ -30,8 +30,8 @@ import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.*
-import com.crskdev.photosurfer.services.messaging.PhotoSurferMessageManagerImpl
-import com.crskdev.photosurfer.services.messaging.PhotoSurferMessagingManager
+import com.crskdev.photosurfer.services.messaging.DevicePushMessageManagerImpl
+import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.FCMTokeProviderImpl
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
 import com.crskdev.photosurfer.services.messaging.remote.messagingRetrofit
@@ -59,11 +59,11 @@ object DependencyGraph {
     val diskThreadExecutor: KExecutor = DiskThreadExecutor()
     val ioThreadExecutor: KExecutor = IOThreadExecutor()
     val executorManager: ExecutorsManager = ExecutorsManager(
-            EnumMap<ExecutorsManager.Type, KExecutor>(ExecutorsManager.Type::class.java)
+            EnumMap<ExecutorType, KExecutor>(ExecutorType::class.java)
                     .apply {
-                        put(ExecutorsManager.Type.DISK, diskThreadExecutor)
-                        put(ExecutorsManager.Type.NETWORK, ioThreadExecutor)
-                        put(ExecutorsManager.Type.UI, uiThreadExecutor)
+                        put(ExecutorType.DISK, diskThreadExecutor)
+                        put(ExecutorType.NETWORK, ioThreadExecutor)
+                        put(ExecutorType.UI, uiThreadExecutor)
                     })
 
     //DB
@@ -104,7 +104,7 @@ object DependencyGraph {
         private set
 
     //MESSAGING
-    lateinit var photoSurferMessagingManager: PhotoSurferMessagingManager
+    lateinit var devicePushMessagingManager: DevicePushMessagingManager
         private set
 
     //APIs
@@ -225,7 +225,7 @@ object DependencyGraph {
         //messaging
         messagingAPI = messagingRetrofit(false, FCMTokeProviderImpl(FirebaseInstanceId.getInstance()),
                 authTokenStorage).create()
-        photoSurferMessagingManager = PhotoSurferMessageManagerImpl(context, messagingAPI,
+        devicePushMessagingManager = DevicePushMessageManagerImpl(context, messagingAPI,
                 authTokenStorage as ObservableAuthTokenStorage)
 
         isInit.compareAndSet(false, true)

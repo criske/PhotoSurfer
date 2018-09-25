@@ -11,6 +11,7 @@ import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.toCollectionDB
 import com.crskdev.photosurfer.entities.toCollectionLite
 import com.crskdev.photosurfer.services.TypedWorker
+import com.crskdev.photosurfer.services.messaging.messages.Message
 
 /**
  * Created by Cristian Pela on 02.09.2018.
@@ -55,6 +56,8 @@ class CreateCollectionWorker : TypedWorker() {
         val collectionsAPI: CollectionsAPI = graph.collectionsAPI
         val transactional = graph.daoManager.transactionRunner()
 
+        val devicePushMessagingManager = graph.devicePushMessagingManager
+
         //TODO this really need to be chained
         try {
             val response = collectionsAPI
@@ -64,14 +67,15 @@ class CreateCollectionWorker : TypedWorker() {
                 val collectionReturned = response.body()
                 collectionReturned?.let { cjson ->
                     transactional {
+                        val collectionId = cjson.id
                         val lastCollectionEntity = collectionsDAO.getLatestCollection()
                         val pagingData = lastCollectionEntity?.let {
                             PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
                         } ?: PagingData(1, 1, null, null)
                         collectionsDAO.createCollection(cjson.toCollectionDB(pagingData))
+                        devicePushMessagingManager.sendMessage(Message.CollectionCreate(collectionId))
                         //add the photo to collection
                         if (withPhotoId != null) {
-                            val collectionId = cjson.id
                             val addToCollectionResponse = collectionsAPI
                                     .addPhotoToCollection(collectionId, collectionId, withPhotoId)
                                     .execute()
@@ -90,6 +94,7 @@ class CreateCollectionWorker : TypedWorker() {
                                     }
                                 }
                             }
+                            //TODO notify device for photo added to collection
                         }
                     }
                     sendPlatformNotification("Collection created")

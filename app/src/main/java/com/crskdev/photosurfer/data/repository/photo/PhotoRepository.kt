@@ -21,6 +21,7 @@ import com.crskdev.photosurfer.data.repository.scheduled.Tag
 import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.util.runOn
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
@@ -75,9 +76,9 @@ class PhotoRepositoryImpl(
         private val scheduledWorkService: ScheduledWorkService
 ) : PhotoRepository {
 
-    private val uiExecutor = executorsManager.types[ExecutorsManager.Type.UI]!!
-    private val ioExecutor = executorsManager.types[ExecutorsManager.Type.NETWORK]!!
-    private val diskExecutor = executorsManager.types[ExecutorsManager.Type.DISK]!!
+    private val uiExecutor = executorsManager.types[ExecutorType.UI]!!
+    private val ioExecutor = executorsManager.types[ExecutorType.NETWORK]!!
+    private val diskExecutor = executorsManager.types[ExecutorType.DISK]!!
 
     override fun getPhotos(repositoryAction: RepositoryAction): DataSource.Factory<Int, Photo> {
         val table = when (repositoryAction.type) {

@@ -10,11 +10,11 @@ class PhotoSurferMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         applicationContext.dependencyGraph()
-                .photoSurferMessagingManager.onReceiveMessage(message.from ?: "", message.data)
+                .devicePushMessagingManager.onReceiveMessage(message.data)
     }
 
     override fun onNewToken(token: String) {
         applicationContext.dependencyGraph()
-                .photoSurferMessagingManager.onRegister(token)
+                .devicePushMessagingManager.onRegister(token)
     }
 }

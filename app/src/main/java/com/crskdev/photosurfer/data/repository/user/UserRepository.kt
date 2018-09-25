@@ -17,6 +17,7 @@ import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.entities.toDbUserEntity
 import com.crskdev.photosurfer.entities.toUser
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.util.runOn
 
 /**
@@ -54,9 +55,9 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
                          private val authAPI: AuthAPI,
                          private val authTokenStorage: AuthTokenStorage) : UserRepository {
 
-    private val uiExecutor = executorsManager.types[ExecutorsManager.Type.UI]!!
-    private val ioExecutor = executorsManager.types[ExecutorsManager.Type.NETWORK]!!
-    private val diskExecutor = executorsManager.types[ExecutorsManager.Type.DISK]!!
+    private val uiExecutor = executorsManager.types[ExecutorType.UI]!!
+    private val ioExecutor = executorsManager.types[ExecutorType.NETWORK]!!
+    private val diskExecutor = executorsManager.types[ExecutorType.DISK]!!
 
     private val userDAO: UserDAO = daoManager.getDao(Contract.TABLE_USERS)
     private val transactional: TransactionRunner = daoManager.transactionRunner()

@@ -21,6 +21,7 @@ import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.executors.ThreadCallChecker
+import com.crskdev.photosurfer.services.executors.ExecutorType
 import okhttp3.Request
 import okhttp3.ResponseBody
 import org.junit.Assert.*
@@ -103,11 +104,11 @@ class CollectionRepositoryImplTest : BaseDBTest() {
                 db)
         collectionRepository = CollectionRepositoryImpl(
                 ExecutorsManager(
-                        EnumMap<ExecutorsManager.Type, KExecutor>(ExecutorsManager.Type::class.java)
+                        EnumMap<ExecutorType, KExecutor>(ExecutorType::class.java)
                                 .apply {
-                                    put(ExecutorsManager.Type.DISK, emptyExecutor)
-                                    put(ExecutorsManager.Type.NETWORK, emptyExecutor)
-                                    put(ExecutorsManager.Type.UI, emptyExecutor)
+                                    put(ExecutorType.DISK, emptyExecutor)
+                                    put(ExecutorType.NETWORK, emptyExecutor)
+                                    put(ExecutorType.UI, emptyExecutor)
                                 }),
                 daoManager,
                 PhotoDAOFacade(daoManager),

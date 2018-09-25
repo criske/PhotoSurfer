@@ -6,6 +6,8 @@ import java.util.concurrent.Executor
 
 class UIThreadExecutor(private val threadCallChecker: ThreadCallChecker) : KExecutor {
 
+    override val name: String = Looper.getMainLooper().thread.name
+
     private val mHandler = Handler(Looper.getMainLooper())
 
     override fun execute(command: Runnable) {

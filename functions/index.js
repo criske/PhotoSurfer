@@ -11,6 +11,7 @@ var queueActionOperationTrigger = (change) => {
             var action = {
                 actionType: val.actionType,
                 id: val.id,
+                extraId: val.extraId
             }
             var index = user.tokens.indexOf(val.token);
             console.log(`Username: ${user.username} tokens: ${user.tokens} . Action holder token: ${val.token} i: ${index}`);
@@ -32,12 +33,15 @@ var sendQueueActionOperation = (request, response) => {
     var username = request.query.username;
     var token = request.query.token;
     var action = request.body;
+    console.log(`Action: type:${action.actionType} id: ${action.id} extra-id: ${action.extraId}`)
     if (username === null || token === null || action.actionType === null || action.id === null) {
-        response.status(500).send(`Invalid data sent: username:${username} ; token:${token}; action: ${action.type} id:${action.id}`)
+        response.status(500).send(`Invalid data sent: username:${username} ; token:${token}; action: ${action.actionType} 
+        id:${action.id} extra-id: ${action.extraId}`)
     }
-    dbOps.queueAction(username, token, action.type, action.id)
+    dbOps.queueAction(username, token, action.actionType, action.id, action.extraId)
         .then(() => {
-            var msg = `Action queued: username:${username} ; token:${token}; action: ${action.actionType} id:${action.id}`;
+            var msg = `Action queued: username:${username} ; token:${token}; action: ${action.actionType} 
+            id:${action.id} extra-id: ${action.extraId}`;
             console.log(msg);
             return response.status(200).send(msg)
         })
@@ -50,7 +54,7 @@ var sendQueueActionOperation = (request, response) => {
 exports.queueActionOperationTriggerWrite = functions.database.ref(dbOps.QUEUE)
     .onWrite(queueActionOperationTrigger);
 
-exports.createCollection = functions.https.onRequest(sendQueueActionOperation);
+exports.sendPushMessage = functions.https.onRequest(sendQueueActionOperation);
 
 exports.registerDevice = functions.https.onRequest((request, response) => {
     var username = request.query.username;

@@ -45,4 +45,8 @@ interface CollectionsAPI {
     @Headers(REQUIRE_AUTH)
     fun removePhotoFromCollection(@Path("collection_id") collectionIdPath: Int, @Query("collection_id") collectionId: Int, @Query("photo_id") photoId: String): Call<PhotoJSON>
 
+    @GET("/collections/{collection_id}")
+    @Headers(REQUIRE_AUTH)
+    fun getCollection(@Path("collection_id") collectionId: Int): Call<CollectionJSON>
+
 }

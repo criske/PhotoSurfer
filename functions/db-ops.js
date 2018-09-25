@@ -28,12 +28,13 @@ var getUser = function (username) {
         })
 }
 
-exports.queueAction = function (username, token, actionType, id) {
+exports.queueAction = function (username, token, actionType, id, extraId) {
     return actionOP.set({
         username: username,
         token: token,
         actionType: actionType,
         id: id,
+        extraId: extraId || "",
         date: new Date().getTime()
     })
 }
@@ -45,12 +46,15 @@ exports.addTokenToGroupDevice = function (username, token) {
             if (tokens.indexOf(token) === -1) {
                 tokens.push(token)
                 return fcmCollectionRef.child(username).set(tokens)
+                    .then(()=> Promise.resolve(true))
             } else {
-                return Promise.reject(Error("Token " + token + " already added"))
+                return Promise.resolve(false) //silent resolve
             }
         })
         .catch(e => {
-            return fcmCollectionRef.child(username).set([token])
+            //user not found -> create new user
+            return fcmCollectionRef.child(username).set([token]).then(()=> Promise.resolve(true))
+                    .catch((e)=> Promise.reject(e))
         })
 }
 

@@ -18,6 +18,7 @@ import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.util.runOn
 
 /**
@@ -64,10 +65,10 @@ class CollectionRepositoryImpl(
     private val collectionPhotoDAO: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
 
     private val transactional = daoManager.transactionRunner()
-    private val ioExecutor = executorsManager.types[ExecutorsManager.Type.NETWORK]!!
+    private val ioExecutor = executorsManager.types[ExecutorType.NETWORK]!!
 
-    private val diskExecutor = executorsManager.types[ExecutorsManager.Type.DISK]!!
-    private val uiExecutor = executorsManager.types[ExecutorsManager.Type.UI]!!
+    private val diskExecutor = executorsManager.types[ExecutorType.DISK]!!
+    private val uiExecutor = executorsManager.types[ExecutorType.UI]!!
 
     override fun createCollection(collection: Collection, withPhotoId: String?) {
         scheduledWorkService.schedule(CreateCollectionWorker
