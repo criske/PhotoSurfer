@@ -126,7 +126,9 @@ class OAuth2Authorizer {
                 .addQueryParameter("response_type", "code")
                 .addEncodedQueryParameter("scope", scopes.joinToString("+"))
                 .build()
-        return chain.proceed(Request.Builder().url(authenticityTokenUrl).build())
+        return chain.proceed(Request.Builder()
+                .cacheControl(CacheControl.FORCE_NETWORK)
+                .url(authenticityTokenUrl).build())
     }
 
     private fun requestLogin(chain: Interceptor.Chain, email: String, password: String, doc: Document): Response {
@@ -142,6 +144,7 @@ class OAuth2Authorizer {
                 .url(baseAuthHttpUrl
                         .newBuilder()
                         .addPathSegment("login").build())
+                .cacheControl(CacheControl.FORCE_NETWORK)
                 .post(form)
                 .build())
     }
@@ -163,6 +166,7 @@ class OAuth2Authorizer {
                 .url(baseAuthHttpUrl
                         .newBuilder()
                         .addPathSegment("authorize").build())
+                .cacheControl(CacheControl.FORCE_NETWORK)
                 .post(form)
                 .build())
     }
@@ -180,6 +184,7 @@ class OAuth2Authorizer {
                 .url(baseAuthHttpUrl
                         .newBuilder()
                         .addPathSegment("token").build())
+                .cacheControl(CacheControl.FORCE_NETWORK)
                 .post(authTokenForm)
                 .build())
     }

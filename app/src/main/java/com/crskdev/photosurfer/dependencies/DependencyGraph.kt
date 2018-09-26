@@ -6,8 +6,6 @@ import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.local.*
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
-import com.crskdev.photosurfer.data.remote.NetworkClient
-import com.crskdev.photosurfer.data.remote.RetrofitClient
 import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
@@ -15,10 +13,11 @@ import com.crskdev.photosurfer.data.local.photo.external.*
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
 import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
-import com.crskdev.photosurfer.data.remote.APICallDispatcher
+import com.crskdev.photosurfer.data.remote.*
 import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
-import com.crskdev.photosurfer.data.remote.create
+import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrar
+import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrarImpl
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepositoryImpl
@@ -144,10 +143,11 @@ object DependencyGraph {
             listenableAuthState = this
         }
         //authTokenStorage = InMemoryAuthTokenStorage()
+        val persistentCookieJar = PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
         val retrofitClient = RetrofitClient(NetworkClient(
                 authTokenStorage,
                 APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY, BuildConfig.REDIRECT_URI),
-                PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
+                persistentCookieJar
         ))
         retrofit = retrofitClient.retrofit
         progressListenerRegistrar = ProgressListenerRegistrarImpl(retrofitClient)
@@ -225,11 +225,10 @@ object DependencyGraph {
                 apiCallDispatcher,
                 userAPI,
                 authAPI,
-                authTokenStorage)
+                authTokenStorage,
+                PersistentSessionClearable(persistentCookieJar))
 
         authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
-
-
 
         isInit.compareAndSet(false, true)
     }

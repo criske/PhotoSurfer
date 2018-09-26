@@ -108,12 +108,12 @@ class CollectionAddedPhotoCommand(context: Context) : FCMCommand(context) {
         transactional {
             //update size and cover
             val photoDb = photoDAOFacade.getPhotoFromEitherTable(photoId)
-                    ?: photoAPI.getPhoto(photoId).execute().let {
-                        if (it.isSuccessful) {
+                    ?: photoAPI.getPhoto(photoId).execute().let { r ->
+                        if (r.isSuccessful) {
                             val pagingData = photoDAOFacade.getLastPhoto(Contract.TABLE_COLLECTION_PHOTOS)?.let {
                                 PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
                             } ?: PagingData(1, 1, null, null)
-                            it.body()?.toCollectionPhotoDbEntity(pagingData, photoDAOFacade.getNextIndex(Contract.TABLE_COLLECTION_PHOTOS))
+                            r.body()?.toCollectionPhotoDbEntity(pagingData, photoDAOFacade.getNextIndex(Contract.TABLE_COLLECTION_PHOTOS))
                         } else {
                             null
                         }

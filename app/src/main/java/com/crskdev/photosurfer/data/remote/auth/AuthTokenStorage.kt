@@ -110,7 +110,7 @@ class AuthTokenStorageImpl(private val prefs: SharedPreferences) : ObservableAut
 
     override fun clearToken() {
         val old = token()
-        prefs.edit {
+        prefs.edit(true) {
             remove(KEY_AUTH_TOKEN)
         }
         notifyListeners(old, NONE)

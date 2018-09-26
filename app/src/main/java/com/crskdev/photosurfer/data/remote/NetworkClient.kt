@@ -26,7 +26,6 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
                         setCookiePolicy(CookiePolicy.ACCEPT_ALL)
                     })) {
 
-
     companion object {
         val DEFAULT = NetworkClient(AuthTokenStorage.NONE, APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY,
                 BuildConfig.REDIRECT_URI))
@@ -60,7 +59,6 @@ class NetworkClient(tokenStorage: AuthTokenStorage,
             listener(isStartingValue, bytesRead, contentLength, done)
         }
     }
-
 }
 
 class Caller(private val host: String) {

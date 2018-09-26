@@ -8,6 +8,7 @@ import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.local.user.UserDAO
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.PagingData
+import com.crskdev.photosurfer.data.remote.PersistentSessionClearable
 import com.crskdev.photosurfer.data.remote.auth.AuthAPI
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.auth.toAuthToken
@@ -53,7 +54,8 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
                          private val apiCallDispatcher: APICallDispatcher,
                          private val userAPI: UserAPI,
                          private val authAPI: AuthAPI,
-                         private val authTokenStorage: AuthTokenStorage) : UserRepository {
+                         private val authTokenStorage: AuthTokenStorage,
+                         private val session: PersistentSessionClearable) : UserRepository {
 
     private val uiExecutor = executorsManager.types[ExecutorType.UI]!!
     private val ioExecutor = executorsManager.types[ExecutorType.NETWORK]!!
@@ -156,6 +158,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
         diskExecutor {
             authTokenStorage.clearToken()
             daoManager.clearAll()
+            session.clear()
             callback?.runOn(uiExecutor) { onSuccess(Unit) }
         }
 
