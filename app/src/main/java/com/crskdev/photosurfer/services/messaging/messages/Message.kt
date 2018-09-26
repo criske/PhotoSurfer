@@ -6,6 +6,6 @@ sealed class Message(val topic: Topic) {
     class CollectionEdited(val collectionId: Int) : Message(Topic.COLLECTION_EDITED)
     class CollectionAddedPhoto(val collectionId: Int, val photoId: String) : Message(Topic.COLLECTION_ADDED_PHOTO)
     class CollectionRemovedPhoto(val collectionId: Int, val photoId: String) : Message(Topic.COLLECTION_REMOVED_PHOTO)
-    class CollectionLiked(val photoId: String) : Message(Topic.LIKED)
-    class CollectionUnliked(val photoId: String) : Message(Topic.UNLIKED)
+    class PhotoLiked(val photoId: String) : Message(Topic.LIKED)
+    class PhotoUnliked(val photoId: String) : Message(Topic.UNLIKED)
 }

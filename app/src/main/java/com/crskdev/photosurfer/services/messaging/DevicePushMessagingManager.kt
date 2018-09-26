@@ -66,7 +66,11 @@ class DevicePushMessageManagerImpl(
         providedCommands.takeIf { it.isNotEmpty() } ?: mapOf(
                 Topic.COLLECTION_CREATED to CollectionCreatedCommand(context),
                 Topic.COLLECTION_DELETED to CollectionDeletedCommand(context),
-                Topic.COLLECTION_ADDED_PHOTO to CollectionAddedPhotoCommand(context)
+                Topic.COLLECTION_EDITED to CollectionEditedCommand(context),
+                Topic.COLLECTION_ADDED_PHOTO to CollectionAddedPhotoCommand(context),
+                Topic.COLLECTION_REMOVED_PHOTO to CollectionRemovePhotoCommand(context),
+                Topic.LIKED to PhotoLikeCommand(context),
+                Topic.UNLIKED to PhotoUnlikeCommand(context)
         )
     }
 

@@ -27,6 +27,7 @@ import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.tintIcons
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.synthetic.main.fragment_collection_list_photos.*
 import java.util.concurrent.Executor
@@ -58,6 +59,7 @@ class CollectionListPhotosFragment : Fragment() {
             setNavigationOnClickListener {
                 findNavController().popBackStack()
             }
+            tintIcons()
         }
         recyclerCollectionListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()

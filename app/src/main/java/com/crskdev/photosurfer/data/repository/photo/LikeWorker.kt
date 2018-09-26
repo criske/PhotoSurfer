@@ -1,8 +1,9 @@
 package com.crskdev.photosurfer.data.repository.photo
 
+import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.TypedWorker
-import com.crskdev.photosurfer.data.repository.scheduled.WorkType
+import com.crskdev.photosurfer.services.messaging.messages.Message
 
 class LikeWorker : TypedWorker() {
 
@@ -12,6 +13,7 @@ class LikeWorker : TypedWorker() {
         val graph = applicationContext.dependencyGraph()
         val api = graph.photoAPI
         val apiCallDispatcher = graph.apiCallDispatcher
+        val devicePushMessagingManager = graph.devicePushMessagingManager
 
         val id = inputData.getString("id")
         val liked: Boolean = inputData.getBoolean("likedByMe", false)
@@ -30,6 +32,11 @@ class LikeWorker : TypedWorker() {
             when (code) {
                 201, 200 -> {
                     sendPlatformNotification("Scheduled photo like for id: $id successful")
+                    devicePushMessagingManager.sendMessage(if (liked) {
+                        Message.PhotoLiked(id)
+                    } else {
+                        Message.PhotoUnliked(id)
+                    })
                     Result.SUCCESS
                 }
                 401 -> {

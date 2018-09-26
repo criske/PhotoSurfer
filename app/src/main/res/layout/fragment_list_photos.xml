@@ -29,6 +29,7 @@
                 android:focusable="false"
                 app:defaultQueryHint="@string/search"
                 app:iconifiedByDefault="false"
+                android:theme="@style/Base.ThemeOverlay.AppCompat.Light"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
@@ -40,10 +41,7 @@
         android:id="@+id/recyclerUserListPhotos"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="2dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="2dp"
-        android:layout_marginBottom="2dp"
+        android:layout_margin="2dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

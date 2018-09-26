@@ -1,7 +1,6 @@
 package com.crskdev.photosurfer.presentation.collection
 
 
-import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -25,9 +24,9 @@ import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.util.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
-import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_collections.*
 import kotlinx.android.synthetic.main.item_list_collections.view.*
 import java.util.concurrent.Executor
@@ -86,6 +85,7 @@ class CollectionsFragment : Fragment() {
                 }
                 true
             }
+            tintIcons()
         }
         viewModel.collectionsLiveData.observe(this, Observer {
             (recyclerCollections.adapter as CollectionsAdapter).submitList(it)

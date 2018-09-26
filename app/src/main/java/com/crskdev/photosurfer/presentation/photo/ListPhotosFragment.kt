@@ -35,6 +35,8 @@ import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.KExecutor
+import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
+import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.util.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
@@ -42,6 +44,7 @@ import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.tintIcons
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
@@ -49,7 +52,7 @@ import kotlinx.android.synthetic.main.fragment_list_photos.*
 /**
  * Created by Cristian Pela on 01.08.2018.
  */
-class ListPhotosFragment : Fragment() {
+class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
     companion object {
         private const val KEY_CURRENT_FILTER = "KEY_CURRENT_FILTER"
@@ -114,7 +117,11 @@ class ListPhotosFragment : Fragment() {
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
                     R.id.menu_saved -> {
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
+                        if (AppPermissionsHelper.hasStoragePermission(context)) {
+                            viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
+                        } else {
+                            AppPermissionsHelper.requestStoragePermission(activity!!)
+                        }
                     }
                     R.id.menu_item_search_users -> {
                         navController.navigate(R.id.fragment_search_users, null,
@@ -126,6 +133,8 @@ class ListPhotosFragment : Fragment() {
                 }
                 true
             }
+
+            tintIcons()
         }
 
         val glide = Glide.with(this)
@@ -186,6 +195,10 @@ class ListPhotosFragment : Fragment() {
             authNavigatorMiddleware.navigateToLogin(activity!!)
         })
 
+    }
+
+    override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
+        viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
     }
 
     private fun FilterVM.parcelize(): ParcelableFilter = ParcelableFilter(type.ordinal, title, data)

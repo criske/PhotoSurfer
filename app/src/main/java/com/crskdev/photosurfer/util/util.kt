@@ -5,17 +5,22 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.MotionEvent
-import android.view.View
 import android.view.ViewPropertyAnimator
+import androidx.annotation.ColorRes
 import androidx.annotation.FloatRange
+import androidx.appcompat.widget.Toolbar
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.GestureDetectorCompat
+import androidx.core.view.iterator
 import androidx.navigation.NavOptions
 import androidx.recyclerview.widget.RecyclerView
 import com.crskdev.photosurfer.R
@@ -133,3 +138,18 @@ fun Context.systemNotification(message: String) {
     val notificationManager = NotificationManagerCompat.from(context)
     notificationManager.notify(1337, notification)
 }
+
+fun Toolbar.tintIcons(@ColorRes color: Int = android.R.color.darker_gray) {
+    post {
+        this.menu.iterator().forEach {
+            it.icon = DrawableCompat.wrap(it.icon)?.mutate()?.apply {
+                DrawableCompat.setTint(this, ContextCompat.getColor(context, color))
+            }
+        }
+        this.navigationIcon
+                ?.let { DrawableCompat.setTint(DrawableCompat.wrap(it), ContextCompat.getColor(context, color)) }
+    }
+}
+
+fun Drawable.tint(context: Context, @ColorRes color: Int = android.R.color.darker_gray) =
+        DrawableCompat.setTint(DrawableCompat.wrap(this).mutate(), ContextCompat.getColor(context, color))

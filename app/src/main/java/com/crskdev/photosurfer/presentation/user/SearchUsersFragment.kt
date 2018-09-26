@@ -36,6 +36,7 @@ import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.defaultConfigBuild
 import com.crskdev.photosurfer.util.livedata.filter
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_search_users.*
 
 
@@ -63,7 +64,7 @@ class SearchUsersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val searchView = SearchView(ContextThemeWrapper(view.context,
-                R.style.ThemeOverlay_AppCompat_Dark_ActionBar))
+                R.style.Base_ThemeOverlay_AppCompat_Light_TintedIcon))
                 .apply {
                     maxWidth = Int.MAX_VALUE
                     setIconifiedByDefault(false)
@@ -89,6 +90,7 @@ class SearchUsersFragment : Fragment() {
             setNavigationOnClickListener {
                 findNavController().popBackStack()
             }
+            tintIcons()
         }
         with(recyclerSearchUsers) {
             adapter = SearchUsersAdapter(layoutInflater,

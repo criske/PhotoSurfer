@@ -60,7 +60,8 @@ object AppPermissionsHelper {
         fun notifyAwareFragments(f: Fragment) {
             if (f is HasAppPermissionAwareness) {
                 argDispatched = true
-                f.onPermissionsGranted(grantedPermissions, queueStore.getString(requestCode.toString(), null))
+                if (grantedPermissions.isNotEmpty())
+                    f.onPermissionsGranted(grantedPermissions, queueStore.getString(requestCode.toString(), null))
             }
             f.childFragmentManager.fragments.forEach {
                 notifyAwareFragments(it)

@@ -1,7 +1,9 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="BaseAppTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
+
+    <style name="AppTheme" parent="BaseAppTheme" >
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -14,10 +16,15 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">?attr/actionBarSize</item>
         <item name="android:background">@color/colorPrimary</item>
-        <item name="android:theme">@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar</item>
+        <item name="android:theme">@style/Base.ThemeOverlay.AppCompat.Light.TintedIcon</item>
         <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
         <item name="layout_collapseMode">pin</item>
     </style>
+
+    <style name="Base.ThemeOverlay.AppCompat.Light.TintedIcon">
+        <item name="colorControlNormal">@android:color/darker_gray</item>
+    </style>
+
     <style name="BasicAppToolbar.Common.Nav">
         <item name="navigationIcon">@drawable/ic_arrow_back_white_24dp</item>
     </style>

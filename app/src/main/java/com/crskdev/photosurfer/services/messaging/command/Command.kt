@@ -34,10 +34,6 @@ object UnknownCommand : Command {
 
 class CollectionCreatedCommand(context: Context) : FCMCommand(context) {
 
-    private val dependencyGraph = context.dependencyGraph()
-
-    private val messagingAPI = dependencyGraph.messagingAPI
-
     private val collectionsDAO: CollectionsDAO = dependencyGraph.daoManager.getDao(Contract.TABLE_COLLECTIONS)
 
     private val collectionAPI = dependencyGraph.collectionsAPI
@@ -66,10 +62,6 @@ class CollectionCreatedCommand(context: Context) : FCMCommand(context) {
 
 class CollectionDeletedCommand(context: Context) : FCMCommand(context) {
 
-    private val dependencyGraph = context.dependencyGraph()
-
-    private val messagingAPI = dependencyGraph.messagingAPI
-
     private val collectionsDAO: CollectionsDAO = dependencyGraph.daoManager.getDao(Contract.TABLE_COLLECTIONS)
 
     override fun onReceiveMessage(message: FCMMessage) {
@@ -86,11 +78,44 @@ class CollectionDeletedCommand(context: Context) : FCMCommand(context) {
 
 }
 
+class CollectionEditedCommand(context: Context) : FCMCommand(context) {
+
+    private val collectionsAPI = dependencyGraph.collectionsAPI
+
+    private val daoManager = dependencyGraph.daoManager
+
+    private val collectionsDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
+
+    private val transactional = daoManager.transactionRunner()
+
+    override fun onReceiveMessage(message: FCMMessage) {
+        val collectionId = message.id.toInt()
+        collectionsAPI.getCollection(collectionId).execute()
+                .takeIf { it.isSuccessful }
+                ?.let { r ->
+                    r.body()?.let { cjson ->
+                        transactional {
+                            collectionsDAO.getCollection(collectionId)?.let { c ->
+                                collectionsDAO.updateCollection(c.apply {
+                                    this.title = cjson.title
+                                    this.description = cjson.description
+                                })
+                            }
+                        }
+                    }
+                }
+    }
+
+    override fun sendMessage(message: Message) {
+        messagingAPI.sendPushMessage(FCMMessage().apply {
+            actionType = message.topic.toString()
+            id = (message as Message.CollectionEdited).collectionId.toString()
+        }).execute()
+    }
+
+}
+
 class CollectionAddedPhotoCommand(context: Context) : FCMCommand(context) {
-
-    private val dependencyGraph = context.dependencyGraph()
-
-    private val messagingAPI = dependencyGraph.messagingAPI
 
     private val daoManager = dependencyGraph.daoManager
 
@@ -143,3 +168,72 @@ class CollectionAddedPhotoCommand(context: Context) : FCMCommand(context) {
     }
 
 }
+
+
+class CollectionRemovePhotoCommand(context: Context) : FCMCommand(context) {
+
+    private val daoManager = dependencyGraph.daoManager
+
+    private val transactional = daoManager.transactionRunner()
+
+    private val collectionsDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
+
+    private val photoDAOFacade = dependencyGraph.photoDAOFacade
+
+    override fun onReceiveMessage(message: FCMMessage) {
+        val collectionId = message.id.toInt()
+        val photoId = message.extraId
+        transactional {
+            collectionsDAO.getCollection(collectionId)?.let {
+                photoDAOFacade.removePhotoFromCollection(photoId, it.asLite())
+            }
+        }
+    }
+
+    override fun sendMessage(message: Message) {
+        messagingAPI.sendPushMessage(FCMMessage().apply {
+            actionType = message.topic.toString()
+            id = (message as Message.CollectionRemovedPhoto).collectionId.toString()
+            extraId = message.photoId
+        }).execute()
+    }
+
+}
+
+class PhotoLikeCommand(context: Context) : FCMCommand(context) {
+
+    private val photoDAOFacade = dependencyGraph.photoDAOFacade
+
+    override fun onReceiveMessage(message: FCMMessage) {
+        val photoId = message.id
+        photoDAOFacade.like(photoId, true)
+        //TODO deal when photo is not found
+    }
+
+    override fun sendMessage(message: Message) {
+        messagingAPI.sendPushMessage(FCMMessage().apply {
+            actionType = message.topic.toString()
+            id = (message as Message.PhotoLiked).photoId.toString()
+        }).execute()
+    }
+
+}
+
+class PhotoUnlikeCommand(context: Context) : FCMCommand(context) {
+
+    private val photoDAOFacade = dependencyGraph.photoDAOFacade
+
+    override fun onReceiveMessage(message: FCMMessage) {
+        val photoId = message.id
+        photoDAOFacade.like(photoId, false)
+    }
+
+    override fun sendMessage(message: Message) {
+        messagingAPI.sendPushMessage(FCMMessage().apply {
+            actionType = message.topic.toString()
+            id = (message as Message.PhotoUnliked).photoId.toString()
+        }).execute()
+    }
+
+}
+

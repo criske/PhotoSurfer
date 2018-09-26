@@ -246,7 +246,10 @@ class CollectionRepositoryImpl(
     override fun removePhotoFromCollection(collection: Collection, photo: Photo) {
         //todo schedule api call
         ioExecutor {
-            collectionAPI.removePhotoFromCollection(collection.id, collection.id, photo.id).execute()
+            val response = collectionAPI.removePhotoFromCollection(collection.id, collection.id, photo.id).execute()
+            if(response.isSuccessful){
+                pushMessagingManager.sendMessage(Message.CollectionRemovedPhoto(collection.id, photo.id))
+            }
         }
         diskExecutor {
             transactional {

@@ -5,6 +5,7 @@ import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.TypedWorker
+import com.crskdev.photosurfer.services.messaging.messages.Message
 
 /**
  * Created by Cristian Pela on 15.09.2018.
@@ -32,14 +33,16 @@ class EditCollectionWorker : TypedWorker() {
 
     override fun doWork(): Result {
         try {
-            val collectionsAPI = applicationContext.dependencyGraph().collectionsAPI
+            val dependencyGraph = applicationContext.dependencyGraph()
+            val collectionsAPI = dependencyGraph.collectionsAPI
+            val devicePushMessagingManager = dependencyGraph.devicePushMessagingManager
 
             val id = inputData.getInt(ID, -1)
             val title = inputData.getString(TITLE)!!
             val description: String = inputData.getString(DESCRIPTION) ?: ""
             val private: Boolean = inputData.getBoolean(PRIVATE, true)
-
             collectionsAPI.updateCollection(id, title, description, private).execute()
+            devicePushMessagingManager.sendMessage(Message.CollectionEdited(id))
             sendPlatformNotification("Collection edited")
         } catch (ex: Exception) {
             ex.printStackTrace()
