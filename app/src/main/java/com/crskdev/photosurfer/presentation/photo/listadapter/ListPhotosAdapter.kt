@@ -1,7 +1,12 @@
 package com.crskdev.photosurfer.presentation.photo.listadapter
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.navigation.NavController
 import androidx.paging.PagedListAdapter

@@ -28,10 +28,6 @@
         android:background="?android:attr/selectableItemBackground"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textColor="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         tools:text="Foo" />
 
     <TextView
@@ -41,6 +37,8 @@
         android:layout_gravity="center"
         android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
         android:textColor="@android:color/holo_red_dark"
+        android:textSize="14sp"
+        android:textStyle="italic"
         tools:text="Error!" />
 
     <ImageButton
@@ -64,5 +62,14 @@
         android:background="?android:attr/selectableItemBackground"
         android:contentDescription="@null"
         app:srcCompat="@drawable/ic_collections_white_24dp" />
+
+    <TextView
+        android:id="@+id/txtUnsplash"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="@string/on_unsplash_link"
+        android:textSize="12sp"
+        android:alpha="0.5"
+        android:layout_margin="16dp"/>
 
 </FrameLayout>

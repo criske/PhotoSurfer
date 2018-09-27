@@ -1,6 +1,8 @@
 package com.crskdev.photosurfer.presentation.photo.listadapter
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -29,10 +31,19 @@ class ListPhotosVH(private val glide: RequestManager,
 
     private var enabledActions: Boolean = true
 
-
     init {
+        itemView.txtUnsplash.setOnClickListener { _ ->
+            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://unsplash.com/?utm_source=Photo+Surfer&utm_medium=referral"))
+            itemView.context.startActivity(webIntent)
+        }
         itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it, enabledActions) } }
-        itemView.textAuthor.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.AUTHOR, it, enabledActions) } }
+        itemView.textAuthor.setOnClickListener { _ ->
+            photo?.let {
+                //action(ListPhotosAdapter.ActionWhat.AUTHOR, it, enabledActions)
+                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://unsplash.com/@${it.authorUsername}?utm_source=Photo+Surfer&utm_medium=referral"))
+                itemView.context.startActivity(webIntent)
+            }
+        }
         itemView.imgLike.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it.copy(likedByMe = !it.likedByMe), enabledActions) } }
         itemView.imgCollection.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it, enabledActions) } }
     }
