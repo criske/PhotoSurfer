@@ -7,21 +7,21 @@ import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
+import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
-import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.photo.SearchedPhotosJSON
 import com.crskdev.photosurfer.data.repository.Repository
-import com.crskdev.photosurfer.entities.*
-import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.data.repository.scheduled.Tag
 import com.crskdev.photosurfer.data.repository.scheduled.WorkData
 import com.crskdev.photosurfer.data.repository.scheduled.WorkType
-import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.entities.*
+import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorType
+import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.util.runOn
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
@@ -172,33 +172,25 @@ class PhotoRepositoryImpl(
         }
         ioExecutor {
             try {
-                val now = System.currentTimeMillis()
                 val start = AtomicBoolean(true)
                 downloadManager.download(photo) { _, bytesRead, contentLength, done ->
-                    val passed = System.currentTimeMillis() - now
-                    if (passed < 500 && done) {
-                        callback?.runOn(uiExecutor) {
-                            onSuccess(DownloadProgress(100, false, true))
+                    if (contentLength == -1L) { //indeterminated
+                        if (start.get()) {
+                            callback?.runOn(uiExecutor) {
+                                onSuccess(DownloadProgress.INDETERMINATED_START)
+                                start.compareAndSet(true, false)
+                            }
+                        } else if (done) {
+                            callback?.runOn(uiExecutor) {
+                                onSuccess(DownloadProgress.INDETERMINATED_END)
+                            }
                         }
                     } else {
-                        if (contentLength == -1L) { //indeterminated
-                            if (start.get()) {
-                                callback?.runOn(uiExecutor) {
-                                    onSuccess(DownloadProgress.INDETERMINATED_START)
-                                    start.compareAndSet(true, false)
-                                }
-                            } else if (done) {
-                                callback?.runOn(uiExecutor) {
-                                    onSuccess(DownloadProgress.INDETERMINATED_END)
-                                }
-                            }
-                        } else {
-                            val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
-                            if (percent % 10 == 0 || percent == 100 || done) {// backpressure relief
-                                callback?.runOn(uiExecutor) {
-                                    onSuccess(DownloadProgress(percent, start.get(), percent == 100 || done))
-                                    start.compareAndSet(true, false)
-                                }
+                        val percent = (bytesRead.toFloat() / contentLength * 100).roundToInt()
+                        if (percent % 10 == 0 || percent == 100 || done) {// backpressure relief
+                            callback?.runOn(uiExecutor) {
+                                onSuccess(DownloadProgress(percent, start.get(), percent == 100 || done))
+                                start.compareAndSet(true, false)
                             }
                         }
                     }
@@ -234,10 +226,7 @@ class PhotoRepositoryImpl(
 
     @MainThread
     override fun cancel() {
-        uiExecutor {
-            apiCallDispatcher.cancel()
-            downloadManager.cancel()
-        }
+        downloadManager.cancel()
     }
 
     override fun clearAll() {

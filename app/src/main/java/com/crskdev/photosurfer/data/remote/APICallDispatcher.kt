@@ -42,12 +42,8 @@ class APICallDispatcher(@PublishedApi internal val threadCallChecker: ThreadCall
     @Synchronized
     fun cancel() {
         threadCallChecker.assertOnMainThread()
-        currentCall
-                ?.takeIf { !it.isExecuted }
-                ?.let {
-                    it.cancel()
-                    notifyListeners(null, State.CANCELED)
-                }
+        currentCall?.cancel()
+        notifyListeners(null, State.CANCELED)
     }
 
     @PublishedApi

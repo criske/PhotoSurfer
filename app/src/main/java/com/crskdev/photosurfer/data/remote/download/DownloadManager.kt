@@ -77,6 +77,7 @@ class DownloadManager(
         )
     }
 
+    @Synchronized
     fun download(photo: Photo, progress: ((Boolean, Long, Long, Boolean) -> Unit)) {
         val progressListener = ProgressListener { isStartingValue, bytesRead, contentLength, done ->
             progress(isStartingValue, bytesRead, contentLength, done)
@@ -85,6 +86,7 @@ class DownloadManager(
             }
         }
         progressListenerRegistrar.progressListener = progressListener
+        progressListener.update(true, 0, -1, false)
         photoDownloader.data(photo)?.let { externalPhotoGalleryDAO.save(photo, it) }
     }
 
