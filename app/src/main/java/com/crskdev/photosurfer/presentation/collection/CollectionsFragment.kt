@@ -159,7 +159,7 @@ class CollectionVH(view: View, private val glide: RequestManager,
                     //.transition(DrawableTransitionOptions().crossFade())
                     .into(itemView.imageCollectionCover)
         }
-        itemView.textCollectionTitle.text = collection.title
+        itemView.textCollectionTitle.text = collection.title.capitalize()
         itemView.textCollectionSize.text = collection.totalPhotos.toString()
         itemView.textCollectionDescription.text = collection.description?.trim()
                 ?: itemView.context.getString(R.string.no_description)

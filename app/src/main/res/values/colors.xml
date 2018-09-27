@@ -12,4 +12,5 @@
     <color name="colorLightGray">#efebe9</color>
     <color name="colorTranslucentWhite">#f1ffffff</color>
     <color name="colorLike">#e91e63</color>
+    <color name="colorDarkGrey800">#424242</color>
 </resources>

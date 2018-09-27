@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".presentation.user.SearchUsersFragment">
+
     <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarSearchUsers"
+        style="@style/BasicAppToolbar.Common.Nav"
+        app:title="@string/search_users"
         app:contentInsetStart="0dp"
         app:contentInsetStartWithNavigation="0dp"
-        android:id="@+id/toolbarSearchUsers"
-        android:layout_width="match_parent"
-        app:navigationIcon="@drawable/ic_arrow_back_white_24dp"
-        android:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
-        android:background="@color/colorPrimary"
-        android:layout_height="?android:attr/actionBarSize" />
+        app:navigationIcon="@drawable/ic_arrow_back_white_24dp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerSearchUsers"
@@ -22,6 +21,5 @@
         android:layout_height="match_parent"
         android:clipToPadding="true"
         tools:listitem="@layout/item_list_users" />
-
 
 </LinearLayout>

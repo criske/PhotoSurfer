@@ -29,7 +29,7 @@
     <string name="likes">Likes</string>
     <string name="trending">Trending</string>
     <string name="search">Search…</string>
-    <string name="search_title">&#8981;</string>
+    <string name="search_title" translatable="false">&#8981;</string>
     <string name="search_users">Search Users</string>
     <string name="collections">Collections</string>
     <string name="no_description">No description</string>

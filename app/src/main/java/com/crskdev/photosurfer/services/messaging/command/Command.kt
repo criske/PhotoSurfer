@@ -99,6 +99,7 @@ class CollectionEditedCommand(context: Context) : FCMCommand(context) {
                                 collectionsDAO.updateCollection(c.apply {
                                     this.title = cjson.title
                                     this.description = cjson.description
+                                    this.notPublic = cjson.private
                                 })
                             }
                         }
