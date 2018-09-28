@@ -190,7 +190,6 @@ object DependencyGraph {
                 executorManager,
                 photoDAOFacade,
                 externalPhotoGalleryDAO,
-                authTokenStorage,
                 staleDataTrackSupervisor,
                 apiCallDispatcher,
                 photoAPI,

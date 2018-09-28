@@ -2,9 +2,12 @@ package com.crskdev.photosurfer
 
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LiveData
@@ -20,6 +23,7 @@ import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.setAlphaComponent
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -52,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         AppPermissionsHelper.notifyPermissionGranted(this, requestCode, permissions, grantResults)
     }
 
+   // private var doublePressedBackToExit = false
     override fun onBackPressed() {
         val topFragment = findTopFragment()
         if (topFragment != null && topFragment is HasUpOrBackPressedAwareness) {
@@ -62,7 +67,15 @@ class MainActivity : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
-
+//        if (supportFragmentManager.backStackEntryCount == 0) {
+//            doublePressedBackToExit = true
+//            val toast = Toast.makeText(this, getString(R.string.msg_press_back_exit), Toast.LENGTH_SHORT)
+//            toast.show()
+//            window.decorView.handler.postDelayed(TimeUnit.SECONDS.toMillis(2)) {
+//                doublePressedBackToExit = false
+//                toast.cancel()
+//            }
+//        }
     }
 
 }

@@ -68,7 +68,6 @@ class PhotoRepositoryImpl(
         executorsManager: ExecutorsManager,
         private val daoPhotoFacade: PhotoDAOFacade,
         private val daoExternalPhotoGalleryDAO: ExternalPhotoGalleryDAO,
-        private val authTokenStorage: AuthTokenStorage,
         private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val apiCallDispatcher: APICallDispatcher,
         private val api: PhotoAPI,

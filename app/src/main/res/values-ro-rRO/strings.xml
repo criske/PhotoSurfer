@@ -27,4 +27,5 @@
     <string name="playwaves">Playwaves</string>
     <string name="saved_photos">Fotografii Salvate</string>
     <string name="create_new_collection_with_photo">Noua Colectie cu Fotografia</string>
+    <string name="msg_press_back_exit">Ca sa iesi, apasa \"back\" din nou</string>
 </resources>

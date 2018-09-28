@@ -20,40 +20,31 @@ import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.recyclerview.PaletteManager
 import com.crskdev.photosurfer.util.recyclerview.PaletteViewHolder
 import kotlinx.android.synthetic.main.item_list_photos.view.*
+import kotlinx.android.synthetic.main.item_saved_list_photos.view.*
 
 class ListPhotosVH(private val glide: RequestManager,
                    paletteManager: PaletteManager,
                    view: View,
-                   private val action: (ListPhotosAdapter.ActionWhat, Photo, Boolean) -> Unit) :
+                   private val action: (ListPhotosAdapter.ActionWhat, Photo) -> Unit) :
         PaletteViewHolder<Photo>(paletteManager, view) {
-
-    private var photo: Photo? = null
-
-    private var enabledActions: Boolean = true
-
+    
     init {
         itemView.textUnsplash.setOnClickListener { _ ->
             itemView.context.startActivity(IntentUtils.webIntentUnsplash())
         }
-        itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it, enabledActions) } }
+        itemView.imagePhoto.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it) } }
         itemView.textAuthor.setOnClickListener { _ ->
-            photo?.let {
+            model?.let {
                 //action(ListPhotosAdapter.ActionWhat.AUTHOR, it, enabledActions)
                 itemView.context.startActivity(IntentUtils.webIntentUnsplashPhotographer(it.authorUsername))
             }
         }
-        itemView.imgLike.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it.copy(likedByMe = !it.likedByMe), enabledActions) } }
-        itemView.imgCollection.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it, enabledActions) } }
+        itemView.imgLike.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it.copy(likedByMe = !it.likedByMe)) } }
+        itemView.imgCollection.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it) } }
     }
 
     override fun bind(model: Photo) {
-        this.photo = model
-        this.enabledActions = true
-
-        itemView.imgLike.isVisible = enabledActions
-        itemView.imgCollection.isVisible = enabledActions
-        itemView.textAuthor.isVisible = enabledActions
-
+        this.model = model
         if (model.likedByMe) {
             itemView.imgLike.setColorFilter(ContextCompat.getColor(itemView.context, R.color.colorLike))
         }
@@ -72,7 +63,7 @@ class ListPhotosVH(private val glide: RequestManager,
                     }
 
                     override fun onResourceReady(resource: Bitmap, model: Any, target: Target<Bitmap>,
-                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean{
+                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean {
                         registerPalette(resource)
                         return false
                     }
@@ -82,7 +73,7 @@ class ListPhotosVH(private val glide: RequestManager,
     }
 
     override fun onBindPalette(palette: Palette) {
-        val  vibrant = palette.dominantSwatch
+        val vibrant = palette.dominantSwatch
         vibrant?.bodyTextColor?.let {
             itemView.textAuthor.setTextColor(it)
             itemView.textUnsplash.setTextColor(it)
@@ -90,7 +81,7 @@ class ListPhotosVH(private val glide: RequestManager,
     }
 
     override fun unBind() {
-        photo = null
+        model = null
         with(itemView) {
             textAuthor.text = null
             textError.text = null
@@ -100,6 +91,60 @@ class ListPhotosVH(private val glide: RequestManager,
         }
     }
 
-    override fun id(): String = photo?.id ?: throw Exception("View Holder is not binded to Photo")
+    override fun id(): String? = model?.id
+
+}
+
+class SavedListPhotosVH(private val glide: RequestManager,
+                        paletteManager: PaletteManager,
+                        view: View,
+                        private val action: (ListPhotosAdapter.ActionWhat, Photo) -> Unit) :
+        PaletteViewHolder<Photo>(paletteManager, view) {
+
+    init {
+        itemView.imageSavedPhoto.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.SAVED_PHOTO_DETAIL, it) } }
+    }
+
+    override fun bind(model: Photo) {
+        this.model = model
+        glide.asBitmap()
+                .load(model.urls[ImageType.SMALL])
+                .apply(RequestOptions()
+                        .placeholder(R.drawable.ic_logo)
+                        .transforms(CenterCrop(), RoundedCorners(8)))
+                //.transition(DrawableTransitionOptions().crossFade())
+                .addListener(object : RequestListener<Bitmap> {
+                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?,
+                                              isFirstResource: Boolean): Boolean {
+                        itemView.textSavedError.text = e?.message
+                        return true
+                    }
+
+                    override fun onResourceReady(resource: Bitmap, model: Any, target: Target<Bitmap>,
+                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                        registerPalette(resource)
+                        return false
+                    }
+
+                })
+                .into(itemView.imageSavedPhoto)
+    }
+
+    override fun unBind() {
+        model = null
+        with(itemView) {
+            glide.clear(imageSavedPhoto)
+            imageSavedPhoto.setImageDrawable(null)
+        }
+    }
+
+    override fun id(): String? =  model?.id
+
+    override fun onBindPalette(palette: Palette) {
+        val vibrant = palette.dominantSwatch
+        vibrant?.bodyTextColor?.let {
+            itemView.textSavedUnsplash.setTextColor(it)
+        }
+    }
 
 }

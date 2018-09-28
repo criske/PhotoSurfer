@@ -4,12 +4,17 @@ import android.graphics.Bitmap
 import android.view.View
 import androidx.palette.graphics.Palette
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.reflect.KClass
 
 /**
  * Created by Cristian Pela on 28.09.2018.
  */
 
 abstract class BindViewHolder<T>(view: View) : RecyclerView.ViewHolder(view) {
+
+    protected var model: T? = null
+
+    fun isBound(): Boolean = model != null
 
     abstract fun bind(model: T)
 
@@ -22,19 +27,21 @@ abstract class PaletteViewHolder<T>(
         private val paletteManager: PaletteManager,
         view: View) : BindViewHolder<T>(view) {
 
-    abstract fun id(): String
+    abstract fun id(): String?
 
     abstract fun onBindPalette(palette: Palette)
 
     protected fun registerPalette(bitmap: Bitmap) {
-        val id = id()
-        if (!paletteManager.hasPalette(id)) {
-            Palette.from(bitmap).generate {
-                if (it != null) {
-                    paletteManager.registerPalette(id(), it)
+        id()?.let { id ->
+            if (!paletteManager.hasPalette(id)) {
+                Palette.from(bitmap).generate { palette ->
+                    if (palette != null) {
+                        paletteManager.registerPalette(id, palette)
+                    }
                 }
             }
         }
+
     }
 }
 
@@ -51,22 +58,42 @@ class PaletteManager {
 
     fun <M> bindHolder(model: M, paletteViewHolder: PaletteViewHolder<M>) {
         paletteViewHolder.bind(model)
-        val id = paletteViewHolder.id()
-        val paletteHolder = holders[id]
-        if (paletteHolder == null) {
-            holders[id] = Wrapper().apply {
-                holder = paletteViewHolder
+        paletteViewHolder.id()?.let {
+            val paletteHolder = holders[it]
+            if (paletteHolder == null) {
+                holders[it] = Wrapper().apply {
+                    holder = paletteViewHolder
+                }
+            } else {
+                paletteHolder.holder = paletteViewHolder
+                paletteHolder.palette?.let { p ->
+                    paletteViewHolder.onBindPalette(p)
+                }
             }
-        } else {
-            paletteHolder.holder = paletteViewHolder
-            paletteHolder.palette?.let {
-                paletteViewHolder.onBindPalette(it)
+        }
+
+    }
+
+    fun unbindHolder(paletteViewHolder: PaletteViewHolder<*>) {
+        paletteViewHolder.id()?.let { id ->
+            holders[id]?.let {
+                it.holder?.unBind()
+                it.holder = null
             }
         }
     }
 
-    fun unbindHolder(paletteViewHolder: PaletteViewHolder<*>) {
-        holders[paletteViewHolder.id()]?.let {
+    fun unbindAllHoldersLike(clazz: Class<out PaletteViewHolder<*>>) {
+        holders.values.forEach {
+            if (it.holder?.javaClass == clazz) {
+                it.holder?.unBind()
+                it.holder = null
+            }
+        }
+    }
+
+    fun unbindAllHolders() {
+        holders.values.forEach {
             it.holder?.unBind()
             it.holder = null
         }
@@ -80,7 +107,11 @@ class PaletteManager {
             }
         } else {
             paletteHolder.palette = palette
-            paletteHolder.holder?.onBindPalette(palette)
+            paletteHolder.holder?.apply {
+                if (isBound()) {
+                    onBindPalette(palette)
+                }
+            }
         }
     }
 

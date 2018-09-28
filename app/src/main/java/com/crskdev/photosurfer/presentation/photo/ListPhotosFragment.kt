@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.presentation.photo
 
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
@@ -31,6 +32,7 @@ import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveDat
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
+import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.services.ScheduledWorkService
@@ -48,6 +50,7 @@ import com.crskdev.photosurfer.util.tintIcons
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Cristian Pela on 01.08.2018.
@@ -168,7 +171,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
         viewModel.filterLiveData.observe(this, Observer {
             //if filter is set to saved we disable actions or navs for "like" or "collections"
-            (recyclerUserListPhotos.adapter as ListPhotosAdapter).enabledActions = it.type != FilterVM.Type.SAVED
+            (recyclerUserListPhotos.adapter as ListPhotosAdapter).setType(it.type != FilterVM.Type.SAVED)
             val title = if (it.type == FilterVM.Type.SEARCH) {
                 val term = if (it.data?.isNotEmpty() == true) " ${it.data}" else ""
                 getString(it.title) + term

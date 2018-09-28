@@ -120,7 +120,7 @@ class ExternalPhotoGalleryDataSource(
          */
         val path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
         return PhotoEntity().apply {
-            id = ""
+            id = path
             createdAt = ""
             updatedAt = ""
             colorString = "#ffffff"
@@ -132,6 +132,7 @@ class ExternalPhotoGalleryDataSource(
             collections = emptyList()
             authorId = ""
             authorUsername = ""
+            authorFullName = ""
         }
     }
 
