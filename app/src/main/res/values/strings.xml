@@ -45,7 +45,5 @@
     <string name="message_collection_edited">Collection Edited</string>
     <string name="playwaves">Playwaves</string>
     <string name="saved_photos">Saved Photos</string>
-    <string name="on_unsplash_link" translatable="false">
-       Unsplash.com
-    </string>
+    <string name="on_unsplash_link" translatable="false">on Unsplash</string>
 </resources>

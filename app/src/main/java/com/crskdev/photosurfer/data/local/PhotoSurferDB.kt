@@ -29,7 +29,7 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             CollectionEntity::class,
             CollectionPhotoEntity::class
         ],
-        version = 13,
+        version = 14,
         exportSchema = false
 )
 @TypeConverters(DataTypeConverters::class)

@@ -32,6 +32,7 @@ fun PhotoEntity.toPhoto(): Photo =
                 views,
                 authorId,
                 authorUsername,
+                authorFullName,
                 PagingData(this.total ?: -1, this.curr
                         ?: -1, this.prev, this.next),
                 indexInResponse + 1
@@ -84,7 +85,7 @@ fun Photo.parcelize(): ParcelizedPhoto = ParcelizedPhoto(id,
         description,
         categories,
         DataTypeConverters().fromCollectionLiteListToString(collections),
-        likes, likedByMe, views, authorId, authorUsername,
+        likes, likedByMe, views, authorId, authorUsername, authorFullName,
         pagingData?.total, pagingData?.curr, pagingData?.prev, pagingData?.next)
 
 fun ParcelizedPhoto.deparcelize(): Photo =
@@ -97,6 +98,6 @@ fun ParcelizedPhoto.deparcelize(): Photo =
                 description,
                 categories,
                 DataTypeConverters().fromStringToCollectionListList(collections),
-                likes, likedByMe, views, authorId, authorUsername,
+                likes, likedByMe, views, authorId, authorUsername, authorFullName,
                 PagingData(total ?: -1, curr ?: -1, prev, next))
 

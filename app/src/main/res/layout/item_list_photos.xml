@@ -70,6 +70,6 @@
         android:text="@string/on_unsplash_link"
         android:textSize="12sp"
         android:alpha="0.5"
-        android:layout_margin="16dp"/>
+        android:layout_margin="8dp"/>
 
 </FrameLayout>

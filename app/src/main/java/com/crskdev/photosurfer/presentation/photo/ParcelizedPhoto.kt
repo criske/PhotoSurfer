@@ -19,5 +19,6 @@ class ParcelizedPhoto(
         val likes: Int, val likedByMe: Boolean, val views: Int,
         val authorId: String,
         val authorUsername: String,
+        val authorFullName: String,
         val total: Int?, val curr: Int?, val prev: Int?, val next: Int?) : Parcelable {
 }

@@ -38,6 +38,7 @@ open class PhotoEntity : BaseDBEntity() {
     var views: Int = 0
     lateinit var authorId: String
     lateinit var authorUsername: String
+    lateinit var authorFullName: String
 }
 
 
