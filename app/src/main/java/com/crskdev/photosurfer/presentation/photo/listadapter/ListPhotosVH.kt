@@ -1,12 +1,10 @@
 package com.crskdev.photosurfer.presentation.photo.listadapter
 
-import android.content.Intent
-import android.graphics.drawable.Drawable
-import android.net.Uri
+import android.graphics.Bitmap
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import androidx.recyclerview.widget.RecyclerView
+import androidx.palette.graphics.Palette
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
@@ -19,19 +17,22 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.util.IntentUtils
+import com.crskdev.photosurfer.util.recyclerview.PaletteManager
+import com.crskdev.photosurfer.util.recyclerview.PaletteViewHolder
 import kotlinx.android.synthetic.main.item_list_photos.view.*
 
 class ListPhotosVH(private val glide: RequestManager,
+                   paletteManager: PaletteManager,
                    view: View,
-                   private val action: (ListPhotosAdapter.ActionWhat, Photo, Boolean) -> Unit) : RecyclerView.ViewHolder(view) {
-
+                   private val action: (ListPhotosAdapter.ActionWhat, Photo, Boolean) -> Unit) :
+        PaletteViewHolder<Photo>(paletteManager, view) {
 
     private var photo: Photo? = null
 
     private var enabledActions: Boolean = true
 
     init {
-        itemView.txtUnsplash.setOnClickListener { _ ->
+        itemView.textUnsplash.setOnClickListener { _ ->
             itemView.context.startActivity(IntentUtils.webIntentUnsplash())
         }
         itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it, enabledActions) } }
@@ -45,39 +46,50 @@ class ListPhotosVH(private val glide: RequestManager,
         itemView.imgCollection.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it, enabledActions) } }
     }
 
-    fun bind(photo: Photo, enabledActions: Boolean) {
-        this.photo = photo
-        this.enabledActions = enabledActions
+    override fun bind(model: Photo) {
+        this.photo = model
+        this.enabledActions = true
 
         itemView.imgLike.isVisible = enabledActions
         itemView.imgCollection.isVisible = enabledActions
         itemView.textAuthor.isVisible = enabledActions
 
-        if (photo.likedByMe) {
+        if (model.likedByMe) {
             itemView.imgLike.setColorFilter(ContextCompat.getColor(itemView.context, R.color.colorLike))
         }
-        itemView.textAuthor.text = photo.authorFullName
-        glide.asDrawable()
-                .load(photo.urls[ImageType.SMALL])
+        itemView.textAuthor.text = model.authorFullName
+        glide.asBitmap()
+                .load(model.urls[ImageType.SMALL])
                 .apply(RequestOptions()
                         .placeholder(R.drawable.ic_logo)
                         .transforms(CenterCrop(), RoundedCorners(8)))
                 //.transition(DrawableTransitionOptions().crossFade())
-                .addListener(object : RequestListener<Drawable> {
-                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?,
+                .addListener(object : RequestListener<Bitmap> {
+                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?,
                                               isFirstResource: Boolean): Boolean {
                         itemView.textError.text = e?.message
                         return true
                     }
 
-                    override fun onResourceReady(resource: Drawable, model: Any, target: Target<Drawable>,
-                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean = false
+                    override fun onResourceReady(resource: Bitmap, model: Any, target: Target<Bitmap>,
+                                                 dataSource: DataSource?, isFirstResource: Boolean): Boolean{
+                        registerPalette(resource)
+                        return false
+                    }
 
                 })
                 .into(itemView.imagePhoto)
     }
 
-    fun clear() {
+    override fun onBindPalette(palette: Palette) {
+        val  vibrant = palette.dominantSwatch
+        vibrant?.bodyTextColor?.let {
+            itemView.textAuthor.setTextColor(it)
+            itemView.textUnsplash.setTextColor(it)
+        }
+    }
+
+    override fun unBind() {
         photo = null
         with(itemView) {
             textAuthor.text = null
@@ -87,5 +99,7 @@ class ListPhotosVH(private val glide: RequestManager,
             imagePhoto.setImageDrawable(null)
         }
     }
+
+    override fun id(): String = photo?.id ?: throw Exception("View Holder is not binded to Photo")
 
 }

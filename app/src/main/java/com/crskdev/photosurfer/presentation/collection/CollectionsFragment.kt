@@ -23,7 +23,7 @@ import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
-import com.crskdev.photosurfer.util.HorizontalSpaceDivider
+import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig

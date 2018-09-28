@@ -17,6 +17,7 @@ import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.recyclerview.PaletteManager
 
 class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                         private val glide: RequestManager,
@@ -28,6 +29,8 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
 
 
     var enabledActions: Boolean = true
+
+    private val paletteManager: PaletteManager = PaletteManager()
 
     companion object {
         inline fun actionHelper(navController: NavController, authNavigatorMiddleware: AuthNavigatorMiddleware,
@@ -67,17 +70,21 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListPhotosVH =
-            ListPhotosVH(glide, layoutInflater.inflate(R.layout.item_list_photos, parent, false), action)
+            ListPhotosVH(
+                    glide,
+                    paletteManager,
+                    layoutInflater.inflate(R.layout.item_list_photos, parent, false),
+                    action)
 
 
     override fun onBindViewHolder(viewHolder: ListPhotosVH, position: Int) {
         getItem(position)
-                ?.let { viewHolder.bind(it, enabledActions) }
-                ?: viewHolder.clear()
+                ?.let { paletteManager.bindHolder(it, viewHolder) }
+                ?: paletteManager.unbindHolder(viewHolder)
     }
 
     override fun onViewRecycled(holder: ListPhotosVH) {
-        holder.clear()
+        paletteManager.unbindHolder(holder)
     }
 
     enum class ActionWhat {

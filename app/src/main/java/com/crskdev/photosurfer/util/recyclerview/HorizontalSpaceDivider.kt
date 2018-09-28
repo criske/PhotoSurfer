@@ -1,9 +1,10 @@
-package com.crskdev.photosurfer.util
+package com.crskdev.photosurfer.util.recyclerview
 
 import android.content.Context
 import android.graphics.Rect
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import com.crskdev.photosurfer.util.dpToPx
 
 /**
  * Created by Cristian Pela on 17.09.2018.

@@ -37,7 +37,7 @@ import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
-import com.crskdev.photosurfer.util.HorizontalSpaceDivider
+import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.ListenableLiveData
