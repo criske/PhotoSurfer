@@ -18,6 +18,8 @@ data class Collection(
         val sharedKey: String,
         val coverPhotoId: String? = null,
         val coverPhotoUrls: EnumMap<ImageType, String>? = null,
+        val coverPhotoAuthorUsername: String? = null,
+        val coverPhotoAuthorFullName: String? = null,
         val ownerId: String,
         val ownerUsername: String,
         val links: Map<String, String>,
@@ -26,6 +28,7 @@ data class Collection(
     companion object {
         fun just(title: String, description: String? = null, private: Boolean): Collection =
                 Collection(-1, title, description ?: "", "", "", false,
-                        0, private, "", null, null, "", "", emptyMap())
+                        0, private, "", null, null,
+                        null, null,"", "", emptyMap())
     }
 }

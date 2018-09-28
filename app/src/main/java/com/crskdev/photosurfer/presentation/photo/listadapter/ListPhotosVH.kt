@@ -8,18 +8,17 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
-import com.bumptech.glide.TransitionOptions
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
+import com.crskdev.photosurfer.util.IntentUtils
 import kotlinx.android.synthetic.main.item_list_photos.view.*
 
 class ListPhotosVH(private val glide: RequestManager,
@@ -33,15 +32,13 @@ class ListPhotosVH(private val glide: RequestManager,
 
     init {
         itemView.txtUnsplash.setOnClickListener { _ ->
-            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://unsplash.com/?utm_source=Photo+Surfer&utm_medium=referral"))
-            itemView.context.startActivity(webIntent)
+            itemView.context.startActivity(IntentUtils.webIntentUnsplash())
         }
         itemView.imagePhoto.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it, enabledActions) } }
         itemView.textAuthor.setOnClickListener { _ ->
             photo?.let {
                 //action(ListPhotosAdapter.ActionWhat.AUTHOR, it, enabledActions)
-                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://unsplash.com/@${it.authorUsername}?utm_source=Photo+Surfer&utm_medium=referral"))
-                itemView.context.startActivity(webIntent)
+                itemView.context.startActivity(IntentUtils.webIntentUnsplashPhotographer(it.authorUsername))
             }
         }
         itemView.imgLike.setOnClickListener { _ -> photo?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it.copy(likedByMe = !it.likedByMe), enabledActions) } }

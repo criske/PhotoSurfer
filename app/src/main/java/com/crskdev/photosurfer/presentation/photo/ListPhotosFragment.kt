@@ -133,8 +133,6 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                 }
                 true
             }
-
-            tintIcons()
         }
 
         val glide = Glide.with(this)
@@ -195,6 +193,11 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
             authNavigatorMiddleware.navigateToLogin(activity!!)
         })
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        toolbarListPhotos.tintIcons()
     }
 
     override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {

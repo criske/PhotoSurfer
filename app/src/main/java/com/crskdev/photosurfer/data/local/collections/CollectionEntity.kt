@@ -28,6 +28,8 @@ class CollectionEntity : BaseDBEntity() {
     lateinit var sharedKey: String
     var coverPhotoId: String? = null
     var coverPhotoUrls: String? = null
+    var coverPhotoAuthorUsername: String? = null
+    var coverPhotoAuthorFullName: String? = null
     lateinit var ownerId: String
     lateinit var ownerUsername: String
     lateinit var links: String

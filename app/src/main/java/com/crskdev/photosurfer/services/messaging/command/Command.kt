@@ -2,6 +2,7 @@ package com.crskdev.photosurfer.services.messaging.command
 
 import android.content.Context
 import com.crskdev.photosurfer.data.local.Contract
+import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.dependencies.dependencyGraph
@@ -150,6 +151,8 @@ class CollectionAddedPhotoCommand(context: Context) : FCMCommand(context) {
                     totalPhotos += 1
                     coverPhotoId = photoId
                     coverPhotoUrls = photoDb.urls
+                    coverPhotoAuthorUsername = photoDb.authorUsername
+                    coverPhotoAuthorFullName = photoDb.authorFullName
                 }
                 collectionDB?.let {
                     collectionDAO.updateCollection(it)
@@ -179,6 +182,8 @@ class CollectionRemovePhotoCommand(context: Context) : FCMCommand(context) {
 
     private val collectionsDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
 
+    private val collectionsPhotoDAO: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
+
     private val photoDAOFacade = dependencyGraph.photoDAOFacade
 
     override fun onReceiveMessage(message: FCMMessage) {
@@ -188,6 +193,23 @@ class CollectionRemovePhotoCommand(context: Context) : FCMCommand(context) {
             collectionsDAO.getCollection(collectionId)?.let {
                 photoDAOFacade.removePhotoFromCollection(photoId, it.asLite())
             }
+            val lastPhoto = collectionsPhotoDAO.getLastPhoto()
+            val collectionDB = collectionsDAO.getCollection(collectionId)
+            //update cover with latest photo in collection only if current collection id is collection id
+            if (lastPhoto?.currentCollectionId == collectionId) {
+                lastPhoto.let {
+                    collectionDB?.coverPhotoId = it.id
+                    collectionDB?.coverPhotoUrls = it.urls
+                    collectionDB?.coverPhotoAuthorUsername = it.authorUsername
+                    collectionDB?.coverPhotoAuthorFullName = it.authorFullName
+                }
+            } else if (lastPhoto == null) { // there is no photo in this collection
+                collectionDB?.coverPhotoId = null
+                collectionDB?.coverPhotoUrls = null
+                collectionDB?.coverPhotoAuthorUsername = null
+                collectionDB?.coverPhotoAuthorFullName = null
+            }
+            collectionDB?.let { collectionsDAO.updateCollection(it) }
         }
     }
 

@@ -16,9 +16,11 @@ fun Collection.toCollectionDB() = CollectionEntity().apply {
     this.publishedAt = this@toCollectionDB.publishedAt
     this.updatedAt = this@toCollectionDB.updatedAt
     this.coverPhotoUrls = this@toCollectionDB.coverPhotoUrls?.stringify()
+    this.coverPhotoId = this@toCollectionDB.coverPhotoId
+    this.coverPhotoAuthorUsername = this@toCollectionDB.coverPhotoAuthorUsername
+    this.coverPhotoAuthorFullName = this@toCollectionDB.coverPhotoAuthorFullName
     this.title = this@toCollectionDB.title
     this.description = this@toCollectionDB.description
-    this.coverPhotoId = this@toCollectionDB.coverPhotoId
     this.curated = this@toCollectionDB.curated
     this.totalPhotos = this@toCollectionDB.totalPhotos
     this.notPublic = this@toCollectionDB.private
@@ -41,6 +43,8 @@ fun CollectionJSON.toCollectionDB(pagingData: PagingData): CollectionEntity =
             this.title = this@toCollectionDB.title
             this.description = this@toCollectionDB.description
             this.coverPhotoId = this@toCollectionDB.coverPhoto?.id
+            this.coverPhotoAuthorUsername = this@toCollectionDB.coverPhoto?.author?.username
+            this.coverPhotoAuthorFullName = this@toCollectionDB.coverPhoto?.author?.fullName
             this.curated = this@toCollectionDB.curated
             this.totalPhotos = this@toCollectionDB.totalPhotos
             this.notPublic = this@toCollectionDB.private
@@ -96,6 +100,8 @@ fun CollectionEntity.toCollection(): Collection {
             sharedKey,
             coverPhotoId,
             coverPhotoUrls?.let { transformStrMapToUrls(it) },
+            coverPhotoAuthorUsername,
+            coverPhotoAuthorFullName,
             ownerId,
             ownerUsername,
             transformStrMapToMap(links),

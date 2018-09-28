@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -23,6 +24,7 @@ import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.util.HorizontalSpaceDivider
+import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
@@ -85,13 +87,19 @@ class CollectionsFragment : Fragment() {
                 }
                 true
             }
-            tintIcons()
         }
         viewModel.collectionsLiveData.observe(this, Observer {
             (recyclerCollections.adapter as CollectionsAdapter).submitList(it)
         })
     }
+
+    override fun onResume() {
+        super.onResume()
+        toolbarCollections.tintIcons()
+    }
 }
+
+
 
 class CollectionsViewModel(private val collectionsRepository: CollectionRepository,
                            diskExecutor: Executor) : ViewModel() {
@@ -138,35 +146,55 @@ class CollectionVH(view: View, private val glide: RequestManager,
     private var collection: Collection? = null
 
     init {
-        itemView.imageCollectionCover.setOnClickListener {
-            collection?.let { c -> action(What.PHOTOS, c) }
+        with(itemView) {
+            imageCollectionCover.setOnClickListener {
+                collection?.let { c -> action(What.PHOTOS, c) }
+            }
+            btnCollectionEdit.setOnClickListener {
+                collection?.let { c -> action(What.EDIT, c) }
+            }
+            btnCollectionDelete.setOnClickListener {
+                collection?.let { c -> action(What.DELETE, c) }
+            }
+            textAuthor.setOnClickListener { _ ->
+                collection?.coverPhotoAuthorUsername?.let {
+                    context.startActivity(IntentUtils.webIntentUnsplashPhotographer(it))
+                }
+            }
+            textUnsplash.setOnClickListener { _ ->
+                collection?.let {
+                    context.startActivity(IntentUtils.webIntentUnsplash())
+                }
+            }
         }
-        itemView.btnCollectionEdit.setOnClickListener {
-            collection?.let { c -> action(What.EDIT, c) }
-        }
-        itemView.btnCollectionDelete.setOnClickListener {
-            collection?.let { c -> action(What.DELETE, c) }
-        }
+
     }
 
     fun bind(collection: Collection) {
         this.collection = collection
-        collection.coverPhotoUrls?.get(ImageType.REGULAR)?.let {
-            glide.asDrawable().load(it)
-                    .apply(RequestOptions()
-                            .placeholder(R.drawable.ic_logo)
-                            .centerCrop())
-                    //.transition(DrawableTransitionOptions().crossFade())
-                    .into(itemView.imageCollectionCover)
+        with(itemView) {
+            collection.coverPhotoUrls?.get(ImageType.REGULAR)?.let {
+                glide.asDrawable().load(it)
+                        .apply(RequestOptions()
+                                .placeholder(R.drawable.ic_logo)
+                                .centerCrop())
+                        //.transition(DrawableTransitionOptions().crossFade())
+                        .into(imageCollectionCover)
+            }
+            textCollectionTitle.text = collection.title.capitalize()
+            textCollectionSize.text = collection.totalPhotos.toString()
+            textCollectionDescription.text = collection.description?.trim()
+                    ?: context.getString(R.string.no_description)
+            textAuthor.isVisible = collection.coverPhotoAuthorFullName != null
+            textAuthor.text = collection.coverPhotoAuthorFullName
+            textUnsplash.isVisible = collection.coverPhotoAuthorFullName != null
         }
-        itemView.textCollectionTitle.text = collection.title.capitalize()
-        itemView.textCollectionSize.text = collection.totalPhotos.toString()
-        itemView.textCollectionDescription.text = collection.description?.trim()
-                ?: itemView.context.getString(R.string.no_description)
     }
 
     fun clear() {
         glide.clear(itemView.imageCollectionCover)
+        itemView.textAuthor.isVisible = false
+        itemView.textUnsplash.isVisible = false
     }
 
 }

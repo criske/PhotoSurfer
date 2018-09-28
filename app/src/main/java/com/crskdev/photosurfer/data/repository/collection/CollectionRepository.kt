@@ -225,7 +225,7 @@ class CollectionRepositoryImpl(
         ioExecutor {
             val response = collectionAPI.addPhotoToCollection(collection.id,
                     collection.id, photo.id).execute()
-            if(response.isSuccessful){
+            if (response.isSuccessful) {
                 pushMessagingManager.sendMessage(Message.CollectionAddedPhoto(collection.id, photo.id))
             }
         }
@@ -236,6 +236,8 @@ class CollectionRepositoryImpl(
                     totalPhotos += 1
                     coverPhotoId = photo.id
                     coverPhotoUrls = transformMapUrls(photo.urls)
+                    coverPhotoAuthorUsername = photo.authorUsername
+                    coverPhotoAuthorFullName = photo.authorFullName
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
                 photoDAOFacade.addPhotoToCollection(photo.id, collection.asLite())
@@ -247,28 +249,30 @@ class CollectionRepositoryImpl(
         //todo schedule api call
         ioExecutor {
             val response = collectionAPI.removePhotoFromCollection(collection.id, collection.id, photo.id).execute()
-            if(response.isSuccessful){
+            if (response.isSuccessful) {
                 pushMessagingManager.sendMessage(Message.CollectionRemovedPhoto(collection.id, photo.id))
             }
         }
         diskExecutor {
             transactional {
                 photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLite())
-
                 val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
                     totalPhotos -= 1
                 }
-
                 val lastPhoto = collectionPhotoDAO.getLastPhoto()
                 //update cover with latest photo in collection only if current collection id is collection id
                 if (lastPhoto?.currentCollectionId == collection.id) {
                     lastPhoto.let {
                         collectionDB?.coverPhotoId = it.id
                         collectionDB?.coverPhotoUrls = it.urls
+                        collectionDB?.coverPhotoAuthorUsername = it.authorUsername
+                        collectionDB?.coverPhotoAuthorFullName = it.authorFullName
                     }
                 } else if (lastPhoto == null) { // there is no photo in this collection
                     collectionDB?.coverPhotoId = null
                     collectionDB?.coverPhotoUrls = null
+                    collectionDB?.coverPhotoAuthorUsername = null
+                    collectionDB?.coverPhotoAuthorFullName = null
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
             }

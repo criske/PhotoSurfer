@@ -4,9 +4,10 @@ import android.animation.Animator
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
-import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Build
 import android.util.TypedValue
 import android.view.GestureDetector
@@ -26,7 +27,6 @@ import androidx.core.view.iterator
 import androidx.navigation.NavOptions
 import androidx.recyclerview.widget.RecyclerView
 import com.crskdev.photosurfer.R
-import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -144,34 +144,28 @@ fun Context.systemNotification(message: String) {
 
 
 fun Toolbar.tintIcons(@ColorRes color: Int = android.R.color.darker_gray) {
-    var isTinted = false
-    val c = ContextCompat.getColor(context, color)
-    val toolbarDrawListener = ViewTreeObserver.OnDrawListener {
-        if (!isTinted) {
-            //FIX: when coming back from a fragment pop, the icons where not tinted. posting resolves this
-            post {
-                menu.iterator().forEach {
-                    it.icon = DrawableCompat.wrap(it.icon)?.mutate()?.apply {
-                        DrawableCompat.setTint(this, c)
-                    }
-                }
-                navigationIcon?.let { DrawableCompat.setTint(DrawableCompat.wrap(it), c) }
-                isTinted = true
+    post {
+        val c = ContextCompat.getColor(context, color)
+        menu.iterator().forEach {
+            it.icon = DrawableCompat.wrap(it.icon)?.mutate()?.apply {
+                DrawableCompat.setTint(this, c)
             }
         }
+        navigationIcon?.let { DrawableCompat.setTint(DrawableCompat.wrap(it), c) }
     }
-    //NOTE: this listener might not need explicit to remove the draw listener, but just to be safe from potential leaks
-    val toolbarDetachListener = object : ViewTreeObserver.OnWindowAttachListener {
-        override fun onWindowDetached() {
-            viewTreeObserver.removeOnDrawListener(toolbarDrawListener)
-            viewTreeObserver.removeOnWindowAttachListener(this)
-        }
-
-        override fun onWindowAttached() = Unit
-    }
-    viewTreeObserver.addOnDrawListener(toolbarDrawListener)
-    viewTreeObserver.addOnWindowAttachListener(toolbarDetachListener)
 }
 
 fun Drawable.tint(context: Context, @ColorRes color: Int = android.R.color.darker_gray) =
         DrawableCompat.setTint(DrawableCompat.wrap(this).mutate(), ContextCompat.getColor(context, color))
+
+object IntentUtils {
+
+    fun webIntentUnsplash(): Intent =
+            Intent(Intent.ACTION_VIEW, Uri
+                    .parse("https://unsplash.com/?utm_source=Photo+Surfer&utm_medium=referral"))
+
+    fun webIntentUnsplashPhotographer(authorUsername: String): Intent =
+            Intent(Intent.ACTION_VIEW, Uri
+                    .parse("https://unsplash.com/@$authorUsername?utm_source=Photo+Surfer&utm_medium=referral"))
+
+}

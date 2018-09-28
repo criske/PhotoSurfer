@@ -59,7 +59,6 @@ class CollectionListPhotosFragment : Fragment() {
             setNavigationOnClickListener {
                 findNavController().popBackStack()
             }
-            tintIcons()
         }
         recyclerCollectionListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
@@ -93,6 +92,11 @@ class CollectionListPhotosFragment : Fragment() {
             toolbarCollectionListPhotos.subtitle = "($size)"
         })
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        toolbarCollectionListPhotos.tintIcons()
     }
 }
 
