@@ -24,7 +24,6 @@ class ExternalPhotoGalleryDataSource(
 
     init {
         directory.addWeakListener { _, _ ->
-            println("File Observer Invalidate")
             invalidate()
         }
     }

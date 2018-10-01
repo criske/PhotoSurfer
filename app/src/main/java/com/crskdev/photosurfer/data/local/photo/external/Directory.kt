@@ -57,7 +57,8 @@ class ExternalDirectory(val parent: File, val name: String = "PhotoSurfer") {
     fun exists(path: String): Boolean =
             File(path).exists()
 
-    private class WeakFileObserver(path: String) : FileObserver(path, FileObserver.CREATE.or(FileObserver.DELETE)) {
+    private class WeakFileObserver(path: String, mask: Int =
+            FileObserver.CREATE.or(FileObserver.DELETE)) : FileObserver(path, mask) {
 
         private val TAG = WeakFileObserver::class.java.simpleName
 
@@ -70,22 +71,22 @@ class ExternalDirectory(val parent: File, val name: String = "PhotoSurfer") {
             lock.withLock {
                 val ref = weakListener?.get()
                 Log.d(TAG, "Try to add listener. $listener. Old ref: $ref.")
-                if(listener!= ref) {
+                if (listener != ref) {
                     Log.d(TAG, "Listener added")
                     weakListener = SoftReference(listener)
-                }else{
-                    Log.d(TAG, "Listener rejected")
+                } else {
+                    Log.d(TAG, "Listener rejected. Listener is the same")
                 }
             }
         }
 
         override fun onEvent(event: Int, path: String?) {
-            val type = when(event){
+            val type = when (event) {
                 FileObserver.CREATE -> "CREATED"
                 FileObserver.DELETE -> "DELETE"
                 else -> "UNKNOWN"
             }
-            Log.d(TAG,"File Observer photo directory event: $type. Path: $path. Weak ref: ${weakListener?.get()}")
+            Log.d(TAG, "File Observer photo directory event: $type. Path: $path. Weak ref: ${weakListener?.get()}")
             lock.withLock {
                 weakListener?.get()?.onEvent(event, path)
             }

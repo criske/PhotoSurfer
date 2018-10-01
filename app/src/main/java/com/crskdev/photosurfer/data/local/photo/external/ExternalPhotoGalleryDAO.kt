@@ -85,6 +85,9 @@ class ExternalPhotoGalleryDAOImpl(
                 selectionArgs, null).use { c ->
             if (c?.moveToFirst() == true) {
                 val id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID))
+                // manually delete here, because on HUAWEI P10 Lite at least, DELETE event on file observer
+                // somehow is not triggered, when rely solely on contentResolver#delete
+                directory.delete(path)
                 contentResolver.delete(ContentUris.withAppendedId(uri, id), null, null)
             }
         }
