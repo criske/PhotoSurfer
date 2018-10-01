@@ -1,7 +1,6 @@
 package com.crskdev.photosurfer.presentation.photo
 
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
@@ -32,7 +31,6 @@ import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveDat
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.services.ScheduledWorkService
@@ -50,7 +48,7 @@ import com.crskdev.photosurfer.util.tintIcons
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
-import java.util.concurrent.TimeUnit
+import kotlinx.android.synthetic.main.fragment_list_photos.view.*
 
 /**
  * Created by Cristian Pela on 01.08.2018.
@@ -98,46 +96,6 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
 
-        collapsingToolbarListPhotos.isTitleEnabled = false
-        toolbarListPhotos.apply {
-            setOnMenuItemClickListener {
-                val navController = toolbarListPhotos.findNavController()
-                when (it.itemId) {
-                    R.id.menu_item_account -> {
-                        authNavigatorMiddleware.navigate(
-                                navController,
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(
-                                        viewModel.authStateLiveData.value ?: ""))
-                    }
-                    R.id.menu_action_logout -> {
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
-                        viewModel.logout()
-                    }
-                    R.id.menu_action_likes -> {
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes, viewModel.authStateLiveData.value))
-                    }
-                    R.id.menu_action_trending -> {
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
-                    }
-                    R.id.menu_saved -> {
-                        if (AppPermissionsHelper.hasStoragePermission(context)) {
-                            viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
-                        } else {
-                            AppPermissionsHelper.requestStoragePermission(activity!!)
-                        }
-                    }
-                    R.id.menu_item_search_users -> {
-                        navController.navigate(R.id.fragment_search_users, null,
-                                defaultTransitionNavOptions())
-                    }
-                    R.id.menu_action_collections -> {
-                        authNavigatorMiddleware.navigate(navController, R.id.fragment_collections)
-                    }
-                }
-                true
-            }
-        }
-
         val glide = Glide.with(this)
         recyclerUserListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
@@ -161,6 +119,54 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
             override fun onQueryTextChange(newText: String?): Boolean = true
 
         })
+
+        collapsingToolbarListPhotos.isTitleEnabled = false
+        // "recyclerUserListPhotos" as synthetic inside toolbarListPhotos#apply#setOnMenuItemClickListener is null(bug?)
+        // so I need to keep a reference outside the scope
+        val rvRef = recyclerUserListPhotos
+        toolbarListPhotos.apply {
+            setOnMenuItemClickListener {
+                val navController = toolbarListPhotos.findNavController()
+                when (it.itemId) {
+                    R.id.menu_item_account -> {
+                        authNavigatorMiddleware.navigate(
+                                navController,
+                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(
+                                        viewModel.authStateLiveData.value ?: ""))
+                    }
+                    R.id.menu_action_logout -> {
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
+                        viewModel.logout()
+                    }
+                    R.id.menu_action_likes -> {
+                        rvRef.scrollToPosition(0)
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes, viewModel.authStateLiveData.value))
+                    }
+                    R.id.menu_action_trending -> {
+                        rvRef.scrollToPosition(0)
+                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
+                    }
+                    R.id.menu_saved -> {
+                        if (AppPermissionsHelper.hasStoragePermission(context)) {
+                            rvRef.scrollToPosition(0)
+                            viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
+                        } else {
+                            AppPermissionsHelper.requestStoragePermission(activity!!)
+                        }
+                    }
+                    R.id.menu_item_search_users -> {
+                        navController.navigate(R.id.fragment_search_users, null,
+                                defaultTransitionNavOptions())
+                    }
+                    R.id.menu_action_collections -> {
+                        authNavigatorMiddleware.navigate(navController, R.id.fragment_collections)
+                    }
+                }
+                true
+            }
+        }
+
+
 
         viewModel.authStateLiveData.observe(this, Observer {
             val isLoggedIn = it.isNotEmpty()
@@ -206,6 +212,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
     }
 
     override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
+        recyclerUserListPhotos.scrollToPosition(0)
         viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
     }
 
