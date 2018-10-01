@@ -107,6 +107,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
         paletteManager.unbindHolder(holder)
     }
 
+
     fun setType(remote: Boolean) {
         this.isRemoteType = remote
         //if remote evict and unbind all saved list photos vh else list photos vh
