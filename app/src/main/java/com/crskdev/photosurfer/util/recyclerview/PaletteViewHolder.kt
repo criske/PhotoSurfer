@@ -16,10 +16,10 @@ abstract class BindViewHolder<T>(view: View) : RecyclerView.ViewHolder(view) {
 
     fun isBound(): Boolean = model != null
 
-     fun bind(model: T){
-         this.model = model
-         onBindModel(model)
-     }
+    fun bind(model: T) {
+        this.model = model
+        onBindModel(model)
+    }
 
     abstract fun onBindModel(model: T)
 
@@ -82,8 +82,10 @@ class PaletteManager {
     fun unbindHolder(paletteViewHolder: PaletteViewHolder<*>) {
         paletteViewHolder.id()?.let { id ->
             holders[id]?.let {
-                it.holder?.unBind()
-                it.holder = null
+                if (paletteViewHolder == it.holder) {
+                    it.holder?.unBind()
+                    it.holder = null
+                }
             }
         }
     }

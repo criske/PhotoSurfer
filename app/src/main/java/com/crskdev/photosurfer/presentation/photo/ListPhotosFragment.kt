@@ -139,16 +139,13 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                         viewModel.logout()
                     }
                     R.id.menu_action_likes -> {
-                        rvRef.scrollToPosition(0)
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes, viewModel.authStateLiveData.value))
                     }
                     R.id.menu_action_trending -> {
-                        rvRef.scrollToPosition(0)
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
                     R.id.menu_saved -> {
                         if (AppPermissionsHelper.hasStoragePermission(context)) {
-                            rvRef.scrollToPosition(0)
                             viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
                         } else {
                             AppPermissionsHelper.requestStoragePermission(activity!!)

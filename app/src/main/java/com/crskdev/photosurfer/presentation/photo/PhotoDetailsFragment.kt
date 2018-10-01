@@ -21,6 +21,7 @@ import androidx.core.graphics.toColorFilter
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
+import androidx.navigation.findNavController
 import androidx.palette.graphics.Palette
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
@@ -62,10 +63,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     private lateinit var photo: Photo
     private val glide by lazy { Glide.with(this) }
 
-    companion object {
-        private const val MENU_ID_LIKE = 1
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = viewModelFromProvider(this) {
@@ -93,15 +90,14 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_photo_details, container, false)
+        return inflater.inflate(R.layout.fragment_photo_details_show_actions, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         subscribeToViewModel(view)
         displayPhoto()
 
-
-        val image =view.findViewById<ZoomageView>(R.id.imagePhotoDetails)
+        val image = view.findViewById<ZoomageView>(R.id.imagePhotoDetails)
         val toolbar = view.findViewById<Toolbar>(R.id.toolbarPhotoDetails)
         val fab = view.findViewById<FloatingActionButton>(R.id.fabDownload)
         val btnCancel = view.findViewById<ImageButton>(R.id.imgBtnDownloadCancel)
@@ -119,18 +115,18 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
         toolbar.apply {
             //create menu
-            menu.add(Menu.NONE, MENU_ID_LIKE, 0, R.string.likes).apply {
-                setIcon(R.drawable.ic_thumb_up_white_24dp)
-                this.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-            }
+            inflateMenu(R.menu.menu_photo_detail)
             title = (photo.authorFullName)
             tintLike()
 
             this.setOnMenuItemClickListener {
-                if (it.itemId == MENU_ID_LIKE) {
+                if (it.itemId == R.id.menu_photo_detail_like) {
                     viewModel.like(photo)
                 }
                 true
+            }
+            setNavigationOnClickListener {
+                findNavController().popBackStack()
             }
 
         }
@@ -149,11 +145,11 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     private fun tintLike() {
         val colorLike = if (photo.likedByMe) {
-            ContextCompat.getColor(context!!, R.color.colorLike)
+             R.color.colorLike
         } else {
-            android.R.color.transparent
+            android.R.color.white
         }
-        toolbarPhotoDetails.tintIcon(MENU_ID_LIKE, colorLike)
+        view?.findViewById<Toolbar>(R.id.toolbarPhotoDetails)?.tintIcon(R.id.menu_photo_detail_like, colorLike)
     }
 
 
