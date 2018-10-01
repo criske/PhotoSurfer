@@ -32,7 +32,7 @@ class ListPhotosVH(private val glide: RequestManager,
         itemView.textUnsplash.setOnClickListener { _ ->
             itemView.context.startActivity(IntentUtils.webIntentUnsplash())
         }
-        itemView.imagePhoto.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it) } }
+        itemView.imagePhotoDetails.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it) } }
         itemView.textAuthor.setOnClickListener { _ ->
             model?.let {
                 //action(ListPhotosAdapter.ActionWhat.AUTHOR, it, enabledActions)
@@ -68,7 +68,7 @@ class ListPhotosVH(private val glide: RequestManager,
                     }
 
                 })
-                .into(itemView.imagePhoto)
+                .into(itemView.imagePhotoDetails)
     }
 
     override fun onBindPalette(palette: Palette) {
@@ -85,8 +85,8 @@ class ListPhotosVH(private val glide: RequestManager,
             textAuthor.text = null
             textError.text = null
             imgLike.clearColorFilter()
-            glide.clear(imagePhoto)
-            imagePhoto.setImageDrawable(null)
+            glide.clear(imagePhotoDetails)
+            imagePhotoDetails.setImageDrawable(null)
         }
     }
 

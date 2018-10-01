@@ -1,27 +1,33 @@
 package com.crskdev.photosurfer.presentation.photo
 
 
+import android.animation.TimeInterpolator
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewPropertyAnimator
+import android.view.*
+import android.view.animation.LinearInterpolator
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import androidx.palette.graphics.Palette
+import androidx.transition.ChangeBounds
+import androidx.transition.TransitionManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.R
@@ -40,8 +46,11 @@ import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.tintIcon
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.fragment_photo_details.*
+import com.jsibbold.zoomage.ZoomageView
+import kotlinx.android.synthetic.main.fragment_photo_details_show_actions.*
 import kotlinx.android.synthetic.main.progress_layout.*
 
 class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
@@ -52,6 +61,10 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     private lateinit var photo: Photo
     private val glide by lazy { Glide.with(this) }
+
+    companion object {
+        private const val MENU_ID_LIKE = 1
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +82,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     }
 
     override fun onBackOrUpPressed() {
-        glide.clear(imagePhoto)
+        glide.clear(imagePhotoDetails)
         viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
     }
 
@@ -87,37 +100,66 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         subscribeToViewModel(view)
         displayPhoto()
 
-        setLikeButton(photo.likedByMe)
 
-        fabDownload.setOnClickListener { v ->
+        val image =view.findViewById<ZoomageView>(R.id.imagePhotoDetails)
+        val toolbar = view.findViewById<Toolbar>(R.id.toolbarPhotoDetails)
+        val fab = view.findViewById<FloatingActionButton>(R.id.fabDownload)
+        val btnCancel = view.findViewById<ImageButton>(R.id.imgBtnDownloadCancel)
+
+        image.setOnLongClickListener {
+            val constraintLayout = it as ConstraintLayout
+            val constraintSet = ConstraintSet()
+            constraintSet.clone(context, R.layout.fragment_photo_details_show_actions)
+            TransitionManager.beginDelayedTransition(constraintLayout, ChangeBounds().apply {
+                duration = 750
+            })
+            constraintSet.applyTo(constraintLayout)
+            false
+        }
+
+        toolbar.apply {
+            //create menu
+            menu.add(Menu.NONE, MENU_ID_LIKE, 0, R.string.likes).apply {
+                setIcon(R.drawable.ic_thumb_up_white_24dp)
+                this.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            }
+            title = (photo.authorFullName)
+            tintLike()
+
+            this.setOnMenuItemClickListener {
+                if (it.itemId == MENU_ID_LIKE) {
+                    viewModel.like(photo)
+                }
+                true
+            }
+
+        }
+
+        fab.setOnClickListener { v ->
             if (!AppPermissionsHelper.hasStoragePermission(v.context)) {
                 AppPermissionsHelper.requestStoragePermission(activity!!)
             } else
                 viewModel.download(photo)
         }
 
-        imgBtnDownloadCancel.setOnClickListener {
+        btnCancel.setOnClickListener {
             viewModel.cancelDownload(photo.id)
         }
-
-        btnPhotoLike.setOnClickListener {
-            viewModel.like(photo.copy(likedByMe = !photo.likedByMe))
-        }
     }
 
-    private fun setLikeButton(like: Boolean) {
-        val color = if (like) {
+    private fun tintLike() {
+        val colorLike = if (photo.likedByMe) {
             ContextCompat.getColor(context!!, R.color.colorLike)
         } else {
-            Color.WHITE
+            android.R.color.transparent
         }
-        btnPhotoLike.setColorFilter(color)
+        toolbarPhotoDetails.tintIcon(MENU_ID_LIKE, colorLike)
     }
+
 
     private fun displayPhoto() {
         glide.asBitmap()
                 .load(photo.urls[ImageType.FULL])
-                .apply(RequestOptions().centerCrop())
                 .addListener(object : RequestListener<Bitmap> {
                     override fun onResourceReady(resource: Bitmap?,
                                                  model: Any?, target: Target<Bitmap>?,
@@ -144,23 +186,29 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                         return true
                     }
                 })
-                .into(imagePhoto)
+                .into(imagePhotoDetails)
     }
 
     private fun subscribeToViewModel(view: View) {
         viewModel.paletteLiveData.observe(this, Observer {
             it[photo.id]?.let { palette ->
-                val darkVibrantColor = palette.getDarkVibrantColor(ContextCompat
-                        .getColor(view.context, R.color.colorPrimaryDark))
-                activity?.setStatusBarColor(darkVibrantColor)
+                val primaryColor = ContextCompat.getColor(view.context, R.color.colorPrimary)
+                val dominantColor: Int = palette.getDominantColor(primaryColor)
+                val dominantSwatch = palette.dominantSwatch
                 val accent = ContextCompat.getColor(view.context, R.color.colorAccent)
-                fabDownload.backgroundTintList = ColorStateList.valueOf(palette.getMutedColor(accent))
+                val muted = palette.getMutedColor(accent)
+                val vibrant = palette.getLightVibrantColor(accent)
+
+
+                activity?.setStatusBarColor(dominantColor)
+                fabDownload.backgroundTintList = ColorStateList.valueOf(ColorUtils.blendARGB(dominantColor, vibrant, 0.25f))
                 val progressColorFilter = PorterDuff.Mode.SRC_ATOP.toColorFilter(accent)
                 progressBarDownload.progressDrawable.colorFilter = progressColorFilter
                 progressBarDownload.indeterminateDrawable.colorFilter = progressColorFilter
                 imgBtnDownloadCancel.drawable.setColorFilter(
                         palette.getMutedColor(accent), PorterDuff.Mode.SRC_ATOP)
-                textDownloadProgress.setTextColor(darkVibrantColor)
+                textDownloadProgress.setTextColor(Color.DKGRAY)
+                view.setBackgroundColor(dominantColor)
             }
         })
         viewModel.isDownloadedLiveData.observe(this, Observer {
@@ -188,9 +236,9 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 progSlideUpAnimation = cardProgressDownload.animate().translationY((-200f).dpToPx(resources))
                         .apply { start() }
             }
-            with(it!= PhotoDetailViewModel.DOWNLOADING){
+            with(it != PhotoDetailViewModel.DOWNLOADING) {
                 (fabDownload as View).isVisible = this
-                btnPhotoLike.isVisible = this
+                toolbarPhotoDetails.isVisible = this
             }
 
         })
@@ -199,12 +247,12 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             progressBarLoading.isVisible = !displayed
             with(displayed && enabledActions) {
                 (fabDownload as View).isVisible = this
-                btnPhotoLike.isVisible = this
+                toolbarPhotoDetails.isVisible = this
             }
         })
         viewModel.likeLiveData.observe(this, Observer { liked ->
-            setLikeButton(liked)
             photo = photo.copy(likedByMe = liked)
+            tintLike()
             arguments?.putParcelable("photo", photo.parcelize())
         })
         viewModel.needsAuthLiveData.observe(this, Observer {

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".presentation.photo.PhotoDetailsFragment">
 
     <com.jsibbold.zoomage.ZoomageView
@@ -23,12 +24,12 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:src="@drawable/ic_file_download_white_24dp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/imagePhotoDetails"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imagePhotoDetails"
         tools:visibility="visible" />
 
     <include
@@ -37,12 +38,12 @@
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbarPhotoDetails"
-        style="@style/BasicAppToolbar.Common.Nav"
         android:layout_width="0dp"
-        android:background="@null"
-        app:layout_constraintBottom_toTopOf="parent"
+        style="@style/BasicAppToolbar.Common.Nav"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="@null"
+        app:layout_constraintTop_toTopOf="@+id/imagePhotoDetails" />
 
     <ProgressBar
         android:id="@+id/progressBarLoading"

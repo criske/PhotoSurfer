@@ -155,6 +155,17 @@ fun Toolbar.tintIcons(@ColorRes color: Int = android.R.color.darker_gray) {
     }
 }
 
+fun Toolbar.tintIcon(menuItemId: Int, @ColorRes color: Int = android.R.color.darker_gray){
+    post {
+        val c = ContextCompat.getColor(context, color)
+        menu.findItem(menuItemId)?.apply {
+            this.icon = DrawableCompat.wrap(this.icon)?.mutate()?.apply {
+                DrawableCompat.setTint(this, c)
+            }
+        }
+    }
+}
+
 fun Drawable.tint(context: Context, @ColorRes color: Int = android.R.color.darker_gray) =
         DrawableCompat.setTint(DrawableCompat.wrap(this).mutate(), ContextCompat.getColor(context, color))
 

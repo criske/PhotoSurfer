@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:showIn="@layout/fragment_photo_details"
+    tools:showIn="@layout/fragment_photo_details_show_actions"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <androidx.cardview.widget.CardView
@@ -13,6 +13,7 @@
         app:cardCornerRadius="16dp"
         app:cardBackgroundColor="@color/colorTranslucentWhite"
         app:cardElevation="5dp"
+        tools:visibility="invisible"
         android:layout_height="100dp">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

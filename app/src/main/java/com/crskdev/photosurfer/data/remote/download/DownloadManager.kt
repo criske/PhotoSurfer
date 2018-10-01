@@ -64,6 +64,10 @@ class DownloadManager(
             override var progressListener: ProgressListener? = null
         }
         private val mockedExternalPhotoGalleryDAO = object : ExternalPhotoGalleryDAO {
+            override fun delete(path: String) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
             override fun getPhotos(): DataSource.Factory<Int, PhotoEntity> {
                 TODO("not implemented")
             }

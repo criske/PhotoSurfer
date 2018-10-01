@@ -29,7 +29,7 @@
         android:id="@+id/fragment_photo_details"
         android:name="com.crskdev.photosurfer.presentation.photo.PhotoDetailsFragment"
         android:label="Blank"
-        tools:layout="@layout/fragment_photo_details">
+        tools:layout="@layout/fragment_photo_details_show_actions">
         <argument
             android:name="photo"
             app:argType="com.crskdev.photosurfer.presentation.photo.ParcelizedPhoto" />
