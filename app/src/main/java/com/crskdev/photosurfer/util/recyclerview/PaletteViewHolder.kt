@@ -16,7 +16,12 @@ abstract class BindViewHolder<T>(view: View) : RecyclerView.ViewHolder(view) {
 
     fun isBound(): Boolean = model != null
 
-    abstract fun bind(model: T)
+     fun bind(model: T){
+         this.model = model
+         onBindModel(model)
+     }
+
+    abstract fun onBindModel(model: T)
 
     abstract fun unBind()
 

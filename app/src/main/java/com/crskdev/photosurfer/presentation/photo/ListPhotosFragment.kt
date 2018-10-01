@@ -144,7 +144,9 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
             layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
             val actionHelper = ListPhotosAdapter.actionHelper(
                     view.findNavController(),
-                    authNavigatorMiddleware) { viewModel.like(it) }
+                    authNavigatorMiddleware,
+                    { viewModel.delete(it) },
+                    { viewModel.like(it) })
             adapter = ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
             addItemDecoration(HorizontalSpaceDivider.withDpOf(2, context))
         }
@@ -311,6 +313,10 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
                 FilterVM.Type.SEARCH -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS, vmFilter.data!!)
                 FilterVM.Type.SAVED -> DataSourceFilter.SAVED
             }
+
+    fun delete(photo: Photo) {
+        photoRepository.delete(photo)
+    }
 
 }
 

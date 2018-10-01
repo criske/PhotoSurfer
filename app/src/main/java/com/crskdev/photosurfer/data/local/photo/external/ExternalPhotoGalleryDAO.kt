@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.local.photo.external
 
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -25,6 +26,8 @@ interface ExternalPhotoGalleryDAO {
     fun isDownloaded(id: String): Boolean
 
     fun getPhotos(): DataSource.Factory<Int, PhotoEntity>
+
+    fun delete(path: String)
 
 }
 
@@ -73,6 +76,20 @@ class ExternalPhotoGalleryDAOImpl(
             Unit
         }
     }
+
+    override fun delete(path: String) {
+        val projection = arrayOf(MediaStore.Images.Media._ID)
+        val selectionArgs = arrayOf(path)
+        val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        contentResolver.query(uri, projection, MediaStore.Images.Media.DATA + " = ?",
+                selectionArgs, null).use { c ->
+            if (c?.moveToFirst() == true) {
+                val id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID))
+                contentResolver.delete(ContentUris.withAppendedId(uri, id), null, null)
+            }
+        }
+    }
+
 
     private fun setCustomPhotoAttrs(photo: Photo, file: File) {
         val exifInterface = ExifInterface(file.absolutePath)

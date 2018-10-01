@@ -47,4 +47,6 @@
     <string name="saved_photos">Saved Photos</string>
     <string name="on_unsplash_link" translatable="false">on Unsplash</string>
     <string name="msg_press_back_exit">Press back again to exit</string>
+    <string name="msg_delete_photo">Delete the photo from your phone?</string>
+    <string name="cancel">Cancel</string>
 </resources>

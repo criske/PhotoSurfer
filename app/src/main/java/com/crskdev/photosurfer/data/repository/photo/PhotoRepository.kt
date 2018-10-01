@@ -51,6 +51,8 @@ interface PhotoRepository : Repository {
 
     fun clear(repositoryAction: RepositoryAction)
 
+    fun delete(photo: Photo)
+
 }
 
 class RepositoryAction(val type: Type, vararg val extras: Any) {
@@ -247,6 +249,12 @@ class PhotoRepositoryImpl(
         }
     }
 
+    override fun delete(photo: Photo) {
+        diskExecutor {
+            //for delete photo.id is the file path on disk
+            daoExternalPhotoGalleryDAO.delete(photo.id)
+        }
+    }
 
 }
 

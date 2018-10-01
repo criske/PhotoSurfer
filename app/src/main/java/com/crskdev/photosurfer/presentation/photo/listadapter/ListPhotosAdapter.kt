@@ -35,6 +35,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
         private const val TYPE_REMOTE = 1
 
         inline fun actionHelper(navController: NavController, authNavigatorMiddleware: AuthNavigatorMiddleware,
+                                crossinline deleteAction: (Photo) -> Unit = {},
                                 crossinline likeAction: (Photo) -> Unit):
                 (ActionWhat, Photo) -> Unit {
             return { what, photo ->
@@ -69,7 +70,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
 
                     }
                     ActionWhat.DELETE_SAVED_PHOTO -> {
-
+                        deleteAction(photo)
                     }
                 }
             }

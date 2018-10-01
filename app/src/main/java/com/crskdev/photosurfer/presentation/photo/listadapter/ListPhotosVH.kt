@@ -2,8 +2,8 @@ package com.crskdev.photosurfer.presentation.photo.listadapter
 
 import android.graphics.Bitmap
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.palette.graphics.Palette
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
@@ -27,7 +27,7 @@ class ListPhotosVH(private val glide: RequestManager,
                    view: View,
                    private val action: (ListPhotosAdapter.ActionWhat, Photo) -> Unit) :
         PaletteViewHolder<Photo>(paletteManager, view) {
-    
+
     init {
         itemView.textUnsplash.setOnClickListener { _ ->
             itemView.context.startActivity(IntentUtils.webIntentUnsplash())
@@ -43,8 +43,7 @@ class ListPhotosVH(private val glide: RequestManager,
         itemView.imgCollection.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it) } }
     }
 
-    override fun bind(model: Photo) {
-        this.model = model
+    override fun onBindModel(model: Photo) {
         if (model.likedByMe) {
             itemView.imgLike.setColorFilter(ContextCompat.getColor(itemView.context, R.color.colorLike))
         }
@@ -102,11 +101,35 @@ class SavedListPhotosVH(private val glide: RequestManager,
         PaletteViewHolder<Photo>(paletteManager, view) {
 
     init {
-        itemView.imageSavedPhoto.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.SAVED_PHOTO_DETAIL, it) } }
+        itemView.imageSavedPhoto.setOnClickListener { _ ->
+            model?.let {
+                action(ListPhotosAdapter.ActionWhat.SAVED_PHOTO_DETAIL, it)
+            }
+        }
+        itemView.btnSavedPhotoDelete.setOnClickListener { _ ->
+            model?.let {
+                val context = itemView.context
+                AlertDialog.Builder(context)
+                        .setCancelable(false)
+                        .setOnCancelListener { d ->
+                            d.dismiss()
+                        }
+                        .setNegativeButton(context.getString(R.string.cancel)){ d, _ ->
+                            d.dismiss()
+                        }
+                        .setPositiveButton(android.R.string.ok) { d, _ ->
+                            action(ListPhotosAdapter.ActionWhat.DELETE_SAVED_PHOTO, it)
+                            d.dismiss()
+
+                        }
+                        .setMessage(context.getString(R.string.msg_delete_photo))
+                        .create()
+                        .show()
+            }
+        }
     }
 
-    override fun bind(model: Photo) {
-        this.model = model
+    override fun onBindModel(model: Photo) {
         glide.asBitmap()
                 .load(model.urls[ImageType.SMALL])
                 .apply(RequestOptions()
@@ -138,7 +161,7 @@ class SavedListPhotosVH(private val glide: RequestManager,
         }
     }
 
-    override fun id(): String? =  model?.id
+    override fun id(): String? = model?.id
 
     override fun onBindPalette(palette: Palette) {
         val vibrant = palette.dominantSwatch

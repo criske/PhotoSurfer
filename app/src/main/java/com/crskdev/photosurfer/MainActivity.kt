@@ -46,7 +46,6 @@ class MainActivity : AppCompatActivity() {
 //                Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show()
 //            }
         })
-
     }
 
     override fun onSupportNavigateUp() = findNavController(R.id.nav_host_fragment).navigateUp()

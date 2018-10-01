@@ -2,14 +2,12 @@ package com.crskdev.photosurfer.data.local.photo.external
 
 import android.content.ContentResolver
 import android.database.Cursor
-import android.media.ExifInterface
 import android.provider.MediaStore
 import androidx.core.content.ContentResolverCompat
 import androidx.paging.PositionalDataSource
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.transformMapUrls
-import java.lang.Exception
 import java.util.*
 
 /**
@@ -26,6 +24,7 @@ class ExternalPhotoGalleryDataSource(
 
     init {
         directory.addWeakListener { _, _ ->
+            println("File Observer Invalidate")
             invalidate()
         }
     }
