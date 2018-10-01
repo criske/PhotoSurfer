@@ -63,6 +63,10 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
     private lateinit var currentFilter: FilterVM
 
+    private val glide by lazy {
+        Glide.with(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         currentFilter = savedInstanceState
@@ -92,11 +96,21 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
         return inflater.inflate(R.layout.fragment_list_photos, container, false)
     }
 
+
+    private fun adapterFactory(): RecyclerView.Adapter<*>{
+        val authNavigatorMiddleware = view!!.context.dependencyGraph().authNavigatorMiddleware
+        val actionHelper = ListPhotosAdapter.actionHelper(
+                view!!.findNavController(),
+                authNavigatorMiddleware,
+                { viewModel.delete(it) },
+                { viewModel.like(it) })
+        return ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
 
-        val glide = Glide.with(this)
         recyclerUserListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
             layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
@@ -105,7 +119,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                     authNavigatorMiddleware,
                     { viewModel.delete(it) },
                     { viewModel.like(it) })
-            adapter = ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
+            adapter = adapterFactory()
             addItemDecoration(HorizontalSpaceDivider.withDpOf(2, context))
         }
 
@@ -139,13 +153,16 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                         viewModel.logout()
                     }
                     R.id.menu_action_likes -> {
+                        rvRef.swapAdapter(adapterFactory(), false)
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes, viewModel.authStateLiveData.value))
                     }
                     R.id.menu_action_trending -> {
+                        rvRef.swapAdapter(adapterFactory(), false)
                         viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
                     }
                     R.id.menu_saved -> {
                         if (AppPermissionsHelper.hasStoragePermission(context)) {
+                            rvRef.swapAdapter(adapterFactory(), false)
                             viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
                         } else {
                             AppPermissionsHelper.requestStoragePermission(activity!!)
@@ -209,7 +226,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
     }
 
     override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
-        recyclerUserListPhotos.scrollToPosition(0)
+        recyclerUserListPhotos.swapAdapter(adapterFactory(), false)
         viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
     }
 
