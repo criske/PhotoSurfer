@@ -33,17 +33,16 @@ import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
-import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
-import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.tintIcons
 import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
@@ -81,7 +80,6 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                     graph.userRepository,
                     graph.photoRepository,
                     graph.searchTermTracker,
-                    graph.scheduledWorkService,
                     graph.listenableAuthState
             )
         }
@@ -97,7 +95,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
     }
 
 
-    private fun adapterFactory(): RecyclerView.Adapter<*>{
+    private fun adapterFactory(): RecyclerView.Adapter<*> {
         val authNavigatorMiddleware = view!!.context.dependencyGraph().authNavigatorMiddleware
         val actionHelper = ListPhotosAdapter.actionHelper(
                 view!!.findNavController(),
@@ -246,11 +244,10 @@ data class FilterVM(val type: FilterVM.Type, @StringRes val title: Int, val data
 data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: String? = null) : Parcelable
 
 class ListPhotosViewModel(initialFilterVM: FilterVM,
-                          private val diskExecutor: KExecutor,
+                          diskExecutor: KExecutor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
                           private val searchTermTracker: SearchTermTracker,
-                          private val scheduledWorkService: ScheduledWorkService,
                           listenableAuthState: Listenable<AuthToken>) : ViewModel() {
 
 
@@ -284,18 +281,14 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
     val photosLiveData = photosPageListConfigLiveData(
             diskExecutor,
             choosablePhotoDataSourceFactory,
-            errorLiveData
-    )
+            errorLiveData)
 
     fun cancel() {
         photoRepository.cancel()
     }
 
     fun logout() {
-        scheduledWorkService.clearAllScheduled()
-        diskExecutor {
-            userRepository.logout()
-        }
+        userRepository.logout()
     }
 
     fun changePageListingType(vmFilter: FilterVM) {

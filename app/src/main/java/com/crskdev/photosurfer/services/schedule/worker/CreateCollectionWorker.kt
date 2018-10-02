@@ -1,22 +1,23 @@
-package com.crskdev.photosurfer.data.repository.collection
+package com.crskdev.photosurfer.services.schedule.worker
 
+import androidx.work.Worker
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
-import com.crskdev.photosurfer.data.repository.scheduled.Tag
-import com.crskdev.photosurfer.data.repository.scheduled.WorkData
-import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.toCollectionDB
 import com.crskdev.photosurfer.entities.toCollectionLite
-import com.crskdev.photosurfer.services.TypedWorker
 import com.crskdev.photosurfer.services.messaging.messages.Message
+import com.crskdev.photosurfer.services.schedule.Tag
+import com.crskdev.photosurfer.services.schedule.WorkData
+import com.crskdev.photosurfer.services.schedule.WorkType
+import com.crskdev.photosurfer.util.systemNotification
 
 /**
  * Created by Cristian Pela on 02.09.2018.
  */
-class CreateCollectionWorker : TypedWorker() {
+class CreateCollectionWorker : Worker() {
 
     companion object {
         private const val TITLE = "collection_title"
@@ -30,17 +31,15 @@ class CreateCollectionWorker : TypedWorker() {
                 description: String,
                 private: Boolean,
                 withPhoto: String? = null): WorkData {
-            return WorkData(Tag(WorkType.CREATE_COLLECTION), false,
-                    PHOTO to (withPhoto ?: ""),
+            return WorkData(Tag(WorkType.CREATE_COLLECTION),
+                    PHOTO to (withPhoto
+                            ?: ""),
                     TITLE to title,
                     DESCRIPTION to description,
                     PRIVATE to private)
         }
 
     }
-
-    override val type: WorkType = WorkType.CREATE_COLLECTION
-
 
     override fun doWork(): Result {
 
@@ -73,6 +72,7 @@ class CreateCollectionWorker : TypedWorker() {
                             PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
                         } ?: PagingData(1, 1, null, null)
                         collectionsDAO.createCollection(cjson.toCollectionDB(pagingData))
+
                         devicePushMessagingManager.sendMessage(Message.CollectionCreate(collectionId))
                         //add the photo to collection
                         if (withPhotoId != null) {
@@ -97,15 +97,15 @@ class CreateCollectionWorker : TypedWorker() {
                             //TODO notify device for photo added to collection
                         }
                     }
-                    sendPlatformNotification("Collection created")
+                    applicationContext.systemNotification("Collection created")
                 }
             } else {
-                sendPlatformNotification(response.errorBody().toString())
+                applicationContext.systemNotification(response.errorBody().toString())
                 return Result.FAILURE
             }
         } catch (ex: Exception) {
             ex.printStackTrace()
-            sendPlatformNotification(ex.message ?: "Unknown error: ${ex}")
+            applicationContext.systemNotification(ex.message ?: "Unknown error: ${ex}")
             Result.FAILURE
         }
 

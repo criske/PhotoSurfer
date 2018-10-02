@@ -1,25 +1,24 @@
-package com.crskdev.photosurfer.data.repository.collection
+package com.crskdev.photosurfer.services.schedule.worker
 
-import com.crskdev.photosurfer.data.repository.scheduled.Tag
-import com.crskdev.photosurfer.data.repository.scheduled.WorkData
-import com.crskdev.photosurfer.data.repository.scheduled.WorkType
+import androidx.work.Worker
 import com.crskdev.photosurfer.dependencies.dependencyGraph
-import com.crskdev.photosurfer.services.TypedWorker
 import com.crskdev.photosurfer.services.messaging.messages.Message
+import com.crskdev.photosurfer.services.schedule.Tag
+import com.crskdev.photosurfer.services.schedule.WorkData
+import com.crskdev.photosurfer.services.schedule.WorkType
+import com.crskdev.photosurfer.util.systemNotification
 
 /**
  * Created by Cristian Pela on 14.09.2018.
  */
-class DeleteCollectionWorker : TypedWorker() {
-
-    override val type: WorkType = WorkType.DELETE_COLLECTION
+class DeleteCollectionWorker : Worker() {
 
     companion object {
 
         private const val ID = "ID"
 
         fun createWorkData(id: Int): WorkData {
-            return WorkData(Tag(WorkType.DELETE_COLLECTION, id.toString()), false, ID to id)
+            return WorkData(Tag(WorkType.DELETE_COLLECTION, id.toString()), ID to id)
         }
     }
 
@@ -32,7 +31,7 @@ class DeleteCollectionWorker : TypedWorker() {
             if (res.isSuccessful) {
                 graph.devicePushMessagingManager.sendMessage(Message.CollectionDeleted(id))
             }
-            sendPlatformNotification("Collection deleted")
+            applicationContext.systemNotification("Collection deleted")
         } catch (ex: Exception) {
             ex.printStackTrace()
             return Result.FAILURE

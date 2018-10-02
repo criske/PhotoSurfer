@@ -19,6 +19,7 @@ import com.crskdev.photosurfer.entities.toDbUserEntity
 import com.crskdev.photosurfer.entities.toUser
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.services.executors.ExecutorType
+import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.util.runOn
 
 /**
@@ -50,6 +51,7 @@ interface UserRepository : Repository {
 
 class UserRepositoryImpl(executorsManager: ExecutorsManager,
                          private val daoManager: DaoManager,
+                         private val scheduledWorkManager: ScheduledWorkManager,
                          private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
                          private val apiCallDispatcher: APICallDispatcher,
                          private val userAPI: UserAPI,
@@ -157,6 +159,7 @@ class UserRepositoryImpl(executorsManager: ExecutorsManager,
     override fun logout(callback: Repository.Callback<Unit>?) {
         diskExecutor {
             authTokenStorage.clearToken()
+            scheduledWorkManager.cancel(null)
             daoManager.clearAll()
             session.clear()
             callback?.runOn(uiExecutor) { onSuccess(Unit) }

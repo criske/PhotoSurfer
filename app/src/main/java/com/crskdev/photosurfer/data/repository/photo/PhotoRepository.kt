@@ -8,20 +8,16 @@ import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.PagingData
-import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.download.DownloadManager
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
 import com.crskdev.photosurfer.data.remote.photo.SearchedPhotosJSON
 import com.crskdev.photosurfer.data.repository.Repository
-import com.crskdev.photosurfer.data.repository.scheduled.Tag
-import com.crskdev.photosurfer.data.repository.scheduled.WorkData
-import com.crskdev.photosurfer.data.repository.scheduled.WorkType
 import com.crskdev.photosurfer.entities.*
-import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.services.schedule.*
 import com.crskdev.photosurfer.util.runOn
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
@@ -74,7 +70,7 @@ class PhotoRepositoryImpl(
         private val apiCallDispatcher: APICallDispatcher,
         private val api: PhotoAPI,
         private val downloadManager: DownloadManager,
-        private val scheduledWorkService: ScheduledWorkService
+        private val scheduledWorkService: ScheduledWorkManager
 ) : PhotoRepository {
 
     private val uiExecutor = executorsManager.types[ExecutorType.UI]!!
@@ -221,7 +217,7 @@ class PhotoRepositoryImpl(
             daoPhotoFacade.like(photo.id, photo.likedByMe)
             callback.runOn(uiExecutor) { onSuccess(photo.likedByMe) }
         }
-        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), true, "id" to photo.id,
+        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id,
                 "likedByMe" to photo.likedByMe))
     }
 

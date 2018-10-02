@@ -3,8 +3,6 @@ package com.crskdev.photosurfer.data.repository.collection
 import android.support.test.runner.AndroidJUnit4
 import androidx.room.Room
 import com.crskdev.photosurfer.data.local.*
-import com.crskdev.photosurfer.data.local.collections.CollectionEntity
-import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
@@ -13,20 +11,16 @@ import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.collections.CollectionJSON
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
 import com.crskdev.photosurfer.data.remote.photo.PhotoJSON
-import com.crskdev.photosurfer.data.repository.scheduled.Tag
-import com.crskdev.photosurfer.data.repository.scheduled.WorkData
-import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.NetworkCheckService
-import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.messages.Message
+import com.crskdev.photosurfer.services.schedule.*
 import okhttp3.Request
 import okhttp3.ResponseBody
-import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import retrofit2.Call
@@ -68,10 +62,8 @@ class CollectionRepositoryImplTest : BaseDBTest() {
                 Contract.TABLE_COLLECTIONS to db.collectionsDAO(),
                 Contract.TABLE_COLLECTION_PHOTOS to db.collectionPhotoDAO()
         ))
-        val scheduledWorkService = object : ScheduledWorkService {
-            override fun schedule(workData: WorkData) {}
-            override fun clearScheduled(workerTag: Tag) {}
-            override fun clearAllScheduled() {}
+        val scheduledWorkService = object : ScheduledWorkManager(EnumMap<WorkType, ScheduledWork>(WorkType::class.java)) {
+            override fun cancel(tag: Tag?) = Unit
         }
         val threadCallChecker = object : ThreadCallChecker() {
             override fun isOnMainThread(): Boolean = true
@@ -122,8 +114,8 @@ class CollectionRepositoryImplTest : BaseDBTest() {
                 collectionsAPI,
                 authTokenStorage,
                 staleDataTrackSupervisor,
-                object : DevicePushMessagingManager{
-                    override fun onReceiveMessage(data: Map<String, String>)= Unit
+                object : DevicePushMessagingManager {
+                    override fun onReceiveMessage(data: Map<String, String>) = Unit
 
                     override fun onRegister(token: String) = Unit
 

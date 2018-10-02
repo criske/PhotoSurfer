@@ -16,11 +16,14 @@ import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.entities.Collection
-import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
 import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.messages.Message
+import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
+import com.crskdev.photosurfer.services.schedule.worker.CreateCollectionWorker
+import com.crskdev.photosurfer.services.schedule.worker.DeleteCollectionWorker
+import com.crskdev.photosurfer.services.schedule.worker.EditCollectionWorker
 import com.crskdev.photosurfer.util.runOn
 
 /**
@@ -56,7 +59,7 @@ class CollectionRepositoryImpl(
         executorsManager: ExecutorsManager,
         daoManager: DaoManager,
         private val photoDAOFacade: PhotoDAOFacade,
-        private val scheduledWorkService: ScheduledWorkService,
+        private val scheduledWorkService: ScheduledWorkManager,
         private val apiCallDispatcher: APICallDispatcher,
         private val collectionAPI: CollectionsAPI,
         private val authTokenStorage: AuthTokenStorage,

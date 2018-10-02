@@ -4,43 +4,47 @@ import android.content.Context
 import android.os.Environment
 import com.crskdev.photosurfer.BuildConfig
 import com.crskdev.photosurfer.data.local.*
-import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
-import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
-import com.crskdev.photosurfer.data.remote.download.*
-import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
-import com.crskdev.photosurfer.data.local.photo.external.*
+import com.crskdev.photosurfer.data.local.photo.external.ExternalDirectory
+import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
+import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDB
+import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDBImpl
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
 import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.*
 import com.crskdev.photosurfer.data.remote.auth.*
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
+import com.crskdev.photosurfer.data.remote.download.*
 import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrar
 import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrarImpl
+import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepositoryImpl
+import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
-import com.crskdev.photosurfer.services.ScheduledWorkServiceImpl
 import com.crskdev.photosurfer.services.NetworkCheckService
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
-import com.crskdev.photosurfer.services.ScheduledWorkService
 import com.crskdev.photosurfer.services.executors.*
 import com.crskdev.photosurfer.services.messaging.DevicePushMessageManagerImpl
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.FCMTokeProviderImpl
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
 import com.crskdev.photosurfer.services.messaging.remote.messagingRetrofit
+import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
+import com.crskdev.photosurfer.services.schedule.ScheduledWorkManagerImpl
+import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
-import retrofit2.Retrofit
-import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
-import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
+import com.franmontiel.persistentcookiejar.cache.SetCookieCache
+import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.google.firebase.iid.FirebaseInstanceId
 import com.squareup.moshi.Moshi
+import retrofit2.Retrofit
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -99,11 +103,15 @@ object DependencyGraph {
         private set
     lateinit var photoDownloader: PhotoDownloader
         private set
-    lateinit var scheduledWorkService: ScheduledWorkService
-        private set
 
     //MESSAGING
     lateinit var devicePushMessagingManager: DevicePushMessagingManager
+        private set
+
+    //SCHEDULE
+    lateinit var scheduledWorkManager: ScheduledWorkManager
+        private set
+    lateinit var workQueueBookKeeper: WorkQueueBookKeeper
         private set
 
     //APIs
@@ -136,8 +144,13 @@ object DependencyGraph {
 
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
+
+        //SCHEDULE
+        workQueueBookKeeper = WorkQueueBookKeeper(context)
+        scheduledWorkManager = ScheduledWorkManagerImpl.withDefaultSchedulers(workQueueBookKeeper)
+
+
         //NETWORK
-        scheduledWorkService = ScheduledWorkServiceImpl()
         networkCheckService = NetworkCheckServiceImpl(context)
         authTokenStorage = AuthTokenStorageImpl(preferences).apply {
             listenableAuthState = this
@@ -194,7 +207,7 @@ object DependencyGraph {
                 apiCallDispatcher,
                 photoAPI,
                 downloadManager,
-                scheduledWorkService
+                scheduledWorkManager
         )
 
         collectionsAPI = retrofit.create(CollectionsAPI::class.java)
@@ -202,7 +215,7 @@ object DependencyGraph {
                 executorManager,
                 daoManager,
                 photoDAOFacade,
-                scheduledWorkService,
+                scheduledWorkManager,
                 apiCallDispatcher,
                 collectionsAPI,
                 authTokenStorage,
@@ -220,6 +233,7 @@ object DependencyGraph {
         userRepository = UserRepositoryImpl(
                 executorManager,
                 daoManager,
+                scheduledWorkManager,
                 staleDataTrackSupervisor,
                 apiCallDispatcher,
                 userAPI,
