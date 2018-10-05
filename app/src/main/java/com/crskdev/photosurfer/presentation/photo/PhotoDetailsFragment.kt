@@ -42,10 +42,7 @@ import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.setStatusBarColor
 import com.crskdev.photosurfer.util.dpToPx
-import com.crskdev.photosurfer.util.glide.GlideApp
-import com.crskdev.photosurfer.util.glide.asBitmapPalette
-import com.crskdev.photosurfer.util.glide.into
-import com.crskdev.photosurfer.util.glide.onError
+import com.crskdev.photosurfer.util.glide.*
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
@@ -179,7 +176,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                     }
                 }
                 .into(imagePhotoDetails) {
-                    val palette = it.paletteQuadrants[0]
+                    val palette = it.paletteRegions[BitmapPalette.NO_REGIONS_ID]!!
                     val primaryColor = ContextCompat.getColor(view!!.context, R.color.colorPrimary)
                     val dominantColor: Int = palette.getDominantColor(primaryColor)
                     val accent = ContextCompat.getColor(view!!.context, R.color.colorAccent)
@@ -236,7 +233,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             val enabledActions = PhotoDetailsFragmentArgs.fromBundle(arguments).enabledActions
             progressBarLoading.isVisible = !displayed
             with(displayed && enabledActions) {
-               // (fabDownload as View).isVisible = this
+                // (fabDownload as View).isVisible = this
                 toolbarPhotoDetails.isVisible = this
             }
         })

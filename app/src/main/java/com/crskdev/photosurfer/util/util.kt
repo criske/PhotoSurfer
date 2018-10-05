@@ -6,14 +6,12 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.util.TypedValue
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.ViewPropertyAnimator
-import android.view.ViewTreeObserver
+import android.view.*
 import androidx.annotation.ColorRes
 import androidx.annotation.FloatRange
 import androidx.appcompat.widget.Toolbar
@@ -179,4 +177,12 @@ object IntentUtils {
             Intent(Intent.ACTION_VIEW, Uri
                     .parse("https://unsplash.com/@$authorUsername?utm_source=Photo+Surfer&utm_medium=referral"))
 
+}
+
+fun View.getDrawingRect(): Rect = Rect().apply {
+    getDrawingRect(this)
+}
+
+fun View.getHitRect(): Rect = Rect().apply {
+    getHitRect(this)
 }
