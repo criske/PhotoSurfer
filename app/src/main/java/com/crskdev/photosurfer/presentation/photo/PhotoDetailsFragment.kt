@@ -1,16 +1,17 @@
 package com.crskdev.photosurfer.presentation.photo
 
 
-import android.animation.TimeInterpolator
 import android.content.res.ColorStateList
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
-import android.view.*
-import android.view.animation.LinearInterpolator
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewPropertyAnimator
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -20,17 +21,13 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.*
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
-import androidx.palette.graphics.Palette
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
-import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.remote.download.DownloadProgress
 import com.crskdev.photosurfer.data.repository.Repository
@@ -40,18 +37,21 @@ import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.deparcelize
 import com.crskdev.photosurfer.entities.parcelize
-import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
+import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
+import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.setStatusBarColor
 import com.crskdev.photosurfer.util.dpToPx
+import com.crskdev.photosurfer.util.glide.GlideApp
+import com.crskdev.photosurfer.util.glide.asBitmapPalette
+import com.crskdev.photosurfer.util.glide.into
+import com.crskdev.photosurfer.util.glide.onError
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.tintIcon
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.jsibbold.zoomage.ZoomageView
-import kotlinx.android.synthetic.main.fragment_photo_details_show_actions.*
 import kotlinx.android.synthetic.main.progress_layout.*
 
 class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
@@ -61,7 +61,16 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     private var progSlideUpAnimation: ViewPropertyAnimator? = null
 
     private lateinit var photo: Photo
-    private val glide by lazy { Glide.with(this) }
+
+    private val glide by lazy { GlideApp.with(this) }
+
+
+    private val imagePhotoDetails by lazy { view!!.findViewById<ImageView>(R.id.imagePhotoDetails) }
+    private val toolbarPhotoDetails by lazy { view!!.findViewById<Toolbar>(R.id.toolbarPhotoDetails) }
+    private val fabDownload by lazy { view!!.findViewById<FloatingActionButton>(R.id.fabDownload) }
+    private val imgBtnDownloadCancel by lazy { view!!.findViewById<ImageButton>(R.id.imgBtnDownloadCancel) }
+    private val progressBarLoading by lazy { view!!.findViewById<ProgressBar>(R.id.progressBarLoading) }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,7 +89,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onBackOrUpPressed() {
         glide.clear(imagePhotoDetails)
-        viewModel.cancelDownload(PhotoDetailsFragmentArgs.fromBundle(arguments).photo.id)
+        viewModel.cancelDownload()
     }
 
     override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
@@ -99,12 +108,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         subscribeToViewModel(view)
         displayPhoto()
 
-        val image = view.findViewById<ZoomageView>(R.id.imagePhotoDetails)
-        val toolbar = view.findViewById<Toolbar>(R.id.toolbarPhotoDetails)
-        val fab = view.findViewById<FloatingActionButton>(R.id.fabDownload)
-        val btnCancel = view.findViewById<ImageButton>(R.id.imgBtnDownloadCancel)
-
-        image.setOnClickListener {
+        imagePhotoDetails.setOnLongClickListener {
             val constraintLayout = view as ConstraintLayout
             val constraintSet = ConstraintSet()
             val layout = if (showActions) R.layout.fragment_photo_details_show_actions else
@@ -115,9 +119,10 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             })
             constraintSet.applyTo(constraintLayout)
             showActions = !showActions
+            true
         }
 
-        toolbar.apply {
+        toolbarPhotoDetails.apply {
             //create menu
             inflateMenu(R.menu.menu_photo_detail)
             title = (photo.authorFullName)
@@ -135,15 +140,15 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
         }
 
-        fab.setOnClickListener { v ->
+        fabDownload.setOnClickListener { v ->
             if (!AppPermissionsHelper.hasStoragePermission(v.context)) {
                 AppPermissionsHelper.requestStoragePermission(activity!!)
             } else
                 viewModel.download(photo)
         }
 
-        btnCancel.setOnClickListener {
-            viewModel.cancelDownload(photo.id)
+        imgBtnDownloadCancel.setOnClickListener {
+            viewModel.cancelDownload()
         }
     }
 
@@ -158,59 +163,44 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
 
     private fun displayPhoto() {
-        glide.asBitmap()
-                .load(photo.urls[ImageType.FULL])
-                .addListener(object : RequestListener<Bitmap> {
-                    override fun onResourceReady(resource: Bitmap?,
-                                                 model: Any?, target: Target<Bitmap>?,
-                                                 dataSource: DataSource?,
-                                                 isFirstResource: Boolean): Boolean {
-                        setPalette(this@PhotoDetailsFragment.photo.id, resource)
-                        viewModel.photoDisplayedLiveData.value = true
-                        return false
-                    }
 
-                    override fun onLoadFailed(e: GlideException?, model: Any?,
-                                              target: Target<Bitmap>?,
-                                              isFirstResource: Boolean): Boolean {
-                        view?.let {
-                            viewModel.photoDisplayedLiveData.value = true
-                            Snackbar.make(it, e?.message
-                                    ?: "Unknown Error", Snackbar.LENGTH_INDEFINITE)
-                                    .setAction("Retry") { _ ->
-                                        viewModel.photoDisplayedLiveData.value = false
-                                        displayPhoto()
-                                    }
-                                    .show()
-                        }
-                        return true
+        glide.asBitmapPalette()
+                .load(photo.urls[ImageType.FULL])
+                .onError {
+                    view?.let { v ->
+                        viewModel.photoDisplayedLiveData.value = true
+                        Snackbar.make(v, it.message
+                                ?: "Unknown Error", Snackbar.LENGTH_INDEFINITE)
+                                .setAction("Retry") { _ ->
+                                    viewModel.photoDisplayedLiveData.value = false
+                                    displayPhoto()
+                                }
+                                .show()
                     }
-                })
-                .into(imagePhotoDetails)
+                }
+                .into(imagePhotoDetails) {
+                    val palette = it.paletteQuadrants[0]
+                    val primaryColor = ContextCompat.getColor(view!!.context, R.color.colorPrimary)
+                    val dominantColor: Int = palette.getDominantColor(primaryColor)
+                    val accent = ContextCompat.getColor(view!!.context, R.color.colorAccent)
+                    val vibrant = palette.getLightVibrantColor(accent)
+
+
+                    activity?.setStatusBarColor(dominantColor)
+                    fabDownload.backgroundTintList = ColorStateList.valueOf(ColorUtils.blendARGB(dominantColor, vibrant, 0.25f))
+                    val progressColorFilter = PorterDuff.Mode.SRC_ATOP.toColorFilter(accent)
+                    progressBarDownload.progressDrawable.colorFilter = progressColorFilter
+                    progressBarDownload.indeterminateDrawable.colorFilter = progressColorFilter
+                    imgBtnDownloadCancel.drawable.setColorFilter(
+                            palette.getMutedColor(accent), PorterDuff.Mode.SRC_ATOP)
+                    textDownloadProgress.setTextColor(Color.DKGRAY)
+                    view!!.setBackgroundColor(dominantColor)
+
+                    viewModel.photoDisplayedLiveData.value = true
+                }
     }
 
     private fun subscribeToViewModel(view: View) {
-        viewModel.paletteLiveData.observe(this, Observer {
-            it[photo.id]?.let { palette ->
-                val primaryColor = ContextCompat.getColor(view.context, R.color.colorPrimary)
-                val dominantColor: Int = palette.getDominantColor(primaryColor)
-                val dominantSwatch = palette.dominantSwatch
-                val accent = ContextCompat.getColor(view.context, R.color.colorAccent)
-                val muted = palette.getMutedColor(accent)
-                val vibrant = palette.getLightVibrantColor(accent)
-
-
-                activity?.setStatusBarColor(dominantColor)
-                fabDownload.backgroundTintList = ColorStateList.valueOf(ColorUtils.blendARGB(dominantColor, vibrant, 0.25f))
-                val progressColorFilter = PorterDuff.Mode.SRC_ATOP.toColorFilter(accent)
-                progressBarDownload.progressDrawable.colorFilter = progressColorFilter
-                progressBarDownload.indeterminateDrawable.colorFilter = progressColorFilter
-                imgBtnDownloadCancel.drawable.setColorFilter(
-                        palette.getMutedColor(accent), PorterDuff.Mode.SRC_ATOP)
-                textDownloadProgress.setTextColor(Color.DKGRAY)
-                view.setBackgroundColor(dominantColor)
-            }
-        })
         viewModel.isDownloadedLiveData.observe(this, Observer {
             Toast.makeText(this.context, "Photo already downloaded!", Toast.LENGTH_SHORT).show()
         })
@@ -246,7 +236,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             val enabledActions = PhotoDetailsFragmentArgs.fromBundle(arguments).enabledActions
             progressBarLoading.isVisible = !displayed
             with(displayed && enabledActions) {
-                (fabDownload as View).isVisible = this
+               // (fabDownload as View).isVisible = this
                 toolbarPhotoDetails.isVisible = this
             }
         })
@@ -255,22 +245,13 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
             tintLike()
             arguments?.putParcelable("photo", photo.parcelize())
         })
+
         viewModel.needsAuthLiveData.observe(this, Observer {
             view.context.dependencyGraph().authNavigatorMiddleware.navigateToLogin(activity!!)
         })
 
     }
 
-    fun setPalette(id: String?, bitmap: Bitmap?) {
-        if (id != null && bitmap != null) {
-            if (viewModel.paletteLiveData.value?.get(id) == null) {
-                Palette.from(bitmap).generate {
-                    if (it != null)
-                        viewModel.updatePalette(id, it)
-                }
-            }
-        }
-    }
 
     override fun onDestroyView() {
         progSlideUpAnimation?.cancel()
@@ -296,10 +277,6 @@ class PhotoDetailViewModel(
 
     val needsAuthLiveData = SingleLiveEvent<Unit>()
 
-    val paletteLiveData = MutableLiveData<Map<String, Palette>>().apply {
-        value = emptyMap()
-    }
-
     val downloadLiveData = MutableLiveData<DownloadProgress>()
 
     val photoDisplayedLiveData = MutableLiveData<Boolean>().apply {
@@ -318,15 +295,6 @@ class PhotoDetailViewModel(
             value = IDLE
         }
     }
-
-    fun updatePalette(id: String, palette: Palette) {
-        val old = paletteLiveData.value
-        paletteLiveData.value = mutableMapOf<String, Palette>().apply {
-            old?.let { putAll(it) }
-            put(id, palette)
-        }
-    }
-
 
     fun download(photo: Photo) {
         val isDownloaded = photoRepository.isDownloaded(photo.id)
@@ -363,7 +331,7 @@ class PhotoDetailViewModel(
     }
 
 
-    fun cancelDownload(id: String) {
+    fun cancelDownload() {
         photoRepository.cancel()
     }
 
