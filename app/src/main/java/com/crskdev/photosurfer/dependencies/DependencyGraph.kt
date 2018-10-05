@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package com.crskdev.photosurfer.dependencies
 
 import android.content.Context
@@ -54,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 object DependencyGraph {
 
-    internal var isInit: AtomicBoolean = AtomicBoolean(false)
+    private var isInit: AtomicBoolean = AtomicBoolean(false)
 
     //EXECUTORS
     val threadCallChecker: ThreadCallChecker = AndroidThreadCallChecker()
@@ -143,7 +145,6 @@ object DependencyGraph {
         if (isInit.get()) return
 
         val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
-
 
         //SCHEDULE
         workQueueBookKeeper = WorkQueueBookKeeper(context)

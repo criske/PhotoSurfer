@@ -38,6 +38,7 @@ import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.glide.GlideApp
 import com.crskdev.photosurfer.util.livedata.ListenableLiveData
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.filter
@@ -63,7 +64,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
     private lateinit var currentFilter: FilterVM
 
     private val glide by lazy {
-        Glide.with(this)
+        GlideApp.with(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

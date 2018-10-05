@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".presentation.photo.PhotoDetailsFragment">
 
-    <com.jsibbold.zoomage.ZoomageView
+    <com.crskdev.photosurfer.util.ExtraGesturedZoomageView
         android:id="@+id/imagePhotoDetails"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

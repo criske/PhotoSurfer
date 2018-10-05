@@ -90,8 +90,10 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_photo_details_show_actions, container, false)
+        return inflater.inflate(R.layout.fragment_photo_details, container, false)
     }
+
+    private var showActions = true
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         subscribeToViewModel(view)
@@ -102,15 +104,17 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         val fab = view.findViewById<FloatingActionButton>(R.id.fabDownload)
         val btnCancel = view.findViewById<ImageButton>(R.id.imgBtnDownloadCancel)
 
-        image.setOnLongClickListener {
-            val constraintLayout = it as ConstraintLayout
+        image.setOnClickListener {
+            val constraintLayout = view as ConstraintLayout
             val constraintSet = ConstraintSet()
-            constraintSet.clone(context, R.layout.fragment_photo_details_show_actions)
+            val layout = if (showActions) R.layout.fragment_photo_details_show_actions else
+                R.layout.fragment_photo_details
+            constraintSet.clone(context, layout)
             TransitionManager.beginDelayedTransition(constraintLayout, ChangeBounds().apply {
-                duration = 750
+                duration = 350
             })
             constraintSet.applyTo(constraintLayout)
-            false
+            showActions = !showActions
         }
 
         toolbar.apply {
@@ -145,7 +149,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     private fun tintLike() {
         val colorLike = if (photo.likedByMe) {
-             R.color.colorLike
+            R.color.colorLike
         } else {
             android.R.color.white
         }

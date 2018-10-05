@@ -12,18 +12,16 @@ import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
-import com.crskdev.photosurfer.util.recyclerview.PaletteManager
-import com.crskdev.photosurfer.util.recyclerview.PaletteViewHolder
+import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
+
 
 class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                         private val glide: RequestManager,
-                        private val action: (ActionWhat, Photo) -> Unit) : PagedListAdapter<Photo, PaletteViewHolder<Photo>>(
+                        private val action: (ActionWhat, Photo) -> Unit) : PagedListAdapter<Photo, BindViewHolder<Photo>>(
         object : DiffUtil.ItemCallback<Photo>() {
             override fun areItemsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem.id == newItem.id
             override fun areContentsTheSame(oldItem: Photo, newItem: Photo): Boolean = oldItem == newItem
         }) {
-
-    private val paletteManager: PaletteManager = PaletteManager()
 
     private var isRemoteType: Boolean = true
 
@@ -81,43 +79,33 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
         return if (isRemoteType) TYPE_REMOTE else TYPE_SAVED
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PaletteViewHolder<Photo> =
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BindViewHolder<Photo> =
             if (viewType == TYPE_REMOTE) {
                 ListPhotosVH(
                         glide,
-                        paletteManager,
                         layoutInflater.inflate(R.layout.item_list_photos, parent, false),
                         action)
             } else {
                 SavedListPhotosVH(
                         glide,
-                        paletteManager,
                         layoutInflater.inflate(R.layout.item_saved_list_photos, parent, false),
                         action)
             }
 
 
-    override fun onBindViewHolder(viewHolder: PaletteViewHolder<Photo>, position: Int) {
+    override fun onBindViewHolder(viewHolder: BindViewHolder<Photo>, position: Int) {
         getItem(position)
-                ?.let { paletteManager.bindHolder(it, viewHolder) }
-                ?: paletteManager.unbindHolder(viewHolder)
+                ?.let { viewHolder.bind(it) }
+                ?: viewHolder.unBind()
     }
 
-    override fun onViewRecycled(holder: PaletteViewHolder<Photo>) {
-        paletteManager.unbindHolder(holder)
+    override fun onViewRecycled(holder: BindViewHolder<Photo>) {
+        holder.unBind()
     }
 
 
     fun setType(remote: Boolean) {
         this.isRemoteType = remote
-        //if remote evict and unbind all saved list photos vh else list photos vh
-        if(remote){
-            paletteManager.unbindAllHoldersLike(SavedListPhotosVH::class.java)
-        }else{
-            paletteManager.unbindAllHoldersLike(ListPhotosVH::class.java)
-        }
-
-
     }
 
     enum class ActionWhat {

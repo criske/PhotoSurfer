@@ -14,7 +14,6 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
 import com.crskdev.photosurfer.R
@@ -23,11 +22,14 @@ import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
-import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.glide.GlideApp
+import com.crskdev.photosurfer.util.glide.asBitmapPalette
+import com.crskdev.photosurfer.util.glide.into
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_collections.*
 import kotlinx.android.synthetic.main.item_list_collections.view.*
@@ -59,7 +61,7 @@ class CollectionsFragment : Fragment() {
         recyclerCollections.apply {
             val fragmentCtx = this@CollectionsFragment.context!!
             val nav = this.findNavController()
-            adapter = CollectionsAdapter(LayoutInflater.from(fragmentCtx), Glide.with(fragmentCtx)) { what, collection ->
+            adapter = CollectionsAdapter(LayoutInflater.from(fragmentCtx), GlideApp.with(fragmentCtx)) { what, collection ->
                 when (what) {
                     What.PHOTOS -> nav.navigate(CollectionsFragmentDirections
                             .ActionFragmentCollectionsToCollectionListPhotosFragment(collection.id), defaultTransitionNavOptions())
@@ -98,7 +100,6 @@ class CollectionsFragment : Fragment() {
         toolbarCollections.tintIcons()
     }
 }
-
 
 
 class CollectionsViewModel(private val collectionsRepository: CollectionRepository,
@@ -173,13 +174,20 @@ class CollectionVH(view: View, private val glide: RequestManager,
     fun bind(collection: Collection) {
         this.collection = collection
         with(itemView) {
-            collection.coverPhotoUrls?.get(ImageType.REGULAR)?.let {
-                glide.asDrawable().load(it)
+            collection.coverPhotoUrls?.get(ImageType.REGULAR)?.let { url->
+                glide.asBitmapPalette().load(url)
                         .apply(RequestOptions()
                                 .placeholder(R.drawable.ic_logo)
                                 .centerCrop())
                         //.transition(DrawableTransitionOptions().crossFade())
-                        .into(imageCollectionCover)
+                        .into(imageCollectionCover) { bp ->
+                            bp.paletteQuadrants[0].dominantSwatch?.bodyTextColor?.let {
+                                textUnsplash.setTextColor(it)
+                            }
+                            bp.paletteQuadrants[3].dominantSwatch?.bodyTextColor?.let {
+                                textAuthor.setTextColor(it)
+                            }
+                        }
             }
             textCollectionTitle.text = collection.title.capitalize()
             textCollectionSize.text = collection.totalPhotos.toString()
