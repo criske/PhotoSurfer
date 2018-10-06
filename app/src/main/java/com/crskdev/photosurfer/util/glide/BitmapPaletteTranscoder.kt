@@ -24,12 +24,13 @@ class BitmapPaletteTranscoder(private val bitmapPool: BitmapPool)
         val regions = options.get(Option.memory(SAMPLING_REGIONS_KEY,
                 mapOf(BitmapPalette.NO_REGIONS_ID to Rect(0, 0, bitmap.width, bitmap.height))))!!
         val paletteRegions = regions.mapValues {
-                    Palette.from(bitmap).setRegion(
-                            it.value.left,
-                            it.value.top,
-                            it.value.right,
-                            it.value.bottom)
-                            .generate() }
-        return BitmapPaletteResource(BitmapPalette(bitmap, paletteRegions), bitmapPool)
+            Palette.from(bitmap).setRegion(
+                    it.value.left,
+                    it.value.top,
+                    it.value.right,
+                    it.value.bottom)
+                    .generate()
+        }
+        return BitmapPaletteResource(BitmapPalette(bitmap, PaletteSampler(paletteRegions)), bitmapPool)
     }
 }

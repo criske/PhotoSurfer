@@ -224,7 +224,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
             //add photo if current photo collection table has the collection.id
             val lastCollectionPhoto = daoCollectionPhoto.getLastPhoto()
             if (lastCollectionPhoto != null && lastCollectionPhoto.currentCollectionId == collection.id) {
-                val pickedPhoto = if(providedPhoto!= null) providedPhoto else
+                val pickedPhoto = if (providedPhoto != null) providedPhoto else
                     photosByTable.entries.first().value
                 pickedPhoto.let {
                     val collectionPhoto = CollectionPhotoEntity().apply {
@@ -237,6 +237,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.urls = it.urls
                         this.likedByMe = it.likedByMe
                         this.authorUsername = it.authorUsername
+                        this.authorFullName = it.authorFullName
                         this.authorId = it.authorId
                         this.indexInResponse = lastCollectionPhoto.indexInResponse
                         this.curr = lastCollectionPhoto.curr

@@ -176,7 +176,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                     }
                 }
                 .into(imagePhotoDetails) {
-                    val palette = it.paletteRegions[BitmapPalette.NO_REGIONS_ID]!!
+                    val palette = it.paletteSampler[BitmapPalette.NO_REGIONS_ID]
                     val primaryColor = ContextCompat.getColor(view!!.context, R.color.colorPrimary)
                     val dominantColor: Int = palette.getDominantColor(primaryColor)
                     val accent = ContextCompat.getColor(view!!.context, R.color.colorAccent)

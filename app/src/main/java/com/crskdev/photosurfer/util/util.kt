@@ -6,10 +6,18 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.BackgroundColorSpan
+import android.text.style.ImageSpan
+import android.text.style.StyleSpan
 import android.util.TypedValue
 import android.view.*
 import androidx.annotation.ColorRes
@@ -25,6 +33,7 @@ import androidx.core.view.iterator
 import androidx.navigation.NavOptions
 import androidx.recyclerview.widget.RecyclerView
 import com.crskdev.photosurfer.R
+import com.google.android.material.chip.ChipDrawable
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -153,7 +162,7 @@ fun Toolbar.tintIcons(@ColorRes color: Int = android.R.color.darker_gray) {
     }
 }
 
-fun Toolbar.tintIcon(menuItemId: Int, @ColorRes color: Int = android.R.color.darker_gray){
+fun Toolbar.tintIcon(menuItemId: Int, @ColorRes color: Int = android.R.color.darker_gray) {
     post {
         val c = ContextCompat.getColor(context, color)
         menu.findItem(menuItemId)?.apply {
@@ -185,4 +194,12 @@ fun View.getDrawingRect(): Rect = Rect().apply {
 
 fun View.getHitRect(): Rect = Rect().apply {
     getHitRect(this)
+}
+
+fun CharSequence.decorateWithChip(context: Context, bgColor: Int): Spannable {
+    return SpannableString(this).apply {
+               setSpan(ChipSpan(Color.RED, 8.dpToPx(context.resources), 10.dpToPx(context.resources)),
+                       0, this@decorateWithChip.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+       // setSpan(BackgroundColorSpan(bgColor), 0, this@decorateWithChip.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
 }

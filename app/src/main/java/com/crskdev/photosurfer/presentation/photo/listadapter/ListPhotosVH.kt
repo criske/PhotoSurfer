@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.presentation.photo.listadapter
 
+import android.graphics.Rect
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
@@ -22,8 +23,19 @@ class ListPhotosVH(private val glide: RequestManager,
                    private val action: (ListPhotosAdapter.ActionWhat, Photo) -> Unit) :
         BindViewHolder<Photo>(view) {
 
+    private val authorRegionRect: Rect
+    private val unsplashRegionRect: Rect
 
     init {
+        //calculate regions for sampling palettes
+        val resources = itemView.resources
+        val margin = resources.getDimensionPixelSize(R.dimen.item_photo_text_margin)
+        val photoHeight = resources.getDimensionPixelSize(R.dimen.item_photo_height)
+        val textHeight = resources.getDimensionPixelSize(R.dimen.item_photo_text_h)
+        val textWidth = resources.getDimensionPixelSize(R.dimen.item_photo_text_w)
+        unsplashRegionRect = Rect(margin, margin, margin + textWidth, margin + textHeight)
+        authorRegionRect = Rect(margin, photoHeight - margin - textHeight, margin + textWidth, photoHeight - margin)
+
         itemView.textUnsplash.setOnClickListener { _ ->
             itemView.context.startActivity(IntentUtils.webIntentUnsplash())
         }
@@ -44,28 +56,26 @@ class ListPhotosVH(private val glide: RequestManager,
         }
         itemView.textAuthor.text = model.authorFullName
 
-        itemView.post {
-            glide.asBitmapPalette()
-                    .load(model.urls[ImageType.SMALL])
-                    .setSamplingRegions(mapOf(
-                            itemView.textUnsplash.id to itemView.textUnsplash.getHitRect(),
-                            itemView.textAuthor.id to itemView.textAuthor.getHitRect()
-                    ))
-                    .apply(RequestOptions()
-                            .placeholder(R.drawable.ic_logo)
-                            .transforms(CenterCrop(), RoundedCorners(8)))
-                    .onError {
-                        itemView.textError.text = it.message
+        glide.asBitmapPalette()
+                .load(model.urls[ImageType.SMALL])
+                .setSamplingRegions(mapOf(
+                        itemView.textUnsplash.id to unsplashRegionRect,
+                        itemView.textAuthor.id to authorRegionRect
+                ))
+                .apply(RequestOptions()
+                        .placeholder(R.drawable.ic_logo)
+                        .transforms(CenterCrop(), RoundedCorners(8)))
+                .onError {
+                    itemView.textError.text = it.message
+                }
+                .into(itemView.imagePhotoDetails) { bp ->
+                    bp.paletteSampler[itemView.textUnsplash.id].dominantSwatch?.let {
+                        itemView.textUnsplash.setTextColor(it.bodyTextColor)
                     }
-                    .into(itemView.imagePhotoDetails) { bp ->
-                        bp.paletteRegions[itemView.textUnsplash.id]?.dominantSwatch?.let {
-                            itemView.textUnsplash.setTextColor(it.bodyTextColor)
-                        }
-                        bp.paletteRegions[itemView.textAuthor.id]?.dominantSwatch?.let {
-                            itemView.textAuthor.setTextColor(it.bodyTextColor)
-                        }
+                    bp.paletteSampler[itemView.textAuthor.id].dominantSwatch?.let {
+                        itemView.textAuthor.setTextColor(it.bodyTextColor)
                     }
-        }
+                }
     }
 
 
@@ -127,7 +137,7 @@ class SavedListPhotosVH(private val glide: RequestManager,
                     itemView.textSavedError.text = it.message
                 }
                 .into(itemView.imageSavedPhoto) { bp ->
-                    bp.paletteRegions[BitmapPalette.NO_REGIONS_ID]?.dominantSwatch?.bodyTextColor?.let { it ->
+                    bp.paletteSampler[BitmapPalette.NO_REGIONS_ID].dominantSwatch?.bodyTextColor?.let { it ->
                         itemView.textSavedUnsplash.setTextColor(it)
                     }
                 }

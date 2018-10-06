@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -23,6 +24,7 @@ import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
+import com.crskdev.photosurfer.util.decorateWithChip
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
@@ -75,7 +77,7 @@ class CollectionListPhotosFragment : Fragment() {
         }
 
         viewModel.photosLiveData.observe(this, Observer { it ->
-            it?.let { page->
+            it?.let { page ->
                 recyclerCollectionListPhotos.post {
                     (recyclerCollectionListPhotos.adapter as ListPhotosAdapter).submitList(page)
                 }
@@ -89,7 +91,7 @@ class CollectionListPhotosFragment : Fragment() {
         viewModel.collectionLiveData.observe(this, Observer {
             val size = it.totalPhotos.toString()
             toolbarCollectionListPhotos.title = it.title
-            toolbarCollectionListPhotos.subtitle = "($size)"
+            toolbarCollectionListPhotos.subtitle = size.decorateWithChip(context!!, ContextCompat.getColor(context!!, R.color.colorLike))
         })
 
     }
