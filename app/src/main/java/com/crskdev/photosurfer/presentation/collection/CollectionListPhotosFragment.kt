@@ -24,7 +24,6 @@ import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
-import com.crskdev.photosurfer.util.decorateWithChip
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
@@ -90,8 +89,8 @@ class CollectionListPhotosFragment : Fragment() {
 
         viewModel.collectionLiveData.observe(this, Observer {
             val size = it.totalPhotos.toString()
-            toolbarCollectionListPhotos.title = it.title
-            toolbarCollectionListPhotos.subtitle = size.decorateWithChip(context!!, ContextCompat.getColor(context!!, R.color.colorLike))
+            toolbarCollectionListPhotosTitle.text = it.title
+            toolbarCollectionListPhotosSubtitle.text = size
         })
 
     }

@@ -1,9 +1,9 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="BaseAppTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
+    <style name="BaseAppTheme" parent="Theme.AppCompat.Light.NoActionBar" />
 
-    <style name="AppTheme" parent="BaseAppTheme" >
+    <style name="AppTheme" parent="BaseAppTheme">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -35,6 +35,16 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:fitsSystemWindows">true</item>
         <item name="android:theme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
+    </style>
+
+    <style name="infoChipStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textAppearance">@android:style/TextAppearance.Small</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="chipBackgroundColor">@color/colorPrimaryLight</item>
+        <item name="chipIconVisible">false</item>
+        <item name="chipCornerRadius">5dp</item>
     </style>
 
 

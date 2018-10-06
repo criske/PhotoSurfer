@@ -20,12 +20,12 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Collection Title" />
 
-        <TextView
+        <com.google.android.material.chip.Chip
             android:id="@+id/textCollectionSize"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            style="@style/infoChipStyle"
+            android:layout_height="20dp"
             android:layout_marginEnd="8dp"
-            android:textSize="14sp"
+            android:textSize="12sp"
             app:layout_constraintBaseline_toBaselineOf="@+id/textCollectionTitle"
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="20" />

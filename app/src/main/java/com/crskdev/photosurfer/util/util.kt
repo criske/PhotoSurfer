@@ -195,11 +195,3 @@ fun View.getDrawingRect(): Rect = Rect().apply {
 fun View.getHitRect(): Rect = Rect().apply {
     getHitRect(this)
 }
-
-fun CharSequence.decorateWithChip(context: Context, bgColor: Int): Spannable {
-    return SpannableString(this).apply {
-               setSpan(ChipSpan(Color.RED, 8.dpToPx(context.resources), 10.dpToPx(context.resources)),
-                       0, this@decorateWithChip.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-       // setSpan(BackgroundColorSpan(bgColor), 0, this@decorateWithChip.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    }
-}
