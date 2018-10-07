@@ -33,9 +33,9 @@ open class PhotoEntity : BaseDBEntity() {
     var categories: String? = null
     //TODO use type converters
     lateinit var collections: List<CollectionLite>
-    var likes: Int = 0
+    var likes: Long = 0
     var likedByMe: Boolean = false
-    var views: Int = 0
+    var views: Long = 0
     lateinit var authorId: String
     lateinit var authorUsername: String
     lateinit var authorFullName: String

@@ -4,6 +4,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import androidx.paging.PagedList
+import java.text.DecimalFormat
+
 
 /**
  * Created by Cristian Pela on 17.08.2018.
@@ -85,3 +87,17 @@ fun PagedList.Config.Builder.defaultConfigBuild() = this
         .setPageSize(10)
 
 fun defaultPageListConfig(): PagedList.Config = PagedList.Config.Builder().defaultConfigBuild().build()
+
+fun Long.suffixFormat(): String {
+    if(this < 1000){
+        return this.toString()
+    }
+    val suffix = charArrayOf(' ', 'k', 'M', 'B', 'T', 'P', 'E')
+    val value = Math.floor(Math.log10(this.toDouble())).toInt()
+    val base = value / 3
+    return if (value >= 3 && base < suffix.size) {
+        DecimalFormat("#0.0").format(this / Math.pow(10.0, (base * 3).toDouble())) + suffix[base]
+    } else {
+        DecimalFormat("#,##0").format(this)
+    }
+}

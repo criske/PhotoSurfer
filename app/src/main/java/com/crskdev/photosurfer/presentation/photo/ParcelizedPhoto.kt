@@ -16,7 +16,7 @@ class ParcelizedPhoto(
         val description: String?,
         val categories: List<String>,
         val collections: String,
-        val likes: Int, val likedByMe: Boolean, val views: Int,
+        val likes: Long, val likedByMe: Boolean, val views: Long,
         val authorId: String,
         val authorUsername: String,
         val authorFullName: String,

@@ -21,10 +21,10 @@ class PhotoJSON {
     @Json(name = "current_user_collections")
     var collections: List<CollectionLiteJSON> = emptyList()
     lateinit var categories: List<String>
-    var likes: Int = 0
+    var likes: Long = 0
     @Json(name = "liked_by_user")
     var likedByMe: Boolean = false
-    var views: Int = 0
+    var views: Long = 0
     @Json(name = "user")
     lateinit var author: AuthorJSON
 }

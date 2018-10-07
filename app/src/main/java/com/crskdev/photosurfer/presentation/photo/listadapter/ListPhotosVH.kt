@@ -4,6 +4,7 @@ import android.graphics.Rect
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -12,8 +13,8 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.util.IntentUtils
-import com.crskdev.photosurfer.util.getHitRect
 import com.crskdev.photosurfer.util.glide.*
+import com.crskdev.photosurfer.util.livedata.suffixFormat
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 import kotlinx.android.synthetic.main.item_list_photos.view.*
 import kotlinx.android.synthetic.main.item_saved_list_photos.view.*
@@ -55,6 +56,10 @@ class ListPhotosVH(private val glide: RequestManager,
             itemView.imgLike.setColorFilter(ContextCompat.getColor(itemView.context, R.color.colorLike))
         }
         itemView.textAuthor.text = model.authorFullName
+        itemView.chipLikes.apply {
+            isVisible = true
+            text = (model.likes).suffixFormat()
+        }
 
         glide.asBitmapPalette()
                 .load(model.urls[ImageType.SMALL])
@@ -85,6 +90,7 @@ class ListPhotosVH(private val glide: RequestManager,
             textAuthor.text = null
             textError.text = null
             imgLike.clearColorFilter()
+            chipLikes.isVisible = false
             glide.clear(imagePhotoDetails)
         }
     }

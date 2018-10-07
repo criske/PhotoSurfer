@@ -202,7 +202,10 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
             //(un)like the photo in each photo-table
             val photos = getPhotoMappedByTable(id)
             photos.forEach {
-                val photo = it.value.apply { likedByMe = liked }
+                val photo = it.value.apply {
+                    likedByMe = liked
+                    likes = if (liked) (likes + 1) else likes - 1
+                }
                 val table = it.key
                 update(table, photo)
             }
