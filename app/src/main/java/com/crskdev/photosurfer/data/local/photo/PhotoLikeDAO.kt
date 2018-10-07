@@ -35,7 +35,7 @@ interface PhotoLikeDAO : DataAccessor {
     @Query("SELECT * FROM like_photos WHERE id=:id")
     fun getPhotoLiveData(id: String): LiveData<LikePhotoEntity?>
 
-    @Query("SELECT * FROM like_photos ORDER BY indexInResponse LIMIT 1")
+    @Query("SELECT * FROM like_photos ORDER BY indexInResponse DESC LIMIT 1")
     fun getLastPhoto(): LikePhotoEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

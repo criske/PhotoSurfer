@@ -2,13 +2,10 @@ package com.crskdev.photosurfer.data.repository.photo
 
 import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
-import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
@@ -22,7 +19,10 @@ import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
-import com.crskdev.photosurfer.services.schedule.*
+import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
+import com.crskdev.photosurfer.services.schedule.Tag
+import com.crskdev.photosurfer.services.schedule.WorkData
+import com.crskdev.photosurfer.services.schedule.WorkType
 import com.crskdev.photosurfer.util.runOn
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
@@ -38,7 +38,7 @@ interface PhotoRepository : Repository {
 
     fun getSavedPhotos(): DataSource.Factory<Int, Photo>
 
-    fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>? = null)
+    fun fetchAndSavePhotos(repositoryAction: RepositoryAction, callback: Repository.Callback<Unit>? = null)
 
     fun refresh(username: String? = null)
 
@@ -105,19 +105,34 @@ class PhotoRepositoryImpl(
 
 
     //this must be called on the io thread
-    override fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>?) {
+    override fun fetchAndSavePhotos(repositoryAction: RepositoryAction, callback: Repository.Callback<Unit>?) {
         uiExecutor {
             apiCallDispatcher.cancel()
         }
         ioExecutor.execute {
             try {
+                val lastPhoto = when (repositoryAction.type) {
+                    RepositoryAction.Type.LIKE -> daoPhotoFacade.getLastPhoto(Contract.TABLE_LIKE_PHOTOS)
+                    RepositoryAction.Type.TRENDING -> daoPhotoFacade.getLastPhoto(Contract.TABLE_PHOTOS)
+                    RepositoryAction.Type.USER_PHOTOS -> daoPhotoFacade.getLastPhoto(Contract.TABLE_USER_PHOTOS)
+                    RepositoryAction.Type.SEARCH -> daoPhotoFacade.getLastPhoto(Contract.TABLE_SEARCH_PHOTOS)
+                    else -> throw Exception("Unsupported Action")
+                }
+                if (lastPhoto != null && lastPhoto.next == null) {
+                    //bail out if no more pages
+                    return@execute
+                }
+                val page = lastPhoto?.next ?: 1
                 val response = if (repositoryAction.type == RepositoryAction.Type.SEARCH) {
+                    //repositoryAction.extras[0] - USERNAME
                     apiCallDispatcher { api.getSearchedPhotos(repositoryAction.extras[0].toString(), page) }
                 } else {
                     apiCallDispatcher {
                         when (repositoryAction.type) {
+                            //repositoryAction.extras[0] - USERNAME
                             RepositoryAction.Type.LIKE -> api.getLikedPhotos(repositoryAction.extras[0].toString(), page)
                             RepositoryAction.Type.TRENDING -> api.getRandomPhotos(page)
+                            //repositoryAction.extras[0] - USERNAME
                             RepositoryAction.Type.USER_PHOTOS -> api.getUserPhotos(repositoryAction.extras[0].toString(), page)
                             else -> throw Exception("Unsupported Action")
                         }
@@ -133,14 +148,24 @@ class PhotoRepositoryImpl(
                                 if (repositoryAction.type == RepositoryAction.Type.SEARCH)
                                     (it as SearchedPhotosJSON).results else it as List<PhotoJSON>
                             }
+                            var nextIndex =
+                                    when (repositoryAction.type) {
+                                        RepositoryAction.Type.LIKE -> daoPhotoFacade.getNextIndex(Contract.TABLE_LIKE_PHOTOS)
+                                        RepositoryAction.Type.TRENDING -> daoPhotoFacade.getNextIndex(Contract.TABLE_PHOTOS)
+                                        RepositoryAction.Type.USER_PHOTOS -> daoPhotoFacade.getNextIndex(Contract.TABLE_USER_PHOTOS)
+                                        RepositoryAction.Type.SEARCH -> daoPhotoFacade.getNextIndex(Contract.TABLE_SEARCH_PHOTOS)
+                                        else -> throw Exception("Unsupported Action")
+                                    }
                             body?.map {
-                                when (repositoryAction.type) {
-                                    RepositoryAction.Type.LIKE -> it.toLikePhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_LIKE_PHOTOS))
-                                    RepositoryAction.Type.TRENDING -> it.toDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_PHOTOS))
-                                    RepositoryAction.Type.USER_PHOTOS -> it.toUserPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_USER_PHOTOS))
-                                    RepositoryAction.Type.SEARCH -> it.toSearchPhotoDbEntity(pagingData, daoPhotoFacade.getNextIndex(Contract.TABLE_SEARCH_PHOTOS))
+                                val mapped = when (repositoryAction.type) {
+                                    RepositoryAction.Type.LIKE -> it.toLikePhotoDbEntity(pagingData, nextIndex)
+                                    RepositoryAction.Type.TRENDING -> it.toDbEntity(pagingData, nextIndex)
+                                    RepositoryAction.Type.USER_PHOTOS -> it.toUserPhotoDbEntity(pagingData, nextIndex)
+                                    RepositoryAction.Type.SEARCH -> it.toSearchPhotoDbEntity(pagingData, nextIndex)
                                     else -> throw Exception("Unsupported Action")
                                 }
+                                nextIndex += 1
+                                mapped
                             }?.apply {
                                 when (repositoryAction.type) {
                                     RepositoryAction.Type.LIKE -> daoPhotoFacade.insertPhotos(Contract.TABLE_LIKE_PHOTOS, this)

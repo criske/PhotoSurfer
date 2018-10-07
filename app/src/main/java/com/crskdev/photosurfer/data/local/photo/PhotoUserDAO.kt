@@ -41,4 +41,7 @@ interface PhotoUserDAO : DataAccessor {
     @Update
     fun update(photo: UserPhotoEntity): Int
 
+    @Query("SELECT * FROM user_photos ORDER BY indexInResponse DESC LIMIT 1")
+    fun getLastPhoto(): UserPhotoEntity?
+
 }

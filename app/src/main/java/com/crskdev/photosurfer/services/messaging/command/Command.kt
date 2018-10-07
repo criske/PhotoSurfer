@@ -2,10 +2,9 @@ package com.crskdev.photosurfer.services.messaging.command
 
 import android.content.Context
 import com.crskdev.photosurfer.data.local.Contract
-import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
+import com.crskdev.photosurfer.data.local.photo.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
-import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.messaging.remote.FCMMessage

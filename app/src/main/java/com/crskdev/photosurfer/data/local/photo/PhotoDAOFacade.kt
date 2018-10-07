@@ -9,7 +9,6 @@ import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
 import com.crskdev.photosurfer.data.local.DataAccessor
 import com.crskdev.photosurfer.data.local.TransactionRunner
-import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.entities.CollectionLite
 import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
@@ -130,10 +129,10 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
 
     fun getLastPhoto(table: String): PhotoEntity? =
             when (table) {
-                Contract.TABLE_USER_PHOTOS -> null
-                Contract.TABLE_PHOTOS -> null
+                Contract.TABLE_USER_PHOTOS -> daoUserPhotos.getLastPhoto()
+                Contract.TABLE_PHOTOS -> daoPhotos.getLastPhoto()
                 Contract.TABLE_LIKE_PHOTOS -> daoLikes.getLastPhoto()
-                Contract.TABLE_SEARCH_PHOTOS -> null
+                Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getLastPhoto()
                 Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getLastPhoto()
                 else -> throw Exception("Dao for table $table not found")
             }

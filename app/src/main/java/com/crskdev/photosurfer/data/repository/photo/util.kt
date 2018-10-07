@@ -48,9 +48,10 @@ private fun createLiveData(dataSourceFactory: DataSource.Factory<Int, Photo>,
                     LivePagedListBuilder<Int, Photo>(dataSourceFactory, it)
                             .setFetchExecutor(diskExecutor)
                             .setBoundaryCallback(GenericBoundaryCallback<Photo> { page ->
+                                //TODO might not need page after all, I'm using the last item in repository to get the page
                                 val repositoryAction = repositoryActionProvider()
                                 if (repositoryAction.type != RepositoryAction.Type.NONE) {
-                                    photoRepository.insertPhotos(repositoryAction, page, object : Repository.Callback<Unit> {
+                                    photoRepository.fetchAndSavePhotos(repositoryAction, object : Repository.Callback<Unit> {
                                         override fun onError(error: Throwable, isAuthenticationError: Boolean) {
                                             errorLiveData.postValue(error)
                                         }

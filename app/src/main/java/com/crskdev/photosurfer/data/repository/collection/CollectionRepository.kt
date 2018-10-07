@@ -5,7 +5,7 @@ import androidx.lifecycle.Transformations
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
-import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
+import com.crskdev.photosurfer.data.local.photo.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
@@ -200,6 +200,14 @@ class CollectionRepositoryImpl(
             if (me == null) {
                 callback?.runOn(uiExecutor) { onError(Error("Must be logged in to get your collection"), true) }
             } else {
+                //TODO: remove page parameter!
+                val lastCollection = collectionDAO.getLatestCollection()
+                if (lastCollection != null && lastCollection.next == null) {
+                    //bail out if no more pages
+                    return@ioExecutor
+                }
+                val page = lastCollection?.next ?: 1
+
                 val response = apiCallDispatcher { collectionAPI.getMyCollectionPhotos(collectionId, page) }
                 with(response) {
                     if (response.isSuccessful) {

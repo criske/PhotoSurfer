@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.crskdev.photosurfer.data.local.collections.CollectionEntity
-import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
+import com.crskdev.photosurfer.data.local.photo.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.*

@@ -36,6 +36,9 @@ interface PhotoDAO : DataAccessor {
     @Query("SELECT * FROM photos WHERE id=:id")
     fun getPhotoLiveData(id: String): LiveData<PhotoEntity?>
 
+    @Query("SELECT * FROM photos ORDER BY indexInResponse DESC LIMIT 1")
+    fun getLastPhoto(): PhotoEntity?
+
     @Update
     fun like(photo: PhotoEntity)
 

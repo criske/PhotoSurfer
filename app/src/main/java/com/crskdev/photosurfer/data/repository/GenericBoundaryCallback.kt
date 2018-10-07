@@ -22,6 +22,7 @@ class GenericBoundaryCallback<E : BaseEntity>(
     }
 
     override fun onItemAtFrontLoaded(itemAtFront: E) {
+        //TODO: remove this line?
         tryLoadMore(itemAtFront.pagingData?.prev)
     }
 
