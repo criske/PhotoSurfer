@@ -14,10 +14,14 @@ class PhotoTest {
     @Test
     fun getCreatedAt() {
         val now = Date(System.currentTimeMillis())
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").apply {
-            timeZone = TimeZone.getTimeZone("Europe/Paris")
+        val format = UNSPLASH_DATE_FORMATTER
+        val otherFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
+            timeZone = TimeZone.getDefault()
         }
-        println(format.format(now))
+
+        println(otherFormat.format(format.parse("2018-10-06T06:47:55-04:00")))
+
+
 
     }
 }

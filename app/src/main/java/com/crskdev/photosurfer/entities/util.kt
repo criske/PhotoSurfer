@@ -27,7 +27,7 @@ fun transformStrMapToMap(strMap: String): Map<String, String> =
 
 
 val UNSPLASH_DATE_FORMATTER: DateFormat by lazy {
-    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+    SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssX", Locale.getDefault())
 }
 
 fun DateFormat.formatNow(): String = format(System.currentTimeMillis())

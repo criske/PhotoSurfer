@@ -49,4 +49,8 @@
     <string name="msg_press_back_exit">Press back again to exit</string>
     <string name="msg_delete_photo">Delete the photo from your phone?</string>
     <string name="cancel">Cancel</string>
+    <string name="description">Description</string>
+    <string name="photo_info_size">Size: %1$dx%2$d </string>
+    <string name="photo_info_color">Color:</string>
+    <string name="photo_info_created">Created at: %1$s</string>
 </resources>

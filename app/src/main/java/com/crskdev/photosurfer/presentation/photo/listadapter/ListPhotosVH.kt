@@ -40,7 +40,12 @@ class ListPhotosVH(private val glide: RequestManager,
         itemView.textUnsplash.setOnClickListener { _ ->
             itemView.context.startActivity(IntentUtils.webIntentUnsplash())
         }
-        itemView.imagePhotoDetails.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_DETAIL, it) } }
+        itemView.imagePhotoDetails.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_FULL_SCREEN, it) } }
+        itemView.imagePhotoDetails.setOnLongClickListener { _ ->
+            model?.let { action(ListPhotosAdapter.ActionWhat.PHOTO_INFO, it) }
+            true
+        }
+
         itemView.textAuthor.setOnClickListener { _ ->
             model?.let {
                 //action(ListPhotosAdapter.ActionWhat.AUTHOR, it, enabledActions)
@@ -105,7 +110,7 @@ class SavedListPhotosVH(private val glide: RequestManager,
     init {
         itemView.imageSavedPhoto.setOnClickListener { _ ->
             model?.let {
-                action(ListPhotosAdapter.ActionWhat.SAVED_PHOTO_DETAIL, it)
+                action(ListPhotosAdapter.ActionWhat.SAVED_PHOTO_FULL_SCREEN, it)
             }
         }
         itemView.btnSavedPhotoDelete.setOnClickListener { _ ->

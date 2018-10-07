@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/bottomSheetPhotoInfo"
+    android:layout_width="match_parent"
+    android:layout_height="350dp"
+    app:behavior_hideable="true"
+    android:background="@color/colorPrimary"
+    app:layout_behavior="@string/bottom_sheet_behavior">
+
+    <ImageView
+        android:id="@+id/imageIconPhotoInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:contentDescription="@null"
+        android:tint="@color/colorPrimaryLight"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_info_black_24dp" />
+
+    <TextView
+        android:id="@+id/textLblPhotoInfoDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/description"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageIconPhotoInfo" />
+
+    <TextView
+        android:id="@+id/textPhotoInfoDescription"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:maxLines="5"
+        android:scrollbars="vertical"
+        android:text="@string/lorem_ipsum"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textLblPhotoInfoDescription" />
+
+    <TextView
+        android:id="@+id/textPhotoInfoAuthor"
+        android:gravity="center_vertical"
+        android:drawableStart="@drawable/ic_camera_alt_black_24dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textPhotoInfoDescription"
+        tools:text="John Doe" />
+
+    <TextView
+        android:id="@+id/textPhotoInfoUnsplash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="8dp"
+        android:text="/Unsplash"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/textPhotoInfoSize"
+        app:layout_constraintStart_toEndOf="@+id/textPhotoInfoAuthor"
+        app:layout_constraintTop_toTopOf="@+id/textPhotoInfoAuthor"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/textPhotoInfoSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/photo_info_size"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textPhotoInfoAuthor"
+        tools:text="Size: 100x200" />
+
+    <TextView
+        android:id="@+id/textPhotoInfoCreationDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/photo_info_created"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textPhotoInfoSize" />
+
+    <TextView
+        android:id="@+id/textPhotoInfoColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/photo_info_color"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/chipPhotoInfoColor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/chipPhotoInfoColor" />
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chipPhotoInfoColor"
+        style="@style/infoChipStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textPhotoInfoColor"
+        app:layout_constraintTop_toBottomOf="@+id/textPhotoInfoCreationDate" />
+
+    <ImageView
+        android:id="@+id/imagePhotoInfoClose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/ic_delete" />
+</androidx.constraintlayout.widget.ConstraintLayout>

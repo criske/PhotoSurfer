@@ -3,6 +3,7 @@ package com.crskdev.photosurfer.presentation.photo.listadapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -11,6 +12,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
+import com.crskdev.photosurfer.presentation.photo.PhotoInfoBottomSheetFragment
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 
@@ -32,13 +34,15 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
 
         private const val TYPE_REMOTE = 1
 
-        inline fun actionHelper(navController: NavController, authNavigatorMiddleware: AuthNavigatorMiddleware,
+        inline fun actionHelper(navController: NavController,
+                                authNavigatorMiddleware: AuthNavigatorMiddleware,
+                                fragmentManager: FragmentManager? = null,
                                 crossinline deleteAction: (Photo) -> Unit = {},
                                 crossinline likeAction: (Photo) -> Unit):
                 (ActionWhat, Photo) -> Unit {
             return { what, photo ->
                 when (what) {
-                    ActionWhat.PHOTO_DETAIL -> {
+                    ActionWhat.PHOTO_FULL_SCREEN -> {
                         navController.navigate(R.id.fragment_photo_details, bundleOf(
                                 "photo" to photo.parcelize(),
                                 "enabledActions" to true
@@ -64,11 +68,14 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
 //                                navController,
 //                                ListPhotosFragmentDirections.actionFragmentListPhotosToFragmentAddToCollection(photo.parcelize()))
                     }
-                    ActionWhat.SAVED_PHOTO_DETAIL -> {
+                    ActionWhat.SAVED_PHOTO_FULL_SCREEN -> {
 
                     }
                     ActionWhat.DELETE_SAVED_PHOTO -> {
                         deleteAction(photo)
+                    }
+                    ActionWhat.PHOTO_INFO -> {
+                        fragmentManager?.let { PhotoInfoBottomSheetFragment.show(photo.id, it) }
                     }
                 }
             }
@@ -109,7 +116,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
     }
 
     enum class ActionWhat {
-        PHOTO_DETAIL, SAVED_PHOTO_DETAIL, DELETE_SAVED_PHOTO, AUTHOR, LIKE, COLLECTION
+        PHOTO_FULL_SCREEN, SAVED_PHOTO_FULL_SCREEN, DELETE_SAVED_PHOTO, AUTHOR, LIKE, COLLECTION, PHOTO_INFO
     }
 
 }

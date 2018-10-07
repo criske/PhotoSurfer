@@ -30,4 +30,8 @@
     <string name="msg_press_back_exit">Ca sa iesi, apasa \"back\" din nou</string>
     <string name="msg_delete_photo">Stergeti poza de pe telefon?</string>
     <string name="cancel">Anuleaza</string>
+    <string name="description">Descriere</string>
+    <string name="photo_info_size">Dimensiuni: %1$dx%2$d</string>
+    <string name="photo_info_color">Culoare:</string>
+    <string name="photo_info_created">Creat la: %1$s</string>
 </resources>

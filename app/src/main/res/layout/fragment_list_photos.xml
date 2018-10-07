@@ -27,9 +27,9 @@
                 android:layout_height="56dp"
                 android:layout_marginTop="56dp"
                 android:focusable="false"
+                android:theme="@style/Base.ThemeOverlay.AppCompat.Light"
                 app:defaultQueryHint="@string/search"
                 app:iconifiedByDefault="false"
-                android:theme="@style/Base.ThemeOverlay.AppCompat.Light"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>

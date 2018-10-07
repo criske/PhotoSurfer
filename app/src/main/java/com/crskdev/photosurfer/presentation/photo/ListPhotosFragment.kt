@@ -49,6 +49,7 @@ import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.fragment_list_photos.view.*
+import kotlinx.android.synthetic.main.item_photo_info_sheet.*
 
 /**
  * Created by Cristian Pela on 01.08.2018.
@@ -101,6 +102,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
         val actionHelper = ListPhotosAdapter.actionHelper(
                 view!!.findNavController(),
                 authNavigatorMiddleware,
+                activity?.supportFragmentManager,
                 { viewModel.delete(it) },
                 { viewModel.like(it) })
         return ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
@@ -113,11 +115,6 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
         recyclerUserListPhotos.apply {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
             layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-            val actionHelper = ListPhotosAdapter.actionHelper(
-                    view.findNavController(),
-                    authNavigatorMiddleware,
-                    { viewModel.delete(it) },
-                    { viewModel.like(it) })
             adapter = adapterFactory()
             addItemDecoration(HorizontalSpaceDivider.withDpOf(2, context))
         }
