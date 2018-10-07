@@ -4,12 +4,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import androidx.paging.PagedList
-import kotlin.reflect.KClass
 
 /**
  * Created by Cristian Pela on 17.08.2018.
  */
-inline fun <T> LiveData<T>.filter(crossinline predicate: (T) -> Boolean): LiveData<T> =
+inline fun <T> LiveData<T>.filter(crossinline predicate: (T?) -> Boolean): LiveData<T> =
         MediatorLiveData<T>().apply {
             addSource(this@filter) {
                 if (predicate(it)) {
@@ -18,27 +17,47 @@ inline fun <T> LiveData<T>.filter(crossinline predicate: (T) -> Boolean): LiveDa
             }
         }
 
+
 fun <T> LiveData<T>.distinctUntilChanged(): LiveData<T> {
     val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
-    var lastValue: T? = null
-    mutableLiveData.addSource(this) {
-        if (lastValue != it) {
-            mutableLiveData.value = it
-            lastValue = it
+    mutableLiveData.addSource(this, object : Observer<T> {
+        var lastValue: T? = null
+        override fun onChanged(t: T) {
+            if (lastValue != t) {
+                mutableLiveData.value = t
+                lastValue = t
+            }
         }
-    }
+    })
+    return mutableLiveData
+}
+
+inline fun <T> LiveData<T>.distinctUntilChanged(crossinline predicate: (T, T) -> Boolean): LiveData<T> {
+    val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
+    mutableLiveData.addSource(this, object : Observer<T> {
+        var lastValue: T? = null
+        override fun onChanged(t: T) {
+            val prevT = lastValue
+            if (prevT == null || predicate(prevT, t)) {
+                mutableLiveData.value = t
+                lastValue = t
+            }
+        }
+    })
     return mutableLiveData
 }
 
 fun <T> LiveData<T>.skip(count: Int): LiveData<T> {
     val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
-    var valueCount = 0
-    mutableLiveData.addSource(this) {
-        if (valueCount >= count) {
-            mutableLiveData.value = it
+    mutableLiveData.addSource(this, object : Observer<T> {
+        var valueCount = 0
+        override fun onChanged(t: T) {
+            if (valueCount >= count) {
+                mutableLiveData.value = t
+            }
+            valueCount++
         }
-        valueCount++
-    }
+    })
     return mutableLiveData
 }
 

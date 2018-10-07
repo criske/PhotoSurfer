@@ -46,7 +46,7 @@ class ListPhotosVH(private val glide: RequestManager,
                 itemView.context.startActivity(IntentUtils.webIntentUnsplashPhotographer(it.authorUsername))
             }
         }
-        itemView.imgLike.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it.copy(likedByMe = !it.likedByMe)) } }
+        itemView.imgLike.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it) } }
         itemView.imgCollection.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it) } }
     }
 

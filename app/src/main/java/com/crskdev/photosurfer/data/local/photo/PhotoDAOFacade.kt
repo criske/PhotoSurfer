@@ -2,6 +2,8 @@
 
 package com.crskdev.photosurfer.data.local.photo
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
@@ -10,6 +12,10 @@ import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.entities.CollectionLite
+import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
+import com.crskdev.photosurfer.entities.formatNow
+import com.crskdev.photosurfer.util.livedata.distinctUntilChanged
+import com.crskdev.photosurfer.util.livedata.filter
 
 /**
  * Created by Cristian Pela on 22.08.2018.
@@ -111,6 +117,17 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
         }
     }
 
+    fun getPhotoLiveData(table: String, id: String): LiveData<out PhotoEntity?> {
+        return when (table) {
+            Contract.TABLE_USER_PHOTOS -> daoUserPhotos.getPhotoLiveData(id)
+            Contract.TABLE_PHOTOS -> daoPhotos.getPhotoLiveData(id)
+            Contract.TABLE_LIKE_PHOTOS -> daoLikes.getPhotoLiveData(id)
+            Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getPhotoLiveData(id)
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getPhotoLiveData(id)
+            else -> throw Exception("Dao for table $table not found")
+        }
+    }
+
     fun getLastPhoto(table: String): PhotoEntity? =
             when (table) {
                 Contract.TABLE_USER_PHOTOS -> null
@@ -128,6 +145,20 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                 return photo
         }
         return null
+    }
+
+    fun getPhotoFromEitherTableLiveData(id: String): LiveData<PhotoEntity> {
+        val mediatorLiveData = MediatorLiveData<PhotoEntity>().apply {
+            Contract.PHOTO_TABLES.forEach { table ->
+                addSource(getPhotoLiveData(table, id).filter { it != null }) { pe ->
+                    value = pe
+                }
+            }
+        }
+        return mediatorLiveData.distinctUntilChanged { last, curr ->
+            last.id != curr.id ||
+                    (curr.id == last.id && last.likedByMe != curr.likedByMe)
+        }
     }
 
     fun getPhotoMappedByTable(id: String): Map<String, PhotoEntity> {
@@ -182,7 +213,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                     val likePhoto = LikePhotoEntity().apply {
                         this.id = it.id
                         this.createdAt = it.createdAt
-                        this.updatedAt = it.updatedAt
+                        this.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                         this.width = it.width
                         this.height = it.height
                         this.colorString = it.colorString

@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.local.collections
 
+import androidx.lifecycle.LiveData
 import androidx.paging.DataSource
 import androidx.room.*
 import com.crskdev.photosurfer.data.local.DataAccessor
@@ -31,6 +32,9 @@ interface CollectionPhotoDAO : DataAccessor {
 
     @Query("SELECT * FROM collection_photos WHERE id=:id")
     fun getPhoto(id: String): CollectionPhotoEntity?
+
+    @Query("SELECT * FROM collection_photos WHERE id=:id")
+    fun getPhotoLiveData(id: String): LiveData<CollectionPhotoEntity?>
 
     @Update
     fun like(photo: CollectionPhotoEntity)

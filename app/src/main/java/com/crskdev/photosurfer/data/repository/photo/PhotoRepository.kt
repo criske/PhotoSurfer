@@ -1,9 +1,14 @@
 package com.crskdev.photosurfer.data.repository.photo
 
 import androidx.annotation.MainThread
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
+import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
@@ -29,6 +34,8 @@ interface PhotoRepository : Repository {
 
     fun getPhotos(repositoryAction: RepositoryAction): DataSource.Factory<Int, Photo>
 
+    fun getPhotoLiveData(id: String): LiveData<Photo>
+
     fun getSavedPhotos(): DataSource.Factory<Int, Photo>
 
     fun insertPhotos(repositoryAction: RepositoryAction, page: Int, callback: Repository.Callback<Unit>? = null)
@@ -41,7 +48,7 @@ interface PhotoRepository : Repository {
 
     fun isDownloaded(id: String): Boolean
 
-    fun like(photo: Photo, callback: Repository.Callback<Boolean>)
+    fun like(photo: Photo, callback: Repository.Callback<Boolean>? = null)
 
     fun clearAll()
 
@@ -212,13 +219,15 @@ class PhotoRepositoryImpl(
 //        daoPhotoFacade.refresh(table)
     }
 
-    override fun like(photo: Photo, callback: Repository.Callback<Boolean>) {
+    override fun like(photo: Photo, callback: Repository.Callback<Boolean>?) {
+        //NOTE: do the toggle here: if like -> unlike and vice-versa
+        val likedPhoto = photo.copy(likedByMe = !photo.likedByMe)
         diskExecutor {
-            daoPhotoFacade.like(photo.id, photo.likedByMe)
-            callback.runOn(uiExecutor) { onSuccess(photo.likedByMe) }
+            daoPhotoFacade.like(likedPhoto.id, likedPhoto.likedByMe)
+            callback.runOn(uiExecutor) { callback?.onSuccess(likedPhoto.likedByMe) }
         }
-        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, photo.id), "id" to photo.id,
-                "likedByMe" to photo.likedByMe))
+        scheduledWorkService.schedule(WorkData(Tag(WorkType.LIKE, likedPhoto.id), "id" to likedPhoto.id,
+                "likedByMe" to likedPhoto.likedByMe))
     }
 
     @MainThread
@@ -249,6 +258,12 @@ class PhotoRepositoryImpl(
         diskExecutor {
             //for delete photo.id is the file path on disk
             daoExternalPhotoGalleryDAO.delete(photo.id)
+        }
+    }
+
+    override fun getPhotoLiveData(id: String): LiveData<Photo> {
+        return Transformations.map(daoPhotoFacade.getPhotoFromEitherTableLiveData(id)) {
+            it.toPhoto()
         }
     }
 

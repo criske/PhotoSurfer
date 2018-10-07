@@ -6,6 +6,8 @@ import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
 import com.crskdev.photosurfer.dependencies.dependencyGraph
+import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
+import com.crskdev.photosurfer.entities.formatNow
 import com.crskdev.photosurfer.entities.toCollectionDB
 import com.crskdev.photosurfer.entities.toCollectionLite
 import com.crskdev.photosurfer.services.messaging.messages.Message
@@ -87,6 +89,7 @@ class CreateCollectionWorker : Worker() {
                                         totalPhotos += 1
                                         coverPhotoUrls = photoDB.urls
                                         coverPhotoId = photoDB.id
+                                        updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                                     }
                                     if (collectionDB != null) {
                                         collectionsDAO.updateCollection(collectionDB)

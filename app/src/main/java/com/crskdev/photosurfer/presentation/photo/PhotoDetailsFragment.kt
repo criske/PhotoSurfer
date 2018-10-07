@@ -21,10 +21,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.toColorFilter
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
 import androidx.navigation.findNavController
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
@@ -61,7 +58,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     private val glide by lazy { GlideApp.with(this) }
 
-
     private val imagePhotoDetails by lazy { view!!.findViewById<ImageView>(R.id.imagePhotoDetails) }
     private val toolbarPhotoDetails by lazy { view!!.findViewById<Toolbar>(R.id.toolbarPhotoDetails) }
     private val fabDownload by lazy { view!!.findViewById<FloatingActionButton>(R.id.fabDownload) }
@@ -71,11 +67,11 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = viewModelFromProvider(this) {
-            PhotoDetailViewModel(context!!.dependencyGraph().photoRepository)
-        }
         photo = PhotoDetailsFragmentArgs.fromBundle(arguments)
                 .photo.deparcelize()
+        viewModel = viewModelFromProvider(this) {
+            PhotoDetailViewModel(photo.id, context!!.dependencyGraph().photoRepository)
+        }
     }
 
     override fun onDestroy() {
@@ -122,9 +118,6 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         toolbarPhotoDetails.apply {
             //create menu
             inflateMenu(R.menu.menu_photo_detail)
-            title = (photo.authorFullName)
-            tintLike()
-
             this.setOnMenuItemClickListener {
                 if (it.itemId == R.id.menu_photo_detail_like) {
                     viewModel.like(photo)
@@ -149,8 +142,8 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
         }
     }
 
-    private fun tintLike() {
-        val colorLike = if (photo.likedByMe) {
+    private fun tintLike(liked: Boolean) {
+        val colorLike = if (liked) {
             R.color.colorLike
         } else {
             android.R.color.white
@@ -237,10 +230,9 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
                 toolbarPhotoDetails.isVisible = this
             }
         })
-        viewModel.likeLiveData.observe(this, Observer { liked ->
-            photo = photo.copy(likedByMe = liked)
-            tintLike()
-            arguments?.putParcelable("photo", photo.parcelize())
+        viewModel.photoLiveData.observe(this, Observer { photo ->
+            tintLike(photo.likedByMe)
+            toolbarPhotoDetails?.title = (photo.authorFullName)
         })
 
         viewModel.needsAuthLiveData.observe(this, Observer {
@@ -259,6 +251,7 @@ class PhotoDetailsFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPerm
 }
 
 class PhotoDetailViewModel(
+        photoId: String,
         private val photoRepository: PhotoRepository) : ViewModel() {
 
     companion object {
@@ -270,8 +263,6 @@ class PhotoDetailViewModel(
 
     val isDownloadedLiveData = SingleLiveEvent<Unit>()
 
-    val likeLiveData = MutableLiveData<Boolean>()
-
     val needsAuthLiveData = SingleLiveEvent<Unit>()
 
     val downloadLiveData = MutableLiveData<DownloadProgress>()
@@ -279,6 +270,8 @@ class PhotoDetailViewModel(
     val photoDisplayedLiveData = MutableLiveData<Boolean>().apply {
         value = false
     }
+
+    val photoLiveData = photoRepository.getPhotoLiveData(photoId)
 
     val downloadStateLiveData = MediatorLiveData<Int>().apply {
         value = IDLE
@@ -312,19 +305,7 @@ class PhotoDetailViewModel(
     }
 
     fun like(photo: Photo) {
-        photoRepository.like(photo, object : Repository.Callback<Boolean> {
-            override fun onSuccess(data: Boolean, extras: Any?) {
-                likeLiveData.value = data
-            }
-
-            override fun onError(error: Throwable, isAuthenticationError: Boolean) {
-                if (!isAuthenticationError) {
-                    errorLiveData.value = error
-                } else {
-                    needsAuthLiveData.value = Unit
-                }
-            }
-        })
+        photoRepository.like(photo)
     }
 
 

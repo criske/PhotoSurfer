@@ -1,5 +1,7 @@
 package com.crskdev.photosurfer.entities
 
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -22,3 +24,10 @@ fun transformStrMapToMap(strMap: String): Map<String, String> =
                 ?.fold(mutableMapOf())
                 { a, c -> c.split(KV_DELIM).let { a.apply { a[it[0]] = it[1] } } }
                 ?: emptyMap()
+
+
+val UNSPLASH_DATE_FORMATTER: DateFormat by lazy {
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+}
+
+fun DateFormat.formatNow(): String = format(System.currentTimeMillis())

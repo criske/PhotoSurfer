@@ -6,10 +6,7 @@ import com.crskdev.photosurfer.data.local.collections.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.dependencies.dependencyGraph
-import com.crskdev.photosurfer.entities.asLite
-import com.crskdev.photosurfer.entities.toCollectionDB
-import com.crskdev.photosurfer.entities.toCollectionPhotoDbEntity
-import com.crskdev.photosurfer.entities.transformMapUrls
+import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.messaging.remote.FCMMessage
 
@@ -101,6 +98,7 @@ class CollectionEditedCommand(context: Context) : FCMCommand(context) {
                                     this.title = cjson.title
                                     this.description = cjson.description
                                     this.notPublic = cjson.private
+                                    this.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                                 })
                             }
                         }
@@ -153,6 +151,7 @@ class CollectionAddedPhotoCommand(context: Context) : FCMCommand(context) {
                     coverPhotoUrls = photoDb.urls
                     coverPhotoAuthorUsername = photoDb.authorUsername
                     coverPhotoAuthorFullName = photoDb.authorFullName
+                    updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                 }
                 collectionDB?.let {
                     collectionDAO.updateCollection(it)

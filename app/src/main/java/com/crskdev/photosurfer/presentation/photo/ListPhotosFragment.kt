@@ -253,7 +253,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
 
 
     private val searchTermTrackerLiveData = SearchTermTrackerLiveData(searchTermTracker)
-            .filter { it.second != null && it.second?.type == SearchTermTracker.Type.PHOTO_TERM }
+            .filter { it?.second != null && it.second?.type == SearchTermTracker.Type.PHOTO_TERM }
 
     init {
         searchTermTrackerLiveData.observeForever {

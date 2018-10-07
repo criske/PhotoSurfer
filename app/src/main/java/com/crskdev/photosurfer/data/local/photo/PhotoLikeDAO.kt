@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.local.photo
 
+import androidx.lifecycle.LiveData
 import androidx.paging.DataSource
 import androidx.room.*
 import com.crskdev.photosurfer.data.local.DataAccessor
@@ -10,7 +11,7 @@ import com.crskdev.photosurfer.data.local.DataAccessor
 @Dao
 interface PhotoLikeDAO : DataAccessor {
 
-    @Query("SELECT * FROM like_photos ORDER BY indexInResponse ASC")
+    @Query("SELECT * FROM like_photos ORDER BY strftime('%s', updatedAt) DESC")
     fun getPhotos(): DataSource.Factory<Int, LikePhotoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -30,6 +31,9 @@ interface PhotoLikeDAO : DataAccessor {
 
     @Query("SELECT * FROM like_photos WHERE id=:id")
     fun getPhoto(id: String): LikePhotoEntity?
+
+    @Query("SELECT * FROM like_photos WHERE id=:id")
+    fun getPhotoLiveData(id: String): LiveData<LikePhotoEntity?>
 
     @Query("SELECT * FROM like_photos ORDER BY indexInResponse LIMIT 1")
     fun getLastPhoto(): LikePhotoEntity?

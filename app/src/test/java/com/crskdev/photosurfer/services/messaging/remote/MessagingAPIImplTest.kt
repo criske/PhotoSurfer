@@ -41,13 +41,13 @@ class MessagingAPIImplTest {
 
     @Test
     fun shouldRegisterDeviceWithToken() {
-        api.registerDevice().execute()
+        api.registerDevice("foo").execute()
         api.obtainUserDevices().execute().body().apply {
             assertEquals("foo", this?.username)
             assertEquals(listOf("token1"), this?.tokens)
         }
         mockedFCMTokenProvider.generateNextToken()
-        api.registerDevice().execute()
+        api.registerDevice("foo").execute()
         api.obtainUserDevices().execute().body().apply {
             assertEquals("foo", this?.username)
             assertEquals(listOf("token1", "token2"), this?.tokens)

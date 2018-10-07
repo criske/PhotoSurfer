@@ -98,6 +98,7 @@ class CollectionRepositoryImpl(
                     title = collection.title
                     description = collection.description
                     notPublic = collection.private
+                    updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                 }?.run {
                     collectionDAO.updateCollection(this)
                 }
@@ -241,6 +242,7 @@ class CollectionRepositoryImpl(
                     coverPhotoUrls = transformMapUrls(photo.urls)
                     coverPhotoAuthorUsername = photo.authorUsername
                     coverPhotoAuthorFullName = photo.authorFullName
+                    updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
                 photoDAOFacade.addPhotoToCollection(photo.id, collection.asLite())
@@ -270,12 +272,14 @@ class CollectionRepositoryImpl(
                         collectionDB?.coverPhotoUrls = it.urls
                         collectionDB?.coverPhotoAuthorUsername = it.authorUsername
                         collectionDB?.coverPhotoAuthorFullName = it.authorFullName
+                        collectionDB?.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                     }
                 } else if (lastPhoto == null) { // there is no photo in this collection
                     collectionDB?.coverPhotoId = null
                     collectionDB?.coverPhotoUrls = null
                     collectionDB?.coverPhotoAuthorUsername = null
                     collectionDB?.coverPhotoAuthorFullName = null
+                    collectionDB?.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                 }
                 collectionDB?.let { collectionDAO.updateCollection(it) }
             }

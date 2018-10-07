@@ -133,7 +133,7 @@ class SearchUsersViewModel(
         private val searchTermTracker: SearchTermTracker) : ViewModel() {
 
     private val searchTermTrackerLiveData = SearchTermTrackerLiveData(searchTermTracker)
-            .filter { it.second != null && it.second?.type == SearchTermTracker.Type.USER_TERM }
+            .filter { it?.second != null && it.second?.type == SearchTermTracker.Type.USER_TERM }
 
     val errorLiveData = SingleLiveEvent<Throwable>()
 
