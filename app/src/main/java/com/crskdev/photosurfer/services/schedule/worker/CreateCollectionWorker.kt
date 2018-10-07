@@ -69,11 +69,11 @@ class CreateCollectionWorker : Worker() {
                 collectionReturned?.let { cjson ->
                     transactional {
                         val collectionId = cjson.id
-                        val lastCollectionEntity = collectionsDAO.getLatestCollection()
+                        val lastCollectionEntity = collectionsDAO.getLastCollection()
                         val pagingData = lastCollectionEntity?.let {
                             PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
                         } ?: PagingData(1, 1, null, null)
-                        collectionsDAO.createCollection(cjson.toCollectionDB(pagingData))
+                        collectionsDAO.createCollection(cjson.toCollectionDB(pagingData, collectionsDAO.getNextIndex()))
 
                         devicePushMessagingManager.sendMessage(Message.CollectionCreate(collectionId))
                         //add the photo to collection

@@ -1,7 +1,7 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
-    <style name="BaseAppTheme" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="BaseAppTheme" parent="Theme.MaterialComponents.Light.NoActionBar" />
 
     <style name="AppTheme" parent="BaseAppTheme">
         <!-- Customize your theme here. -->
@@ -16,13 +16,13 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">?attr/actionBarSize</item>
         <item name="android:background">@color/colorPrimary</item>
-        <item name="android:theme">@style/Base.ThemeOverlay.AppCompat.Light.TintedIcon</item>
-        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+        <item name="android:theme">@style/ThemeOverlay.MaterialComponents.Light.TintedIcon</item>
+        <item name="popupTheme">@style/ThemeOverlay.MaterialComponents.Light</item>
         <item name="titleTextColor">@color/colorDarkGrey800</item>
         <item name="layout_collapseMode">pin</item>
     </style>
 
-    <style name="Base.ThemeOverlay.AppCompat.Light.TintedIcon">
+    <style name="ThemeOverlay.MaterialComponents.Light.TintedIcon">
         <item name="colorControlNormal">@android:color/darker_gray</item>
     </style>
 
@@ -34,13 +34,13 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:fitsSystemWindows">true</item>
-        <item name="android:theme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
+        <item name="android:theme">@style/ThemeOverlay.MaterialComponents.ActionBar</item>
     </style>
 
     <style name="infoChipStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:textAppearance">@android:style/TextAppearance.Small</item>
+        <item name="android:textAppearance" tools:targetApi="lollipop">@style/TextAppearance.MaterialComponents.Body2</item>
         <item name="checkedIconVisible">false</item>
         <item name="chipBackgroundColor">@color/colorPrimaryLight</item>
         <item name="chipIconVisible">false</item>

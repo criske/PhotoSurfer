@@ -43,9 +43,9 @@ interface CollectionRepository : Repository {
 
     fun getCollectionsForPhoto(photoId: String): DataSource.Factory<Int, PairBE<Collection, Boolean>>
 
-    fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>? = null)
+    fun fetchAndSaveCollection(callback: Repository.Callback<Unit>? = null)
 
-    fun fetchAndSaveCollectionPhotos(collectionId: Int, page: Int, callback: Repository.Callback<Unit>?)
+    fun fetchAndSaveCollectionPhotos(collectionId: Int, callback: Repository.Callback<Unit>?)
 
     fun addPhotoToCollection(collection: Collection, photo: Photo)
 
@@ -162,20 +162,29 @@ class CollectionRepositoryImpl(
             }
 
 
-    override fun fetchAndSaveCollection(page: Int, callback: Repository.Callback<Unit>?) {
+    override fun fetchAndSaveCollection(callback: Repository.Callback<Unit>?) {
         ioExecutor {
             try {
                 val me = authTokenStorage.token()?.username
                 if (me == null) {
                     callback?.runOn(uiExecutor) { onError(Error("Must be logged in to get your collection"), true) }
                 } else {
+                    val lastCollection = collectionDAO.getLastCollection()
+                    if (lastCollection != null && lastCollection.next == null) {
+                        //bail out if no more pages
+                        return@ioExecutor
+                    }
+                    val page = lastCollection?.next ?: 1
                     val response = apiCallDispatcher { collectionAPI.getMyCollections(me, page) }
                     with(response) {
                         if (response.isSuccessful) {
                             val pagingData = PagingData.createFromHeaders(headers())
                             diskExecutor {
+                                var nextIndex = collectionDAO.getNextIndex()
                                 val collections = response.body()?.map {
-                                    it.toCollectionDB(pagingData)
+                                    val p = it.toCollectionDB(pagingData, nextIndex)
+                                    nextIndex += 1
+                                    p
                                 } ?: emptyList()
                                 collectionDAO.insertCollections(collections)
                             }
@@ -194,30 +203,32 @@ class CollectionRepositoryImpl(
         }
     }
 
-    override fun fetchAndSaveCollectionPhotos(collectionId: Int, page: Int, callback: Repository.Callback<Unit>?) {
+    override fun fetchAndSaveCollectionPhotos(collectionId: Int, callback: Repository.Callback<Unit>?) {
         ioExecutor {
             val me = authTokenStorage.token()?.username
             if (me == null) {
                 callback?.runOn(uiExecutor) { onError(Error("Must be logged in to get your collection"), true) }
             } else {
                 //TODO: remove page parameter!
-                val lastCollection = collectionDAO.getLatestCollection()
-                if (lastCollection != null && lastCollection.next == null) {
+                val lastPhoto = photoDAOFacade.getLastPhoto(Contract.TABLE_COLLECTION_PHOTOS)
+                if (lastPhoto != null && lastPhoto.next == null) {
                     //bail out if no more pages
                     return@ioExecutor
                 }
-                val page = lastCollection?.next ?: 1
+                val page = lastPhoto?.next ?: 1
 
                 val response = apiCallDispatcher { collectionAPI.getMyCollectionPhotos(collectionId, page) }
                 with(response) {
                     if (response.isSuccessful) {
                         val pagingData = PagingData.createFromHeaders(headers())
                         diskExecutor {
-                            val nextIndex = collectionDAO.getNextIndex()
+                            var nextIndex = collectionDAO.getNextIndex()
                             val photos = response.body()?.map {
-                                it.toCollectionPhotoDbEntity(pagingData, nextIndex).apply {
+                                val p = it.toCollectionPhotoDbEntity(pagingData, nextIndex).apply {
                                     currentCollectionId = collectionId
                                 }
+                                nextIndex += 1
+                                p
                             } ?: emptyList()
                             collectionPhotoDAO.insertPhotos(photos)
                             callback?.runOn(uiExecutor) { onSuccess(Unit) }

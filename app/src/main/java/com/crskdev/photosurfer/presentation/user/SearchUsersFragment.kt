@@ -64,7 +64,7 @@ class SearchUsersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val searchView = SearchView(ContextThemeWrapper(view.context,
-                R.style.Base_ThemeOverlay_AppCompat_Light_TintedIcon))
+                R.style.ThemeOverlay_MaterialComponents_Light_TintedIcon))
                 .apply {
                     maxWidth = Int.MAX_VALUE
                     setIconifiedByDefault(false)

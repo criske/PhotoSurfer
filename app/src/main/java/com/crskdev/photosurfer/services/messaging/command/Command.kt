@@ -31,19 +31,25 @@ object UnknownCommand : Command {
 
 class CollectionCreatedCommand(context: Context) : FCMCommand(context) {
 
-    private val collectionsDAO: CollectionsDAO = dependencyGraph.daoManager.getDao(Contract.TABLE_COLLECTIONS)
+    private val daoManager = dependencyGraph.daoManager
+
+    private val collectionsDAO: CollectionsDAO = daoManager.getDao(Contract.TABLE_COLLECTIONS)
 
     private val collectionAPI = dependencyGraph.collectionsAPI
+
+    private val transactional = daoManager.transactionRunner()
 
     override fun onReceiveMessage(message: FCMMessage) {
         val collectionId = message.id.toInt()
         val response = collectionAPI.getCollection(collectionId).execute()
         if (response.isSuccessful) {
-            response.body()?.let { cjson ->
-                val pagingData = collectionsDAO.getLatestCollection()?.let {
-                    PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
-                } ?: PagingData(1, 1, null, null)
-                collectionsDAO.createCollection(cjson.toCollectionDB(pagingData))
+            transactional{
+                response.body()?.let { cjson ->
+                    val pagingData = collectionsDAO.getLastCollection()?.let {
+                        PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
+                    } ?: PagingData(1, 1, null, null)
+                    collectionsDAO.createCollection(cjson.toCollectionDB(pagingData, collectionsDAO.getNextIndex()))
+                }
             }
         }
     }

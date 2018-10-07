@@ -93,7 +93,7 @@ class AddToCollectionViewModel(private val collectionsRepository: CollectionRepo
             collectionsRepository.getCollectionsForPhoto(photo.id), defaultPageListConfig())
             .setFetchExecutor(diskExecutor)
             .setBoundaryCallback(GenericBoundaryCallback<PairBE<Collection, Boolean>> {
-                collectionsRepository.fetchAndSaveCollection(it)
+                collectionsRepository.fetchAndSaveCollection()
             })
             .build()
 

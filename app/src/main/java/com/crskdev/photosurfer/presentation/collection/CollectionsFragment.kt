@@ -107,7 +107,7 @@ class CollectionsViewModel(private val collectionsRepository: CollectionReposito
     val collectionsLiveData = LivePagedListBuilder<Int, Collection>(collectionsRepository.getCollections(), defaultPageListConfig())
             .setFetchExecutor(diskExecutor)
             .setBoundaryCallback(GenericBoundaryCallback<Collection> {
-                collectionsRepository.fetchAndSaveCollection(it)
+                collectionsRepository.fetchAndSaveCollection()
             })
             .build()
 

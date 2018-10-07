@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
@@ -19,6 +21,7 @@ import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
 import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.chip.Chip
 import kotlinx.android.synthetic.main.item_photo_info_sheet.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -86,7 +89,18 @@ class PhotoInfoBottomSheetFragment : BottomSheetDialogFragment() {
             chipPhotoInfoColor.apply {
                 val color = Color.parseColor(it.colorString)
                 chipBackgroundColor = ColorStateList.valueOf(color)
+                text = it.colorString
             }
+
+            textLblPhotoInfoCollections.isVisible = it.collections.isNotEmpty()
+
+            it.collections.forEach { collection ->
+                val chip = Chip(ContextThemeWrapper(context, R.style.infoChipStyle)).apply {
+                    text = collection.title
+                }
+                chipGroupPhotoInfoCategories.addView(chip)
+            }
+
         })
     }
 

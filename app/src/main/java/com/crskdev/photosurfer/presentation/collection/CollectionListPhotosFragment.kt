@@ -110,7 +110,7 @@ class CollectionListPhotosViewModel(collectionId: Int,
     val photosLiveData = LivePagedListBuilder(collectionRepository.getCollectionPhotos(collectionId), defaultPageListConfig())
             .setFetchExecutor(diskThreadExecutor)
             .setBoundaryCallback(GenericBoundaryCallback<Photo> {
-                collectionRepository.fetchAndSaveCollectionPhotos(collectionId, it, object : Repository.Callback<Unit> {
+                collectionRepository.fetchAndSaveCollectionPhotos(collectionId, object : Repository.Callback<Unit> {
                     override fun onError(error: Throwable, isAuthenticationError: Boolean) {
                         errorLiveData.value = error
                     }

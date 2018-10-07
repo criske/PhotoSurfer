@@ -39,8 +39,8 @@ interface CollectionsDAO : DataAccessor {
     @Query("SELECT * FROM collections WHERE id=:collectionId")
     fun getCollection(collectionId: Int): CollectionEntity?
 
-    @Query("SELECT * FROM collections ORDER BY  strftime('%s', publishedAt) DESC LIMIT 1")
-    fun getLatestCollection(): CollectionEntity?
+    @Query("SELECT * FROM collections ORDER BY id DESC LIMIT 1")
+    fun getLastCollection(): CollectionEntity?
 
     @Query("SELECT * FROM collections WHERE id=:collectionId")
     fun getCollectionLiveData(collectionId: Int): LiveData<CollectionEntity>

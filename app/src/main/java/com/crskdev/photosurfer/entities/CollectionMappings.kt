@@ -34,7 +34,7 @@ fun Collection.toCollectionDB() = CollectionEntity().apply {
     this.prev = this@toCollectionDB.pagingData?.prev
 }
 
-fun CollectionJSON.toCollectionDB(pagingData: PagingData): CollectionEntity =
+fun CollectionJSON.toCollectionDB(pagingData: PagingData, nextIndex: Int): CollectionEntity =
         CollectionEntity().apply {
             this.id = this@toCollectionDB.id
             this.publishedAt = this@toCollectionDB.publishedAt
@@ -56,6 +56,7 @@ fun CollectionJSON.toCollectionDB(pagingData: PagingData): CollectionEntity =
             this.curr = pagingData.curr
             this.next = pagingData.next
             this.prev = pagingData.prev
+            this.indexInResponse = nextIndex
         }
 
 fun CollectionJSON.toJSONString(jsonAdapter: JsonAdapter<CollectionJSON>): String =

@@ -5,8 +5,8 @@
     android:id="@+id/bottomSheetPhotoInfo"
     android:layout_width="match_parent"
     android:layout_height="350dp"
-    app:behavior_hideable="true"
     android:background="@color/colorPrimary"
+    app:behavior_hideable="true"
     app:layout_behavior="@string/bottom_sheet_behavior">
 
     <ImageView
@@ -49,12 +49,12 @@
 
     <TextView
         android:id="@+id/textPhotoInfoAuthor"
-        android:gravity="center_vertical"
-        android:drawableStart="@drawable/ic_camera_alt_black_24dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
+        android:drawableStart="@drawable/ic_camera_alt_black_24dp"
+        android:gravity="center_vertical"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textPhotoInfoDescription"
@@ -111,11 +111,10 @@
         android:id="@+id/chipPhotoInfoColor"
         style="@style/infoChipStyle"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="25dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:chipStrokeColor="@color/colorPrimaryLight"
         app:layout_constraintStart_toEndOf="@+id/textPhotoInfoColor"
         app:layout_constraintTop_toBottomOf="@+id/textPhotoInfoCreationDate" />
 
@@ -129,4 +128,32 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/ic_delete" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroupPhotoInfoCategories"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textLblPhotoInfoCollections"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/collections"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/chipGroupPhotoInfoCategories"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chipPhotoInfoColor"
+        app:layout_constraintVertical_bias="1.0"
+        tools:visibility="invisible" />
 </androidx.constraintlayout.widget.ConstraintLayout>
