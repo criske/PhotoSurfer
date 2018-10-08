@@ -89,7 +89,7 @@ fun PagedList.Config.Builder.defaultConfigBuild() = this
 fun defaultPageListConfig(): PagedList.Config = PagedList.Config.Builder().defaultConfigBuild().build()
 
 fun Long.suffixFormat(): String {
-    if(this < 1000){
+    if (this < 1000) {
         return this.toString()
     }
     val suffix = charArrayOf(' ', 'k', 'M', 'B', 'T', 'P', 'E')
@@ -100,4 +100,10 @@ fun Long.suffixFormat(): String {
     } else {
         DecimalFormat("#,##0").format(this)
     }
+}
+
+fun <T> empty() = MutableLiveData<T>()
+
+fun <T> just(item: T) = MutableLiveData<T>().apply {
+    value = item
 }

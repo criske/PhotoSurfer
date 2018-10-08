@@ -47,9 +47,9 @@ interface CollectionRepository : Repository {
 
     fun fetchAndSaveCollectionPhotos(collectionId: Int, callback: Repository.Callback<Unit>?)
 
-    fun addPhotoToCollection(collection: Collection, photo: Photo)
+    fun addPhotoToCollection(collectionId: Int, photoId: String)
 
-    fun removePhotoFromCollection(collection: Collection, photo: Photo)
+    fun removePhotoFromCollection(collectionId: Int, photoId: String)
 
     fun getCollectionLiveData(collectionId: Int): LiveData<Collection>
 
@@ -243,64 +243,73 @@ class CollectionRepositoryImpl(
         }
     }
 
-    override fun addPhotoToCollection(collection: Collection, photo: Photo) {
+    override fun addPhotoToCollection(collectionId: Int, photoId: String) {
         //todo schedule api call
         ioExecutor {
-            val response = collectionAPI.addPhotoToCollection(collection.id,
-                    collection.id, photo.id).execute()
+            val response = collectionAPI.addPhotoToCollection(collectionId,
+                    collectionId, photoId).execute()
             if (response.isSuccessful) {
-                pushMessagingManager.sendMessage(Message.CollectionAddedPhoto(collection.id, photo.id))
+                pushMessagingManager.sendMessage(Message.CollectionAddedPhoto(collectionId, photoId))
             }
         }
         diskExecutor {
             transactional {
                 //update size and cover
-                val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
-                    totalPhotos += 1
-                    coverPhotoId = photo.id
-                    coverPhotoUrls = transformMapUrls(photo.urls)
-                    coverPhotoAuthorUsername = photo.authorUsername
-                    coverPhotoAuthorFullName = photo.authorFullName
-                    updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
+                val photo = photoDAOFacade.getPhotoFromEitherTable(photoId)
+                if (photo != null) {
+                    val collectionDB = collectionDAO.getCollection(collectionId)?.apply {
+                        totalPhotos += 1
+                        coverPhotoId = photo.id
+                        coverPhotoUrls = photo.urls
+                        coverPhotoAuthorUsername = photo.authorUsername
+                        coverPhotoAuthorFullName = photo.authorFullName
+                        updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
+                    }
+                    collectionDB?.let {
+                        collectionDAO.updateCollection(it)
+                        photoDAOFacade.addPhotoToCollection(photo.id, it.asLite())
+                    }
+
                 }
-                collectionDB?.let { collectionDAO.updateCollection(it) }
-                photoDAOFacade.addPhotoToCollection(photo.id, collection.asLite())
             }
         }
     }
 
-    override fun removePhotoFromCollection(collection: Collection, photo: Photo) {
+    override fun removePhotoFromCollection(collectionId: Int, photoId: String) {
         //todo schedule api call
         ioExecutor {
-            val response = collectionAPI.removePhotoFromCollection(collection.id, collection.id, photo.id).execute()
+            val response = collectionAPI.removePhotoFromCollection(collectionId, collectionId, photoId).execute()
             if (response.isSuccessful) {
-                pushMessagingManager.sendMessage(Message.CollectionRemovedPhoto(collection.id, photo.id))
+                pushMessagingManager.sendMessage(Message.CollectionRemovedPhoto(collectionId, photoId))
             }
         }
         diskExecutor {
             transactional {
-                photoDAOFacade.removePhotoFromCollection(photo.id, collection.asLite())
-                val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
-                    totalPhotos -= 1
-                }
-                val lastPhoto = collectionPhotoDAO.getLastPhoto()
-                //update cover with latest photo in collection only if current collection id is collection id
-                if (lastPhoto?.currentCollectionId == collection.id) {
-                    lastPhoto.let {
-                        collectionDB?.coverPhotoId = it.id
-                        collectionDB?.coverPhotoUrls = it.urls
-                        collectionDB?.coverPhotoAuthorUsername = it.authorUsername
-                        collectionDB?.coverPhotoAuthorFullName = it.authorFullName
+                val collection = collectionDAO.getCollection(collectionId)
+                if (collection != null) {
+                    photoDAOFacade.removePhotoFromCollection(photoId, collection.asLite())
+                    val collectionDB = collectionDAO.getCollection(collection.id)?.apply {
+                        totalPhotos -= 1
+                    }
+                    val lastPhoto = collectionPhotoDAO.getLastPhoto()
+                    //update cover with latest photo in collection only if current collection id is collection id
+                    if (lastPhoto?.currentCollectionId == collection.id) {
+                        lastPhoto.let {
+                            collectionDB?.coverPhotoId = it.id
+                            collectionDB?.coverPhotoUrls = it.urls
+                            collectionDB?.coverPhotoAuthorUsername = it.authorUsername
+                            collectionDB?.coverPhotoAuthorFullName = it.authorFullName
+                            collectionDB?.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
+                        }
+                    } else if (lastPhoto == null) { // there is no photo in this collection
+                        collectionDB?.coverPhotoId = null
+                        collectionDB?.coverPhotoUrls = null
+                        collectionDB?.coverPhotoAuthorUsername = null
+                        collectionDB?.coverPhotoAuthorFullName = null
                         collectionDB?.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                     }
-                } else if (lastPhoto == null) { // there is no photo in this collection
-                    collectionDB?.coverPhotoId = null
-                    collectionDB?.coverPhotoUrls = null
-                    collectionDB?.coverPhotoAuthorUsername = null
-                    collectionDB?.coverPhotoAuthorFullName = null
-                    collectionDB?.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
+                    collectionDB?.let { collectionDAO.updateCollection(it) }
                 }
-                collectionDB?.let { collectionDAO.updateCollection(it) }
             }
         }
     }

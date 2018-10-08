@@ -32,6 +32,10 @@
     <string name="search_title" translatable="false">&#8981;</string>
     <string name="search_users">Search Users</string>
     <string name="collections">Collections</string>
+    <plurals name="collections_plural">
+        <item quantity="one">In one collection.</item>
+        <item quantity="other">In %d collections.</item>
+    </plurals>
     <string name="no_description">No description</string>
     <string name="add">Add</string>
     <string name="create_new_collection">Create New Collection</string>

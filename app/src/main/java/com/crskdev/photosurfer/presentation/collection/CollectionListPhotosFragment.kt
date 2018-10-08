@@ -64,7 +64,7 @@ class CollectionListPhotosFragment : Fragment() {
             (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
             val actionHelper = ListPhotosAdapter.actionHelper(
                     view.findNavController(),
-                    context.dependencyGraph().authNavigatorMiddleware, null) { viewModel.like(it) }
+                    context.dependencyGraph().authNavigatorMiddleware) { viewModel.like(it) }
             adapter = ListPhotosAdapter(LayoutInflater.from(context), Glide.with(this@CollectionListPhotosFragment), actionHelper)
             addItemDecoration(object : RecyclerView.ItemDecoration() {
                 val margin = 2.dpToPx(resources).toInt()

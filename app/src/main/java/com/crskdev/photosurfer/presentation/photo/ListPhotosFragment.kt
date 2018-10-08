@@ -1,22 +1,33 @@
 package com.crskdev.photosurfer.presentation.photo
 
+import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.work.impl.utils.LiveDataUtils
 import com.bumptech.glide.Glide
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
@@ -25,31 +36,38 @@ import com.crskdev.photosurfer.data.local.search.SearchTermTracker
 import com.crskdev.photosurfer.data.local.search.Term
 import com.crskdev.photosurfer.data.remote.auth.AuthToken
 import com.crskdev.photosurfer.data.repository.Repository
+import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
 import com.crskdev.photosurfer.data.repository.photo.RepositoryAction
 import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveData
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
+import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
+import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
+import com.crskdev.photosurfer.presentation.photo.listadapter.PhotoInfoSheetDisplayHelper
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
+import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.glide.GlideApp
-import com.crskdev.photosurfer.util.livedata.ListenableLiveData
-import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
-import com.crskdev.photosurfer.util.livedata.filter
-import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.livedata.*
 import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.tintIcons
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.fragment_list_photos.view.*
 import kotlinx.android.synthetic.main.item_photo_info_sheet.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Created by Cristian Pela on 01.08.2018.
@@ -63,6 +81,28 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
     private lateinit var viewModel: ListPhotosViewModel
 
     private lateinit var currentFilter: FilterVM
+
+    private val authNavigatorMiddleware by lazy(LazyThreadSafetyMode.NONE) {
+        view!!.context.dependencyGraph().authNavigatorMiddleware
+    }
+
+    private var infoSheetDisplayHelper = PhotoInfoSheetDisplayHelper(object : PhotoInfoSheetDisplayHelper.ActionsListener {
+
+        override fun onClose() {
+            viewModel.clearShowInfo()
+        }
+
+        override fun onRemoveFromCollection(collectionId: Int, photoId: String) {
+            viewModel.removeFromCollection(collectionId, photoId)
+        }
+
+        override fun displayCollection(collectionId: Int) {
+            authNavigatorMiddleware.navigate(
+                    findNavController(),
+                    ListPhotosFragmentDirections.actionFragmentListPhotosToCollectionListPhotosFragment(collectionId),
+                    defaultTransitionNavOptions())
+        }
+    })
 
     private val glide by lazy {
         GlideApp.with(this)
@@ -81,6 +121,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                     graph.diskThreadExecutor,
                     graph.userRepository,
                     graph.photoRepository,
+                    graph.collectionsRepository,
                     graph.searchTermTracker,
                     graph.listenableAuthState
             )
@@ -98,14 +139,18 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
 
     private fun adapterFactory(): RecyclerView.Adapter<*> {
-        val authNavigatorMiddleware = view!!.context.dependencyGraph().authNavigatorMiddleware
         val actionHelper = ListPhotosAdapter.actionHelper(
                 view!!.findNavController(),
                 authNavigatorMiddleware,
-                activity?.supportFragmentManager,
+                { viewModel.showInfo(it.id) },
                 { viewModel.delete(it) },
                 { viewModel.like(it) })
         return ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        infoSheetDisplayHelper.clear()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -127,7 +172,6 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean = true
-
         })
 
         collapsingToolbarListPhotos.isTitleEnabled = false
@@ -176,8 +220,6 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
             }
         }
 
-
-
         viewModel.authStateLiveData.observe(this, Observer {
             val isLoggedIn = it.isNotEmpty()
             toolbarListPhotos.menu.clear()
@@ -214,6 +256,11 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
             authNavigatorMiddleware.navigateToLogin(activity!!)
         })
 
+        viewModel.photoInfoLiveData.observe(this, Observer {
+            if (it != null)
+                infoSheetDisplayHelper.displayInfoBottomSheet(context!!, it)
+        })
+
     }
 
     override fun onResume() {
@@ -245,6 +292,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
                           diskExecutor: KExecutor,
                           private val userRepository: UserRepository,
                           private val photoRepository: PhotoRepository,
+                          private val collectionRepository: CollectionRepository,
                           private val searchTermTracker: SearchTermTracker,
                           listenableAuthState: Listenable<AuthToken>) : ViewModel() {
 
@@ -281,6 +329,27 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
             choosablePhotoDataSourceFactory,
             errorLiveData)
 
+
+    private val NO_PHOTO_ID = ""
+    private val photoIDLiveData = MutableLiveData<String>()
+    val photoInfoLiveData = Transformations
+            .switchMap(photoIDLiveData) {
+                if (it == NO_PHOTO_ID) {
+                    AbsentLiveData.create()
+                } else {
+                    photoRepository.getPhotoLiveData(it)
+                }
+            }
+    //.filter { it != null }
+
+    fun showInfo(photoId: String) {
+        photoIDLiveData.value = photoId
+    }
+
+    fun clearShowInfo() {
+        photoIDLiveData.value = NO_PHOTO_ID
+    }
+
     fun cancel() {
         photoRepository.cancel()
     }
@@ -302,7 +371,6 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
         choosablePhotoDataSourceFactory.changeFilter(dataSourceFilter)
         photosLiveData.value?.dataSource?.invalidate()
         filterLiveData.value = filter
-
     }
 
     fun like(photo: Photo) {
@@ -330,6 +398,9 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
         photoRepository.delete(photo)
     }
 
+    fun removeFromCollection(collectionId: Int, photoId: String) {
+        collectionRepository.removePhotoFromCollection(collectionId, photoId)
+    }
 }
 
 

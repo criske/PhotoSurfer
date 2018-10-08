@@ -3,7 +3,6 @@ package com.crskdev.photosurfer.presentation.photo.listadapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
-import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -12,7 +11,6 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
-import com.crskdev.photosurfer.presentation.photo.PhotoInfoBottomSheetFragment
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 
@@ -36,7 +34,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
 
         inline fun actionHelper(navController: NavController,
                                 authNavigatorMiddleware: AuthNavigatorMiddleware,
-                                fragmentManager: FragmentManager? = null,
+                                crossinline showInfo: (Photo) -> Unit = {},
                                 crossinline deleteAction: (Photo) -> Unit = {},
                                 crossinline likeAction: (Photo) -> Unit):
                 (ActionWhat, Photo) -> Unit {
@@ -75,7 +73,7 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                         deleteAction(photo)
                     }
                     ActionWhat.PHOTO_INFO -> {
-                        fragmentManager?.let { PhotoInfoBottomSheetFragment.show(photo.id, it) }
+                        showInfo(photo)
                     }
                 }
             }

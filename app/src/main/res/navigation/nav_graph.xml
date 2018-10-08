@@ -20,10 +20,17 @@
             app:destination="@id/fragment_search_users" />
         <action
             android:id="@+id/action_fragment_list_photos_to_fragment_add_to_collection"
-            app:destination="@id/fragment_add_to_collection"></action>
+            app:destination="@id/fragment_add_to_collection" />
         <action
             android:id="@+id/action_fragment_list_photos_to_playwavesFragment"
             app:destination="@id/nav_play_wave" />
+        <action
+            android:id="@+id/action_fragment_list_photos_to_collectionListPhotosFragment"
+            app:destination="@id/collectionListPhotosFragment">
+            <argument
+                android:name="collectionId"
+                app:argType="integer" />
+        </action>
     </fragment>
     <fragment
         android:id="@+id/fragment_photo_details"

@@ -34,4 +34,9 @@
     <string name="photo_info_size">Dimensiuni: %1$dx%2$d</string>
     <string name="photo_info_color">Culoare:</string>
     <string name="photo_info_created">Creat la: %1$s</string>
+    <plurals name="collections_plural">
+        <item quantity="one">In o colectie.</item>
+        <item quantity="other">In %d collectii.</item>
+        <item quantity="few">In %d collectii.</item>
+    </plurals>
 </resources>

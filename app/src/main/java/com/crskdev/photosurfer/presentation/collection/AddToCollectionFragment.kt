@@ -98,11 +98,11 @@ class AddToCollectionViewModel(private val collectionsRepository: CollectionRepo
             .build()
 
     fun addToCollection(collection: Collection) {
-        collectionsRepository.addPhotoToCollection(collection, photo)
+        collectionsRepository.addPhotoToCollection(collection.id, photo.id)
     }
 
     fun removeFromCollection(collection: Collection) {
-        collectionsRepository.removePhotoFromCollection(collection, photo)
+        collectionsRepository.removePhotoFromCollection(collection.id, photo.id)
     }
 }
 

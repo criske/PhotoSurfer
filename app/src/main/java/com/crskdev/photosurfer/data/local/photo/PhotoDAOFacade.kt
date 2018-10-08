@@ -156,8 +156,11 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
             }
         }
         return mediatorLiveData.distinctUntilChanged { last, curr ->
-            last.id != curr.id ||
-                    (curr.id == last.id && last.likedByMe != curr.likedByMe)
+            //TODO  you must create a "local" last update field for entities, and use that for comp?
+            last.id != curr.id
+                    || (curr.id == last.id && last.likedByMe != curr.likedByMe)
+                    || (curr.id == last.id && last.collections != curr.collections)
+                    || (curr.id == last.id && last.likes != curr.likes)
         }
     }
 

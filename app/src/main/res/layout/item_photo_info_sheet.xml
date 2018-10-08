@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:layout_marginBottom="8dp"
-        android:text="/Unsplash"
+        android:text="/ Unsplash"
         android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@+id/textPhotoInfoSize"
         app:layout_constraintStart_toEndOf="@+id/textPhotoInfoAuthor"
@@ -118,27 +118,36 @@
         app:layout_constraintStart_toEndOf="@+id/textPhotoInfoColor"
         app:layout_constraintTop_toBottomOf="@+id/textPhotoInfoCreationDate" />
 
-    <ImageView
+    <ImageButton
         android:id="@+id/imagePhotoInfoClose"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Base.Widget.AppCompat.Button.Borderless"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:contentDescription="@null"
+        android:tint="@color/colorLike"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@android:drawable/ic_delete" />
+        app:srcCompat="@drawable/ic_close_black_24dp" />
 
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chipGroupPhotoInfoCategories"
-        android:layout_width="0dp"
+    <HorizontalScrollView
+        android:id="@+id/chipGroupPhotoInfoCollectionsScroll"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupPhotoInfoCollections"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:singleLine="true" />
+    </HorizontalScrollView>
+
 
     <TextView
         android:id="@+id/textLblPhotoInfoCollections"
@@ -151,7 +160,7 @@
         android:textSize="12sp"
         android:textStyle="bold"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/chipGroupPhotoInfoCategories"
+        app:layout_constraintBottom_toTopOf="@+id/chipGroupPhotoInfoCollectionsScroll"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/chipPhotoInfoColor"
         app:layout_constraintVertical_bias="1.0"

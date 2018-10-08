@@ -18,4 +18,11 @@ data class Photo(val id: String,
                  val authorUsername: String,
                  val authorFullName: String,
                  override val pagingData: PagingData? = null,
-                 val extras: Any? = null) : BaseEntity()
+                 val extras: Any? = null) : BaseEntity() {
+
+    companion object {
+        val EMPTY = Photo("", "", "", 0, 0, "",
+                EnumMap<ImageType, String>(ImageType::class.java), null, emptyList(), emptyList(), 0L, false, 0L,
+                "", "", "", null, null)
+    }
+}
