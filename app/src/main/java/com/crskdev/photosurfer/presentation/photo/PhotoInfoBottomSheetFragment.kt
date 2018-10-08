@@ -91,16 +91,13 @@ class PhotoInfoBottomSheetFragment : BottomSheetDialogFragment() {
                 chipBackgroundColor = ColorStateList.valueOf(color)
                 text = it.colorString
             }
-
             textLblPhotoInfoCollections.isVisible = it.collections.isNotEmpty()
-
             it.collections.forEach { collection ->
                 val chip = Chip(ContextThemeWrapper(context, R.style.infoChipStyle)).apply {
                     text = collection.title
                 }
                 chipGroupPhotoInfoCategories.addView(chip)
             }
-
         })
     }
 

@@ -2,7 +2,7 @@ package com.crskdev.photosurfer.data.remote
 
 import okhttp3.Headers
 
-data class PagingData(val total: Int, val curr: Int, val prev: Int?, val next: Int?) {
+data class PagingData(val total: Int?, val curr: Int?, val prev: Int?, val next: Int?) {
     companion object {
         private fun extractQueryParams(link: String): Map<String, String> =
                 link.split("?").takeIf { it.size == 2 }
@@ -38,5 +38,18 @@ data class PagingData(val total: Int, val curr: Int, val prev: Int?, val next: I
             } ?: Triple(1, null, null)
             return PagingData(total, curr, prev, next)
         }
+
+        //TODO make pageSize be configurable
+        fun createNextPagingData(total: Int?, curr: Int?, next: Int?, prev: Int?, pageSize: Int = 10): PagingData =
+                PagingData(total?.plus(1) ?: 1, curr ?: 1, prev, next)
+
+        fun createNextPagingData(currPage: PagingData?, pageSize: Int = 10): PagingData =
+                createNextPagingData(
+                        currPage?.total,
+                        currPage?.curr,
+                        currPage?.next,
+                        currPage?.prev,
+                        pageSize)
+
     }
 }

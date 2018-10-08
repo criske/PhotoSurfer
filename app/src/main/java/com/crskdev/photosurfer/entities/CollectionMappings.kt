@@ -28,10 +28,7 @@ fun Collection.toCollectionDB() = CollectionEntity().apply {
     this.ownerId = this@toCollectionDB.ownerId
     this.ownerUsername = this@toCollectionDB.ownerUsername
     this.links = this@toCollectionDB.links.stringify()
-    this.total = this@toCollectionDB.pagingData?.total
-    this.curr = this@toCollectionDB.pagingData?.curr
-    this.next = this@toCollectionDB.pagingData?.next
-    this.prev = this@toCollectionDB.pagingData?.prev
+    this.pagingData = this@toCollectionDB.pagingData
 }
 
 fun CollectionJSON.toCollectionDB(pagingData: PagingData, nextIndex: Int): CollectionEntity =
@@ -52,10 +49,7 @@ fun CollectionJSON.toCollectionDB(pagingData: PagingData, nextIndex: Int): Colle
             this.ownerId = this@toCollectionDB.owner.id
             this.ownerUsername = this@toCollectionDB.owner.username
             this.links = this@toCollectionDB.links.stringify()
-            this.total = pagingData.total
-            this.curr = pagingData.curr
-            this.next = pagingData.next
-            this.prev = pagingData.prev
+            this.pagingData = pagingData
             this.indexInResponse = nextIndex
         }
 
@@ -88,7 +82,6 @@ fun Collection.toLiteJSON(): CollectionLiteJSON = CollectionLiteJSON().apply {
 
 
 fun CollectionEntity.toCollection(): Collection {
-    val pagingData = PagingData(total ?: 0, curr ?: 1, prev, next)
     return Collection(
             id,
             title,

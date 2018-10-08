@@ -106,9 +106,10 @@ class PhotoRepositoryImpl(
 
     //this must be called on the io thread
     override fun fetchAndSavePhotos(repositoryAction: RepositoryAction, callback: Repository.Callback<Unit>?) {
-        uiExecutor {
-            apiCallDispatcher.cancel()
-        }
+        //TODO do a smarter way to cancel your requests maybe group them by repository action
+//        uiExecutor {
+//            apiCallDispatcher.cancel()
+//        }
         ioExecutor.execute {
             try {
                 val lastPhoto = when (repositoryAction.type) {
@@ -118,11 +119,11 @@ class PhotoRepositoryImpl(
                     RepositoryAction.Type.SEARCH -> daoPhotoFacade.getLastPhoto(Contract.TABLE_SEARCH_PHOTOS)
                     else -> throw Exception("Unsupported Action")
                 }
-                if (lastPhoto != null && lastPhoto.next == null) {
+                if (lastPhoto != null && lastPhoto.pagingData?.next == null) {
                     //bail out if no more pages
                     return@execute
                 }
-                val page = lastPhoto?.next ?: 1
+                val page = lastPhoto?.pagingData?.next ?: 1
                 val response = if (repositoryAction.type == RepositoryAction.Type.SEARCH) {
                     //repositoryAction.extras[0] - USERNAME
                     apiCallDispatcher { api.getSearchedPhotos(repositoryAction.extras[0].toString(), page) }
@@ -139,8 +140,7 @@ class PhotoRepositoryImpl(
                     }
                 }
                 response.apply {
-                    val headers = headers()
-                    val pagingData = PagingData.createFromHeaders(headers)
+                    val pagingData = PagingData.createFromHeaders(headers())
                     if (isSuccessful) {
                         diskExecutor {
                             @Suppress("UNCHECKED_CAST")

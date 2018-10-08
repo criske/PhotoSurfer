@@ -45,9 +45,7 @@ class CollectionCreatedCommand(context: Context) : FCMCommand(context) {
         if (response.isSuccessful) {
             transactional{
                 response.body()?.let { cjson ->
-                    val pagingData = collectionsDAO.getLastCollection()?.let {
-                        PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
-                    } ?: PagingData(1, 1, null, null)
+                    val pagingData = PagingData.createNextPagingData(collectionsDAO.getLastCollection()?.pagingData)
                     collectionsDAO.createCollection(cjson.toCollectionDB(pagingData, collectionsDAO.getNextIndex()))
                 }
             }
@@ -140,9 +138,8 @@ class CollectionAddedPhotoCommand(context: Context) : FCMCommand(context) {
             val photoDb = photoDAOFacade.getPhotoFromEitherTable(photoId)
                     ?: photoAPI.getPhoto(photoId).execute().let { r ->
                         if (r.isSuccessful) {
-                            val pagingData = photoDAOFacade.getLastPhoto(Contract.TABLE_COLLECTION_PHOTOS)?.let {
-                                PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
-                            } ?: PagingData(1, 1, null, null)
+                            val pagingData = PagingData.createNextPagingData(photoDAOFacade
+                                            .getLastPhoto(Contract.TABLE_COLLECTION_PHOTOS)?.pagingData)
                             r.body()?.toCollectionPhotoDbEntity(pagingData, photoDAOFacade.getNextIndex(Contract.TABLE_COLLECTION_PHOTOS))
                         } else {
                             null

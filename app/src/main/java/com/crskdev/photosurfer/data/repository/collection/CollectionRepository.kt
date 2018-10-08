@@ -170,11 +170,11 @@ class CollectionRepositoryImpl(
                     callback?.runOn(uiExecutor) { onError(Error("Must be logged in to get your collection"), true) }
                 } else {
                     val lastCollection = collectionDAO.getLastCollection()
-                    if (lastCollection != null && lastCollection.next == null) {
+                    if (lastCollection != null && lastCollection.pagingData?.next == null) {
                         //bail out if no more pages
                         return@ioExecutor
                     }
-                    val page = lastCollection?.next ?: 1
+                    val page = lastCollection?.pagingData?.next ?: 1
                     val response = apiCallDispatcher { collectionAPI.getMyCollections(me, page) }
                     with(response) {
                         if (response.isSuccessful) {
@@ -211,11 +211,11 @@ class CollectionRepositoryImpl(
             } else {
                 //TODO: remove page parameter!
                 val lastPhoto = photoDAOFacade.getLastPhoto(Contract.TABLE_COLLECTION_PHOTOS)
-                if (lastPhoto != null && lastPhoto.next == null) {
+                if (lastPhoto != null && lastPhoto.pagingData?.next == null) {
                     //bail out if no more pages
                     return@ioExecutor
                 }
-                val page = lastPhoto?.next ?: 1
+                val page = lastPhoto?.pagingData?.next ?: 1
 
                 val response = apiCallDispatcher { collectionAPI.getMyCollectionPhotos(collectionId, page) }
                 with(response) {

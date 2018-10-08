@@ -48,10 +48,7 @@ fun UserJSON.toDbUserEntity(pagingData: PagingData, nextIndex: Int): UserEntity 
     this.downloads = this@toDbUserEntity.downloads
     //paging
     this.indexInResponse = nextIndex
-    this.curr = pagingData.curr
-    this.next = pagingData.next
-    this.prev = pagingData.prev
-    this.total = pagingData.total
+    this.pagingData = pagingData
 }
 
 fun UserEntity.toUser(): User = User(
@@ -72,4 +69,4 @@ fun UserEntity.toUser(): User = User(
         following,
         likes,
         downloads,
-        PagingData(total ?: 0, curr ?: 1, prev, next))
+        pagingData)

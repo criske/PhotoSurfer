@@ -33,8 +33,7 @@ fun PhotoEntity.toPhoto(): Photo =
                 authorId,
                 authorUsername,
                 authorFullName,
-                PagingData(this.total ?: -1, this.curr
-                        ?: -1, this.prev, this.next),
+                pagingData,
                 indexInResponse + 1
         )
 

@@ -70,9 +70,7 @@ class CreateCollectionWorker : Worker() {
                     transactional {
                         val collectionId = cjson.id
                         val lastCollectionEntity = collectionsDAO.getLastCollection()
-                        val pagingData = lastCollectionEntity?.let {
-                            PagingData(it.total?.plus(1) ?: 1, it.curr ?: 1, it.prev, it.next)
-                        } ?: PagingData(1, 1, null, null)
+                        val pagingData = PagingData.createNextPagingData(lastCollectionEntity?.pagingData)
                         collectionsDAO.createCollection(cjson.toCollectionDB(pagingData, collectionsDAO.getNextIndex()))
 
                         devicePushMessagingManager.sendMessage(Message.CollectionCreate(collectionId))

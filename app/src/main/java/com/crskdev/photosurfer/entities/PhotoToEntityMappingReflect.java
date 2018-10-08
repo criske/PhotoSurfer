@@ -43,12 +43,7 @@ final class PhotoToEntityMappingReflect {
             setField(instance, photo.getAuthor().getId(), clazz, "authorId");
             setField(instance, photo.getAuthor().getUsername(), clazz, "authorUsername");
             setField(instance, photo.author.fullName, clazz, "authorFullName");
-            if (pagingData != null) {
-                setField(instance, pagingData.getTotal(), clazz, "total");
-                setField(instance, pagingData.getCurr(), clazz, "curr");
-                setField(instance, pagingData.getPrev(), clazz, "prev");
-                setField(instance, pagingData.getNext(), clazz, "next");
-            }
+            setField(instance, pagingData, clazz, "pagingData");
             return instance;
         } catch (IllegalAccessException | InstantiationException | NoSuchFieldException e) {
             e.printStackTrace();
@@ -77,12 +72,7 @@ final class PhotoToEntityMappingReflect {
             setField(instance, photo.getAuthorId(), clazz, "authorId");
             setField(instance, photo.getAuthorUsername(), clazz, "authorUsername");
             setField(instance, photo.getAuthorFullName(), clazz, "authorFullName");
-            if (pagingData != null) {
-                setField(instance, pagingData.getTotal(), clazz, "total");
-                setField(instance, pagingData.getCurr(), clazz, "curr");
-                setField(instance, pagingData.getPrev(), clazz, "prev");
-                setField(instance, pagingData.getNext(), clazz, "next");
-            }
+            setField(instance, pagingData, clazz, "pagingData");
             return instance;
         } catch (IllegalAccessException | InstantiationException | NoSuchFieldException e) {
             e.printStackTrace();

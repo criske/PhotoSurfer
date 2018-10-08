@@ -10,6 +10,7 @@ import com.crskdev.photosurfer.data.local.DaoManager
 import com.crskdev.photosurfer.data.local.DataAccessor
 import com.crskdev.photosurfer.data.local.TransactionRunner
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
+import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.entities.CollectionLite
 import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
 import com.crskdev.photosurfer.entities.formatNow
@@ -227,10 +228,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.collections = it.collections
                         this.categories = it.categories
                         this.indexInResponse = lastLiked?.indexInResponse ?: 0 + 1
-                        this.curr = lastLiked?.curr
-                        this.next = lastLiked?.next
-                        this.prev = lastLiked?.prev
-                        this.total = lastLiked?.total ?: 1
+                        this.pagingData = PagingData.createNextPagingData(lastLiked?.pagingData)
                     }
                     if (liked) {
                         daoLikes.like(likePhoto)
@@ -273,10 +271,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
                         this.authorFullName = it.authorFullName
                         this.authorId = it.authorId
                         this.indexInResponse = lastCollectionPhoto.indexInResponse
-                        this.curr = lastCollectionPhoto.curr
-                        this.next = lastCollectionPhoto.next
-                        this.prev = lastCollectionPhoto.prev
-                        this.total = lastCollectionPhoto.total ?: 1
+                        this.pagingData = PagingData.createNextPagingData(lastCollectionPhoto.pagingData)
                         this.collections = it.collections
                         this.currentCollectionId = collection.id
                     }
