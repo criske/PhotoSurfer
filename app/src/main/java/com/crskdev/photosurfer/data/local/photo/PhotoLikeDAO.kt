@@ -11,7 +11,8 @@ import com.crskdev.photosurfer.data.local.DataAccessor
 @Dao
 interface PhotoLikeDAO : DataAccessor {
 
-    @Query("SELECT * FROM like_photos ORDER BY strftime('%s', updatedAt) DESC")
+    //TODO fix to lastUpdatedLocal when figure how to make triggers work
+    @Query("SELECT * FROM like_photos ORDER BY indexInResponse ASC")
     fun getPhotos(): DataSource.Factory<Int, LikePhotoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

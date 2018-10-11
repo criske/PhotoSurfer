@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.isVisible
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.entities.DISPLAY_DATE_FORMATTER
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
 import com.crskdev.photosurfer.util.IntentUtils
@@ -39,10 +40,6 @@ class PhotoInfoSheetDisplayHelper(private val listener: ActionsListener) {
 
 
     private var mLayoutInflater: LayoutInflater? = null
-
-    private val mDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
-        timeZone = TimeZone.getDefault()
-    }
 
     private var mSheetLayout: View? = null
 
@@ -90,7 +87,7 @@ class PhotoInfoSheetDisplayHelper(private val listener: ActionsListener) {
             val date = UNSPLASH_DATE_FORMATTER.parse(photo.createdAt)
 
             //TODO test this might not be accurate representation
-            findViewById<TextView>(R.id.textPhotoInfoCreationDate).text = context.getString(R.string.photo_info_created, mDateFormat.format(date))
+            findViewById<TextView>(R.id.textPhotoInfoCreationDate).text = context.getString(R.string.photo_info_created, DISPLAY_DATE_FORMATTER.format(date))
             findViewById<Chip>(R.id.chipPhotoInfoColor).apply {
                 val color = Color.parseColor(photo.colorString)
                 chipBackgroundColor = ColorStateList.valueOf(color)

@@ -5,10 +5,7 @@ package com.crskdev.photosurfer.data.local.photo
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.paging.DataSource
-import com.crskdev.photosurfer.data.local.Contract
-import com.crskdev.photosurfer.data.local.DaoManager
-import com.crskdev.photosurfer.data.local.DataAccessor
-import com.crskdev.photosurfer.data.local.TransactionRunner
+import com.crskdev.photosurfer.data.local.*
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.remote.PagingData
 import com.crskdev.photosurfer.entities.CollectionLite
@@ -36,7 +33,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
             Contract.TABLE_PHOTOS -> daoPhotos.getPhotos()
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.getPhotos()
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getPhotos()
-            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getPhotos()
+           // Contract.TABLE_COLLECTION_PHOTOS -> NOT SUPPORTED
             else -> throw Error("Dao for table $table not found or not supported")
         }
     }
@@ -177,7 +174,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
     }
 
     fun getPhotosBelongToCollectionMappedByTable(collectionId: Int): Map<String, List<PhotoEntity>> {
-        val likeCollectionId = "%$collectionId#%"
+        val likeCollectionId = collectionId.asSearchTermInRecord()
         lateinit var map: Map<String, List<PhotoEntity>>
         transactional {
             map = Contract.PHOTO_TABLES.map {

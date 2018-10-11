@@ -5,6 +5,7 @@ import androidx.lifecycle.Transformations
 import androidx.paging.DataSource
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.DaoManager
+import com.crskdev.photosurfer.data.local.asSearchTermInRecord
 import com.crskdev.photosurfer.data.local.photo.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
@@ -63,7 +64,6 @@ class CollectionRepositoryImpl(
         private val apiCallDispatcher: APICallDispatcher,
         private val collectionAPI: CollectionsAPI,
         private val authTokenStorage: AuthTokenStorage,
-        private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val pushMessagingManager: DevicePushMessagingManager
 ) : CollectionRepository {
 
@@ -98,7 +98,6 @@ class CollectionRepositoryImpl(
                     title = collection.title
                     description = collection.description
                     notPublic = collection.private
-                    updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                 }?.run {
                     collectionDAO.updateCollection(this)
                 }
@@ -128,13 +127,11 @@ class CollectionRepositoryImpl(
 
     override fun getCollections(): DataSource.Factory<Int, Collection> =
             collectionDAO.getCollections().mapByPage { page ->
-                staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_COLLECTIONS)
                 page.map { it.toCollection() }
             }
 
     override fun getCollectionsForPhoto(photoId: String): DataSource.Factory<Int, PairBE<Collection, Boolean>> {
         return collectionDAO.getCollections().mapByPage { page ->
-            staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_COLLECTIONS)
             page.map { ce ->
                 val c = ce.toCollection()
                 val photo = photoDAOFacade.getPhotoFromEitherTable(photoId)?.toPhoto()
@@ -147,9 +144,7 @@ class CollectionRepositoryImpl(
     override fun getCollectionPhotos(collectionId: Int): DataSource.Factory<Int, Photo> {
         return collectionPhotoDAO.getPhotos().mapByPage { col ->
             val sample = col.firstOrNull()
-            if (sample?.currentCollectionId == collectionId) {
-                staleDataTrackSupervisor.runStaleDataCheckForTable(Contract.TABLE_COLLECTIONS)
-            } else {
+            if (sample?.currentCollectionId != collectionId) {
                 collectionPhotoDAO.clear()
             }
             col.map { it.toPhoto() }
@@ -209,8 +204,7 @@ class CollectionRepositoryImpl(
             if (me == null) {
                 callback?.runOn(uiExecutor) { onError(Error("Must be logged in to get your collection"), true) }
             } else {
-                //TODO: remove page parameter!
-                val lastPhoto = photoDAOFacade.getLastPhoto(Contract.TABLE_COLLECTION_PHOTOS)
+                val lastPhoto = collectionPhotoDAO.getLastBelongToCollection(collectionId.asSearchTermInRecord())
                 if (lastPhoto != null && lastPhoto.pagingData?.next == null) {
                     //bail out if no more pages
                     return@ioExecutor
@@ -263,7 +257,6 @@ class CollectionRepositoryImpl(
                         coverPhotoUrls = photo.urls
                         coverPhotoAuthorUsername = photo.authorUsername
                         coverPhotoAuthorFullName = photo.authorFullName
-                        updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                     }
                     collectionDB?.let {
                         collectionDAO.updateCollection(it)
@@ -299,14 +292,12 @@ class CollectionRepositoryImpl(
                             collectionDB?.coverPhotoUrls = it.urls
                             collectionDB?.coverPhotoAuthorUsername = it.authorUsername
                             collectionDB?.coverPhotoAuthorFullName = it.authorFullName
-                            collectionDB?.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                         }
                     } else if (lastPhoto == null) { // there is no photo in this collection
                         collectionDB?.coverPhotoId = null
                         collectionDB?.coverPhotoUrls = null
                         collectionDB?.coverPhotoAuthorUsername = null
                         collectionDB?.coverPhotoAuthorFullName = null
-                        collectionDB?.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                     }
                     collectionDB?.let { collectionDAO.updateCollection(it) }
                 }

@@ -28,6 +28,7 @@ class ScheduledWorkManagerImpl(schedulers: EnumMap<WorkType, ScheduledWork>) : S
                             put(WorkType.DELETE_COLLECTION, DeleteCollectionScheduledWork(bookKeeper))
                             put(WorkType.EDIT_COLLECTION, EditCollectionScheduledWork(bookKeeper))
                             put(WorkType.LIKE, LikeScheduledWork(bookKeeper))
+                            put(WorkType.STALE_DATA_TRACK, StaleDataTrackScheduledWork(bookKeeper))
                         }
                 )
     }

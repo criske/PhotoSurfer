@@ -12,6 +12,7 @@ import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 @Dao
 interface CollectionPhotoDAO : DataAccessor {
 
+    //TODO fix to lastUpdatedLocal when figure how to make triggers
     @Query("SELECT * FROM collection_photos ORDER BY indexInResponse ASC")
     fun getPhotos(): DataSource.Factory<Int, CollectionPhotoEntity>
 
@@ -20,6 +21,9 @@ interface CollectionPhotoDAO : DataAccessor {
 
     @Query("SELECT * FROM collection_photos WHERE collections LIKE :likeCollectionId")
     fun getPhotosBelongToCollection(likeCollectionId: String): List<CollectionPhotoEntity>
+
+    @Query("SELECT * FROM collection_photos WHERE collections LIKE :likeCollectionId")
+    fun getPhotosBelongToCollectionDataSource(likeCollectionId: String): DataSource.Factory<Int, CollectionPhotoEntity>
 
     @Query("DELETE FROM collection_photos")
     fun clear()
@@ -45,7 +49,12 @@ interface CollectionPhotoDAO : DataAccessor {
     @Query("SELECT * FROM collection_photos ORDER BY indexInResponse DESC LIMIT 1")
     fun getLastPhoto(): CollectionPhotoEntity?
 
+    @Query("SELECT * FROM collection_photos WHERE collections LIKE :likeCollectionId ORDER BY indexInResponse DESC LIMIT 1")
+    fun getLastBelongToCollection(likeCollectionId: String): CollectionPhotoEntity?
+
     @Query("DELETE FROM collection_photos WHERE id=:id")
     fun delete(id: String)
+
+
 
 }

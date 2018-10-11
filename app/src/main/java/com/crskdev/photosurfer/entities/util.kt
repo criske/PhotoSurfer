@@ -26,6 +26,12 @@ fun transformStrMapToMap(strMap: String): Map<String, String> =
                 ?: emptyMap()
 
 
+val DISPLAY_DATE_FORMATTER: DateFormat  by lazy {
+    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
+        timeZone = TimeZone.getDefault()
+    }
+}
+
 val UNSPLASH_DATE_FORMATTER: DateFormat by lazy {
     SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssX", Locale.getDefault())
 }

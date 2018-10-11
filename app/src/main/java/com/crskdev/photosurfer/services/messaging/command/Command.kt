@@ -101,7 +101,6 @@ class CollectionEditedCommand(context: Context) : FCMCommand(context) {
                                     this.title = cjson.title
                                     this.description = cjson.description
                                     this.notPublic = cjson.private
-                                    this.updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                                 })
                             }
                         }
@@ -153,7 +152,6 @@ class CollectionAddedPhotoCommand(context: Context) : FCMCommand(context) {
                     coverPhotoUrls = photoDb.urls
                     coverPhotoAuthorUsername = photoDb.authorUsername
                     coverPhotoAuthorFullName = photoDb.authorFullName
-                    updatedAt = UNSPLASH_DATE_FORMATTER.formatNow()
                 }
                 collectionDB?.let {
                     collectionDAO.updateCollection(it)

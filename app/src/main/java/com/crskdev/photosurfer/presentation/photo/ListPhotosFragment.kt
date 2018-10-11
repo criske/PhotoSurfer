@@ -1,23 +1,14 @@
 package com.crskdev.photosurfer.presentation.photo
 
-import android.annotation.SuppressLint
-import android.content.DialogInterface
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.os.bundleOf
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -27,8 +18,6 @@ import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.work.impl.utils.LiveDataUtils
-import com.bumptech.glide.Glide
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.local.photo.ChoosablePhotoDataSourceFactory
 import com.crskdev.photosurfer.data.local.photo.DataSourceFilter
@@ -43,15 +32,12 @@ import com.crskdev.photosurfer.data.repository.photo.photosPageListConfigLiveDat
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.Photo
-import com.crskdev.photosurfer.entities.UNSPLASH_DATE_FORMATTER
-import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.presentation.photo.listadapter.ListPhotosAdapter
 import com.crskdev.photosurfer.presentation.photo.listadapter.PhotoInfoSheetDisplayHelper
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
-import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.Listenable
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.glide.GlideApp
@@ -59,15 +45,9 @@ import com.crskdev.photosurfer.util.livedata.*
 import com.crskdev.photosurfer.util.recyclerview.HorizontalSpaceDivider
 import com.crskdev.photosurfer.util.tintIcons
 import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import kotlinx.android.parcel.Parcelize
 import kotlinx.android.synthetic.main.fragment_list_photos.*
 import kotlinx.android.synthetic.main.fragment_list_photos.view.*
-import kotlinx.android.synthetic.main.item_photo_info_sheet.*
-import java.text.SimpleDateFormat
-import java.util.*
 
 /**
  * Created by Cristian Pela on 01.08.2018.

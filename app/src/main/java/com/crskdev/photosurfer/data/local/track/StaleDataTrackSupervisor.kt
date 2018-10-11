@@ -66,9 +66,11 @@ class StaleDataTrackSupervisor private constructor(
         }
     }
 
-    fun runStaleDataCheckForTable(table: String) {
-        if (!networkCheckService.isNetworkAvailableAndOnline())
-            return
+    fun runStaleDataCheckForTable(table: String, ignoreNetwork: Boolean = true) {
+        if (!ignoreNetwork) {
+            if (!networkCheckService.isNetworkAvailableAndOnline())
+                return
+        }
         if (db.inTransaction()) {
             internalRunStaleDataCheckForTable(table)
         } else {

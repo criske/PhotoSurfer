@@ -8,12 +8,9 @@ import com.crskdev.photosurfer.data.remote.PagingData
  */
 open class BaseDBEntity {
     var indexInResponse: Int = -1
-    //paging data
-//    var total: Int? = null
-//    var curr: Int? = null
-//    var prev: Int? = null
-//    var next: Int? = null
 
     @Embedded
     var pagingData: PagingData? = null
+
+    var lastUpdatedLocal: Long? = System.currentTimeMillis()
 }

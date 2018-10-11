@@ -5,8 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.crskdev.photosurfer.data.local.collections.CollectionEntity
-import com.crskdev.photosurfer.data.local.photo.CollectionPhotoDAO
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.*
@@ -29,11 +29,12 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             CollectionEntity::class,
             CollectionPhotoEntity::class
         ],
-        version = 15,
+        version = 24,
         exportSchema = false
 )
 @TypeConverters(DataTypeConverters::class)
 abstract class PhotoSurferDB : RoomDatabase() {
+
     companion object {
         fun create(context: Context, useInMemory: Boolean): PhotoSurferDB {
             val databaseBuilder = if (useInMemory) {
@@ -42,15 +43,40 @@ abstract class PhotoSurferDB : RoomDatabase() {
                 Room.databaseBuilder(context, PhotoSurferDB::class.java, "photo-surfer.db")
             }
             return databaseBuilder
+                    .addCallback(callback)
                     .fallbackToDestructiveMigration()
                     .build()
         }
 
         fun createForTestEnvironment(context: Context): PhotoSurferDB {
             return Room.inMemoryDatabaseBuilder(context, PhotoSurferDB::class.java)
+                    .addCallback(callback)
                     .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
                     .build()
+        }
+
+
+        private val callback = object : RoomDatabase.Callback() {
+
+            private fun createTrigger(table: String, isInsert: Boolean): String {
+                val operation = if (isInsert) "INSERT" else "UPDATE"
+                return """
+                    CREATE TRIGGER last_updated_local_trigger_$table
+                        BEFORE $operation ON $table FOR EACH ROW
+                        BEGIN
+                            UPDATE $table SET lastUpdatedLocal = datetime('now', 'localtime') WHERE id = NEW.id;
+                        END;
+                     """.trimIndent()
+            }
+
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                db.execSQL("PRAGMA recursive_triggers = OFF;")
+                Contract.PHOTO_AND_COLLECTIONS_TABLES.forEach {
+                  db.execSQL(createTrigger(it, false))
+                    //db.execSQL(createTrigger(it, true))
+                }
+            }
         }
     }
 

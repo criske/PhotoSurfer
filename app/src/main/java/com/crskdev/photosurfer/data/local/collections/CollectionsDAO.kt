@@ -18,7 +18,7 @@ interface CollectionsDAO : DataAccessor {
     @Query("SELECT count(*) == 0 FROM collections")
     fun isEmpty(): Boolean
 
-    @Query("SELECT * FROM collections ORDER BY strftime('%s', updatedAt) DESC")
+    @Query("SELECT * FROM collections ORDER BY lastUpdatedLocal DESC")
     fun getCollections(): DataSource.Factory<Int, CollectionEntity>
 
     @Query("SELECT MAX(id) + 1 FROM collections")

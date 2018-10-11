@@ -204,7 +204,6 @@ object DependencyGraph {
                 executorManager,
                 photoDAOFacade,
                 externalPhotoGalleryDAO,
-                staleDataTrackSupervisor,
                 apiCallDispatcher,
                 photoAPI,
                 downloadManager,
@@ -220,7 +219,6 @@ object DependencyGraph {
                 apiCallDispatcher,
                 collectionsAPI,
                 authTokenStorage,
-                staleDataTrackSupervisor,
                 devicePushMessagingManager
         )
 

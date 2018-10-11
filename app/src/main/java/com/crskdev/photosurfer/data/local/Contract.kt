@@ -23,6 +23,8 @@ object Contract {
             TABLE_COLLECTION_PHOTOS
     )
 
+    val PHOTO_AND_COLLECTIONS_TABLES = PHOTO_TABLES + TABLE_COLLECTIONS
+
     val TABLES = PHOTO_TABLES +
             arrayOf(TABLE_USERS,
                     TABLE_COLLECTIONS)

@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.data.repository.photo
 
+import android.util.Log
 import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
@@ -73,7 +74,6 @@ class PhotoRepositoryImpl(
         executorsManager: ExecutorsManager,
         private val daoPhotoFacade: PhotoDAOFacade,
         private val daoExternalPhotoGalleryDAO: ExternalPhotoGalleryDAO,
-        private val staleDataTrackSupervisor: StaleDataTrackSupervisor,
         private val apiCallDispatcher: APICallDispatcher,
         private val api: PhotoAPI,
         private val downloadManager: DownloadManager,
@@ -93,8 +93,10 @@ class PhotoRepositoryImpl(
             else -> throw Exception("Unsupported Action")
         }
         return daoPhotoFacade.getPhotos(table).mapByPage { page ->
-            staleDataTrackSupervisor.runStaleDataCheckForTable(table)
-            page.map { it.toPhoto() }
+            page.map {
+                Log.d(this.javaClass.simpleName, "${it.authorFullName} Liked: ${it.likedByMe}  Updated: ${DISPLAY_DATE_FORMATTER.format(it.lastUpdatedLocal)} ")
+                it.toPhoto()
+            }
         }
     }
 
