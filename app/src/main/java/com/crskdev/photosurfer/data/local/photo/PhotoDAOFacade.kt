@@ -33,7 +33,7 @@ class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
             Contract.TABLE_PHOTOS -> daoPhotos.getPhotos()
             Contract.TABLE_LIKE_PHOTOS -> daoLikes.getPhotos()
             Contract.TABLE_SEARCH_PHOTOS -> daoSearchDAO.getPhotos()
-           // Contract.TABLE_COLLECTION_PHOTOS -> NOT SUPPORTED
+            Contract.TABLE_COLLECTION_PHOTOS -> daoCollectionPhoto.getPhotos()
             else -> throw Error("Dao for table $table not found or not supported")
         }
     }

@@ -32,11 +32,12 @@ class StaleDataTrackScheduledWork(bookKeeper: WorkQueueBookKeeper) : AndroidSche
 
 }
 
-class StaleDataTrackWorker() : Worker() {
+class StaleDataTrackWorker : Worker() {
 
     override fun doWork(): Result {
         //we make sure user is not interacting with app, otherwise run the stale check
-        if (!isAppInForeground()) {
+        if (isAppInForeground()) {
+            applicationContext.systemNotification("Periodic stale data track run postponed. Application is in foreground")
             return Result.RETRY
         }
         val dependencyGraph = applicationContext.dependencyGraph()
