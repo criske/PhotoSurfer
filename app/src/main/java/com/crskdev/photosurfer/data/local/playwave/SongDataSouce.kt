@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.database.Cursor
 import android.provider.MediaStore
 import com.crskdev.photosurfer.data.local.ContentResolverDataSource
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Cristian Pela on 14.10.2018.
@@ -12,7 +13,11 @@ class SongDataSource(contentResolver: ContentResolver) : ContentResolverDataSour
         contentResolver, Config(
         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
         MediaStore.Audio.Media._ID,
-        null,
+        Config.Where("""
+            ${MediaStore.Audio.Media.IS_MUSIC} = ?
+             AND
+            ${MediaStore.Audio.Media.DURATION} >= ?
+        """.trimIndent(), "1", TimeUnit.MINUTES.toMillis(2).toString()),
         MediaStore.Audio.Media._ID,
         MediaStore.Audio.Media.DATA,
         MediaStore.Audio.Media.TITLE,
