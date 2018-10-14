@@ -3,10 +3,8 @@ package com.crskdev.photosurfer.services.schedule.worker
 import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
-import androidx.work.BackoffPolicy
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequest
-import androidx.work.Worker
+import android.content.Context
+import androidx.work.*
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.schedule.AndroidScheduledWork
@@ -32,7 +30,7 @@ class StaleDataTrackScheduledWork(bookKeeper: WorkQueueBookKeeper) : AndroidSche
 
 }
 
-class StaleDataTrackWorker : Worker() {
+class StaleDataTrackWorker (context: Context, params: WorkerParameters) : Worker(context, params) {
 
     override fun doWork(): Result {
         //we make sure user is not interacting with app, otherwise run the stale check

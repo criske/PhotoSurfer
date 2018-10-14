@@ -1,12 +1,14 @@
 package com.crskdev.photosurfer.services.schedule.worker
 
+import android.content.Context
 import androidx.work.Worker
+import androidx.work.WorkerParameters
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.schedule.WorkType
 import com.crskdev.photosurfer.util.systemNotification
 
-class LikeWorker : Worker() {
+class LikeWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
 
     override fun doWork(): Result {
         val graph = applicationContext.dependencyGraph()

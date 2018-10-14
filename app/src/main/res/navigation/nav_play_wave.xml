@@ -3,4 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_play_wave">
+
+    <fragment
+        android:id="@+id/playwavesFragment"
+        android:name="com.crskdev.photosurfer.presentation.playwave.PlaywavesFragment"
+        android:label="fragment_playwaves"
+        tools:layout="@layout/fragment_playwaves" />
 </navigation>

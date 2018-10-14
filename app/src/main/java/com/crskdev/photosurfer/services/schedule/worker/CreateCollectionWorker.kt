@@ -1,6 +1,8 @@
 package com.crskdev.photosurfer.services.schedule.worker
 
+import android.content.Context
 import androidx.work.Worker
+import androidx.work.WorkerParameters
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.remote.PagingData
@@ -17,7 +19,8 @@ import com.crskdev.photosurfer.util.systemNotification
 /**
  * Created by Cristian Pela on 02.09.2018.
  */
-class CreateCollectionWorker : Worker() {
+class CreateCollectionWorker(context: Context, params: WorkerParameters)
+    : Worker(context, params) {
 
     companion object {
         private const val TITLE = "collection_title"

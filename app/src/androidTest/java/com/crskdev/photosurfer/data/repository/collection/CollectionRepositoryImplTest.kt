@@ -96,9 +96,6 @@ class CollectionRepositoryImplTest : BaseDBTest() {
             override fun saveToken(token: AuthToken) = Unit
 
         }
-        val staleDataTrackSupervisor: StaleDataTrackSupervisor = StaleDataTrackSupervisor.install(
-                object : NetworkCheckService {},
-                db)
         collectionRepository = CollectionRepositoryImpl(
                 ExecutorsManager(
                         EnumMap<ExecutorType, KExecutor>(ExecutorType::class.java)
@@ -113,7 +110,6 @@ class CollectionRepositoryImplTest : BaseDBTest() {
                 apiCallDispatcher,
                 collectionsAPI,
                 authTokenStorage,
-                staleDataTrackSupervisor,
                 object : DevicePushMessagingManager {
                     override fun onReceiveMessage(data: Map<String, String>) = Unit
 

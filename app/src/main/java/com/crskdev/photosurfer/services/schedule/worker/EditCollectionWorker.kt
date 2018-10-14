@@ -1,6 +1,8 @@
 package com.crskdev.photosurfer.services.schedule.worker
 
+import android.content.Context
 import androidx.work.Worker
+import androidx.work.WorkerParameters
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.schedule.Tag
@@ -11,7 +13,7 @@ import com.crskdev.photosurfer.util.systemNotification
 /**
  * Created by Cristian Pela on 15.09.2018.
  */
-class EditCollectionWorker : Worker() {
+class EditCollectionWorker (context: Context, params: WorkerParameters) : Worker(context, params) {
 
     companion object {
 
@@ -59,7 +61,7 @@ class EditCollectionWorker : Worker() {
 }
 
 
-class EditCollectionPushMessageWorker : Worker() {
+class EditCollectionPushMessageWorker (context: Context, params: WorkerParameters) : Worker(context, params) {
 
     override fun doWork(): Result {
         try {

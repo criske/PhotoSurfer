@@ -125,15 +125,8 @@
             android:name="id"
             app:argType="integer" />
     </fragment>
-    <include
-        app:graph="@navigation/nav_play_wave"
-        app:startDestination="@id/playwavesFragment">
-        <fragment
-            android:id="@+id/playwavesFragment"
-            android:name="com.crskdev.photosurfer.presentation.playwave.PlaywavesFragment"
-            android:label="fragment_playwaves"
-            tools:layout="@layout/fragment_playwaves" />
-    </include>
-
+    <!--<include-->
+        <!--app:graph="@navigation/nav_play_wave"-->
+        <!--app:startDestination="@id/playwavesFragment" />-->
 
 </navigation>

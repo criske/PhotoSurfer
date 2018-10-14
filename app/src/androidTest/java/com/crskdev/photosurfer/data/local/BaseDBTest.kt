@@ -19,6 +19,9 @@ abstract class BaseDBTest{
     protected  lateinit var db: PhotoSurferDB
 
     protected val emptyExecutor = object: KExecutor{
+        override val name: String
+            get() = "TEST"
+
         override fun execute(command: Runnable?) {
             command?.run()
         }

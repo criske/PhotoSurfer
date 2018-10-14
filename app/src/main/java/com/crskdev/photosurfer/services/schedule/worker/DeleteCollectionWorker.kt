@@ -1,6 +1,8 @@
 package com.crskdev.photosurfer.services.schedule.worker
 
+import android.content.Context
 import androidx.work.Worker
+import androidx.work.WorkerParameters
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.schedule.Tag
@@ -11,7 +13,7 @@ import com.crskdev.photosurfer.util.systemNotification
 /**
  * Created by Cristian Pela on 14.09.2018.
  */
-class DeleteCollectionWorker : Worker() {
+class DeleteCollectionWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
 
     companion object {
 
