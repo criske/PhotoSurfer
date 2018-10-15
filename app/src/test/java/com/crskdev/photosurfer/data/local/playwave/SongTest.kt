@@ -2,6 +2,7 @@
 
 package com.crskdev.photosurfer.data.local.playwave
 
+import com.crskdev.photosurfer.data.local.playwave.song.Song
 import org.junit.Test
 
 /**

@@ -3,9 +3,10 @@ package com.crskdev.photosurfer.data.local.playwave
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import androidx.paging.PositionalDataSource
+import com.crskdev.photosurfer.data.local.playwave.song.Song
+import com.crskdev.photosurfer.data.local.playwave.song.SongDataSource
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.Thread.sleep
 
 /**
  * Created by Cristian Pela on 14.10.2018.
@@ -16,7 +17,7 @@ class SongDataSourceTest {
     @Test
     fun convertRow() {
         val context = InstrumentationRegistry.getTargetContext()
-        val dataSource = SongDataSource(context.contentResolver)
+        val dataSource = SongDataSource(context.contentResolver, "with")
         val callback = object : PositionalDataSource.LoadInitialCallback<Song>() {
 
             var results: List<Song>? = null

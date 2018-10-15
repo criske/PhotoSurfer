@@ -15,6 +15,10 @@ object Contract {
     const val TABLE_COLLECTIONS = "collections"
     const val TABLE_COLLECTION_PHOTOS = "collection_photos"
 
+    const val TABLE_PLAYWAVE = "playwaves"
+
+    const val TABLE_PLAYWAVE_CONTENT = "playwave_contents"
+
     val PHOTO_TABLES = arrayOf(
             TABLE_PHOTOS,
             TABLE_USER_PHOTOS,

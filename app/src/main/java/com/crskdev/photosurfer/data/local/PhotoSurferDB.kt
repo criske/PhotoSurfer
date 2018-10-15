@@ -10,6 +10,8 @@ import com.crskdev.photosurfer.data.local.collections.CollectionEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.*
+import com.crskdev.photosurfer.data.local.playwave.PlaywaveContentEntity
+import com.crskdev.photosurfer.data.local.playwave.PlaywaveEntity
 import com.crskdev.photosurfer.data.local.track.StaleDataTackDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackEntity
 import com.crskdev.photosurfer.data.local.user.UserDAO
@@ -27,9 +29,11 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             UserEntity::class,
             StaleDataTrackEntity::class,
             CollectionEntity::class,
-            CollectionPhotoEntity::class
+            CollectionPhotoEntity::class,
+            PlaywaveEntity::class,
+            PlaywaveContentEntity::class
         ],
-        version = 24,
+        version = 26,
         exportSchema = false
 )
 @TypeConverters(DataTypeConverters::class)
@@ -71,11 +75,12 @@ abstract class PhotoSurferDB : RoomDatabase() {
             }
 
             override fun onCreate(db: SupportSQLiteDatabase) {
-                db.execSQL("PRAGMA recursive_triggers = OFF;")
-                Contract.PHOTO_AND_COLLECTIONS_TABLES.forEach {
-                  db.execSQL(createTrigger(it, false))
-                    //db.execSQL(createTrigger(it, true))
-                }
+                //TODO figure how trigger get triggered under room/android
+//                db.execSQL("PRAGMA recursive_triggers = OFF;")
+//                Contract.PHOTO_AND_COLLECTIONS_TABLES.forEach {
+//                  db.execSQL(createTrigger(it, false))
+//                    //db.execSQL(createTrigger(it, true))
+//                }
             }
         }
     }
