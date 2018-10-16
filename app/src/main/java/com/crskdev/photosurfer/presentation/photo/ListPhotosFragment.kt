@@ -195,6 +195,9 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                     R.id.menu_action_collections -> {
                         authNavigatorMiddleware.navigate(navController, R.id.fragment_collections)
                     }
+                    R.id.menu_item_play_waves ->{
+                        navController.navigate(ListPhotosFragmentDirections.actionFragmentListPhotosToPlaywaves(), defaultTransitionNavOptions())
+                    }
                 }
                 true
             }

@@ -57,4 +57,6 @@
     <string name="photo_info_size">Size: %1$dx%2$d </string>
     <string name="photo_info_color">Color:</string>
     <string name="photo_info_created">Created at: %1$s</string>
+    <string name="error_playwave_no_song">Playwave has no song set</string>
+    <string name="error_playwave_no_song_in_media">Song doesn\'t exist in your media library anymore</string>
 </resources>

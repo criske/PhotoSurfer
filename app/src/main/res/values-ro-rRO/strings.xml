@@ -39,4 +39,6 @@
         <item quantity="other">In %d collectii.</item>
         <item quantity="few">In %d collectii.</item>
     </plurals>
+    <string name="error_playwave_no_song">Playwave-ul nu are piesa</string>
+    <string name="error_playwave_no_song_in_media">Pieasa nu mai exista in libraria telefonului</string>
 </resources>

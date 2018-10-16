@@ -7,6 +7,7 @@ import com.crskdev.photosurfer.data.local.playwave.song.Song
 import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.Playwave
 import com.crskdev.photosurfer.entities.PlaywavePhoto
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Cristian Pela on 16.10.2018.
@@ -19,7 +20,13 @@ class MockPlaywaveRepository : PlaywaveRepository {
 
     override fun getPlaywaves(includePhotos: Boolean): LiveData<List<Playwave>> =
             MutableLiveData<List<Playwave>>().apply {
-                postValue(emptyList())
+                postValue(listOf(
+                        Playwave(1, "Play wave test title", Song(
+                                1, "Foo", "Some Title Song", "DJ NaN",  TimeUnit.MINUTES.toMillis(5), true
+                        ), emptyList()),
+                        Playwave(1, "Play wave test title", Song(
+                                1, "Foo", "Some Title Song", "DJ NaN", 2342429, false
+                        ), emptyList())))
             }
 
     override fun getPlaywave(playwaveId: Int): LiveData<Playwave> {

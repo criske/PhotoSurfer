@@ -7,11 +7,12 @@ import android.provider.MediaStore
  * Created by Cristian Pela on 15.10.2018.
  */
 internal fun toSong(cursor: Cursor, sanitize: Boolean = true): Song =
-        Song(cursor.getInt(cursor.getColumnIndexOrThrow(SONG_ID)),
+        Song(cursor.getLong(cursor.getColumnIndexOrThrow(SONG_ID)),
                 cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
                 cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
                 cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
-                cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)))
+                cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
+                true)
                 .let {
                     if (sanitize) {
                         it.sanitize()
@@ -20,7 +21,7 @@ internal fun toSong(cursor: Cursor, sanitize: Boolean = true): Song =
                     }
                 }
 
-internal val SONG_ID =  MediaStore.Audio.Media._ID
+internal val SONG_ID = MediaStore.Audio.Media._ID
 
 internal val SONGS_URI = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
 

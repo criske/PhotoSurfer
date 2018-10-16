@@ -10,7 +10,9 @@ interface SongDAO {
 
     fun getSongs(filterSearch: String?): DataSource.Factory<Int, Song>
 
-    fun getSongById(id: Int): Song?
+    fun getSongById(id: Long): Song?
+
+    fun exists(id: Long): Boolean
 
 }
 
@@ -21,7 +23,7 @@ class SongDAOImpl(private val contentResolver: ContentResolver) : SongDAO {
                 override fun create(): DataSource<Int, Song> = SongDataSource(contentResolver)
             }
 
-    override fun getSongById(id: Int): Song? {
+    override fun getSongById(id: Long): Song? {
         return contentResolver
                 .query(SONGS_URI, SONGS_PROJECTION, "$SONG_ID=?", arrayOf(id.toString()), null, null)
                 ?.use {
@@ -31,6 +33,14 @@ class SongDAOImpl(private val contentResolver: ContentResolver) : SongDAO {
                         null
                     }
                 }
+    }
+
+    override fun exists(id: Long): Boolean {
+        return contentResolver
+                .query(SONGS_URI, arrayOf(SONG_ID), "$SONG_ID=?", arrayOf(id.toString()), null, null)
+                ?.use {
+                    it.moveToLast()
+                } ?: false
     }
 
 }

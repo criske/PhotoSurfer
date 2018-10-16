@@ -18,6 +18,7 @@ import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrar
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import com.crskdev.photosurfer.services.NetworkCheckService
@@ -52,6 +53,8 @@ interface VariantDependencyGraph {
     val externalPhotoGalleryDAO: ExternalPhotoGalleryDAO
 
     val externalPhotosDirectory: ExternalDirectory
+
+    val photoDAOFacade: PhotoDAOFacade
 
 
 //    //serialization
@@ -104,7 +107,7 @@ interface VariantDependencyGraph {
 
     val searchTermTracker: SearchTermTracker
 
-    val photoDAOFacade: PhotoDAOFacade
+    val playwaveRepository: PlaywaveRepository
 
 
     //nav

@@ -94,7 +94,6 @@ class PhotoRepositoryImpl(
         }
         return daoPhotoFacade.getPhotos(table).mapByPage { page ->
             page.map {
-                Log.d(this.javaClass.simpleName, "${it.authorFullName} Liked: ${it.likedByMe}  Updated: ${DISPLAY_DATE_FORMATTER.format(it.lastUpdatedLocal)} ")
                 it.toPhoto()
             }
         }

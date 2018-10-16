@@ -11,6 +11,7 @@ import com.crskdev.photosurfer.data.local.collections.CollectionPhotoEntity
 import com.crskdev.photosurfer.data.local.collections.CollectionsDAO
 import com.crskdev.photosurfer.data.local.photo.*
 import com.crskdev.photosurfer.data.local.playwave.PlaywaveContentEntity
+import com.crskdev.photosurfer.data.local.playwave.PlaywaveDAO
 import com.crskdev.photosurfer.data.local.playwave.PlaywaveEntity
 import com.crskdev.photosurfer.data.local.track.StaleDataTackDAO
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackEntity
@@ -33,7 +34,7 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             PlaywaveEntity::class,
             PlaywaveContentEntity::class
         ],
-        version = 27,
+        version = 30,
         exportSchema = false
 )
 @TypeConverters(DataTypeConverters::class)
@@ -95,5 +96,7 @@ abstract class PhotoSurferDB : RoomDatabase() {
 
     abstract fun userDAO(): UserDAO
     abstract fun staleDataTrackDAO(): StaleDataTackDAO
+
+    abstract fun playwaveDAO(): PlaywaveDAO
 }
 

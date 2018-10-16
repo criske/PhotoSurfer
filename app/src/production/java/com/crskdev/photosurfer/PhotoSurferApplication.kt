@@ -13,10 +13,6 @@ import com.crskdev.photosurfer.services.schedule.WorkType
  */
 class PhotoSurferApplication : Application() {
 
-    override fun getBaseContext(): Context {
-        return super.getBaseContext()
-    }
-
     override fun onCreate() {
         DependencyGraph.install { ProdDependencyGraph(this) }
         super.onCreate()

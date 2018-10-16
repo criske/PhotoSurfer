@@ -7,6 +7,7 @@ import com.crskdev.photosurfer.data.local.*
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.photo.external.ExternalDirectory
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDBImpl
+import com.crskdev.photosurfer.data.local.playwave.song.SongDAOImpl
 import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.*
@@ -19,6 +20,8 @@ import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepositoryImpl
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
+import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
+import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepositoryImpl
 import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
@@ -36,7 +39,8 @@ import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersisto
 import com.google.firebase.iid.FirebaseInstanceId
 import java.util.*
 
-internal class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
+@Suppress("LeakingThis")
+open class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
 
     //THREADS
     override val threadCallChecker = AndroidThreadCallChecker()
@@ -62,8 +66,8 @@ internal class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
     override val listenableAuthState: Listenable<AuthToken> = authTokenStorage
     //authTokenStorage = InMemoryAuthTokenStorage()
 
-    val persistentCookieJar = PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
-    val retrofitClient = RetrofitClient(NetworkClient(
+    private val persistentCookieJar = PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
+    private val retrofitClient = RetrofitClient(NetworkClient(
             authTokenStorage,
             APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY, BuildConfig.REDIRECT_URI),
             persistentCookieJar
@@ -129,19 +133,21 @@ internal class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
     //search
     override val searchTermTracker = SearchTermTrackerImpl(preferences)
 
-    //user and auth
-    val userAPI = retrofit.create(UserAPI::class.java)
-    val authAPI: AuthAPI = retrofit.create(AuthAPI::class.java)
     override val userRepository = UserRepositoryImpl(
             executorManager,
             daoManager,
             scheduledWorkManager,
             staleDataTrackSupervisor,
             apiCallDispatcher,
-            userAPI,
-            authAPI,
+            retrofit.create(UserAPI::class.java),
+            retrofit.create(AuthAPI::class.java),
             authTokenStorage,
             PersistentSessionClearable(persistentCookieJar))
 
     override val authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
+
+    //playwave
+    override val playwaveRepository: PlaywaveRepository =
+            PlaywaveRepositoryImpl(executorManager, SongDAOImpl(context.contentResolver), db.playwaveDAO())
+
 }

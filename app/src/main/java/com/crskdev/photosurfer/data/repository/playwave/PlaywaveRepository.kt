@@ -49,30 +49,31 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
             if (includePhotos) {
                 Transformations.map(playwaveDAO.getPlaywavesWithPhotosLiveData()) { l ->
                     l.asSequence().map { pwp ->
-                        val song = songDAO.getSongById(pwp.playwaveEntity.songId)
+                        val exists = songDAO.exists(pwp.playwaveEntity.songId)
                         val photos = pwp.playwaveContents.map { it.toPlaywavePhoto() }
-                        pwp.toPlaywave(song)
+                        pwp.toPlaywave(exists)
                     }.toList()
                 }
             } else {
                 Transformations.map(playwaveDAO.getPlaywavesLiveData()) { l ->
                     l.asSequence().map {
-                        val song = songDAO.getSongById(it.songId)
-                        it.toPlaywave(song)
+                        val exists = songDAO.exists(it.songId)
+                        it.toPlaywave(exists)
                     }.toList()
                 }
             }
 
     override fun getPlaywave(playwaveId: Int): LiveData<Playwave> =
             Transformations.map(playwaveDAO.getPlaywaveWithPhotosLiveData(playwaveId)) { pwp ->
-                val song = songDAO.getSongById(pwp.playwaveEntity.songId)
+                val exists = songDAO.exists(pwp.playwaveEntity.songId)
                 val photos = pwp.playwaveContents.map { it.toPlaywavePhoto() }
-                pwp.toPlaywave(song)
+                pwp.toPlaywave(exists)
             }
 
     override fun createPlaywave(playwave: Playwave, callback: Repository.Callback<Playwave>?) {
         diskExecutor {
-            val created = playwaveDAO.insert(playwave.toDB()) > 0
+            playwaveDAO.insert(playwave.toDB())
+            val created = true // TODO insert return is not supported now?
             callback?.run {
                 uiExecutor {
                     if (created) {
@@ -87,7 +88,8 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun updatePlaywave(playwave: Playwave, callback: Repository.Callback<Playwave>?) {
         diskExecutor {
-            val updated = playwaveDAO.update(playwave.toDB()) > 0
+            playwaveDAO.update(playwave.toDB())
+            val updated = true // TODO update return is not supported now?
             callback?.run {
                 uiExecutor {
                     if (updated) {
@@ -103,7 +105,8 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun deletePlaywave(playwave: Playwave, callback: Repository.Callback<Playwave>?) {
         diskExecutor {
-            val deleted = playwaveDAO.delete(playwave.toDB()) > 0
+            playwaveDAO.delete(playwave.toDB())
+            val deleted = true // TODO delete return is not supported now?
             callback?.run {
                 uiExecutor {
                     if (deleted) {
@@ -118,7 +121,8 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun addPhotoToPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>?) {
         diskExecutor {
-            val added = playwaveDAO.addPhotoToPlaywave(photo.toDb(playwaveId)) > 0
+           playwaveDAO.addPhotoToPlaywave(photo.toDb(playwaveId))
+            val added = true // TODO added return is not supported now?
             callback?.run {
                 uiExecutor {
                     if (added) {
@@ -133,7 +137,8 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun removePhotoFromPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>?) {
         diskExecutor {
-            val removed = playwaveDAO.removePhotoFromPlaywave(photo.toDb(playwaveId)) > 0
+             playwaveDAO.removePhotoFromPlaywave(photo.toDb(playwaveId))
+            val removed = true // TODO removed return is not supported now?
             callback?.run {
                 uiExecutor {
                     if (removed) {

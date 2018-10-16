@@ -21,6 +21,7 @@ import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrar
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
+import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.data.repository.user.UserRepository
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import com.crskdev.photosurfer.services.NetworkCheckService
@@ -117,6 +118,8 @@ object DependencyGraph {
         private set
     lateinit var photoDAOFacade: PhotoDAOFacade
         private set
+    lateinit var playwaveRepository: PlaywaveRepository
+        private set
 
     //nav
     lateinit var authNavigatorMiddleware: AuthNavigatorMiddleware
@@ -181,6 +184,8 @@ object DependencyGraph {
 
         collectionsAPI = graph.collectionsAPI
         collectionsRepository = graph.collectionsRepository
+
+        playwaveRepository = graph.playwaveRepository
 
         //search
         searchTermTracker = graph.searchTermTracker

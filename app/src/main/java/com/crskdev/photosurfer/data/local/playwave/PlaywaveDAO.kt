@@ -15,19 +15,19 @@ interface PlaywaveDAO {
     }
 
     @Insert
-    fun insert(playwaveEntity: PlaywaveEntity): Int
+    fun insert(playwaveEntity: PlaywaveEntity)
 
     @Delete
-    fun delete(playwaveEntity: PlaywaveEntity): Int
+    fun delete(playwaveEntity: PlaywaveEntity)
 
     @Update
-    fun update(playwaveEntity: PlaywaveEntity): Int
+    fun update(playwaveEntity: PlaywaveEntity)
 
     @Insert
-    fun addPhotoToPlaywave(playwaveContentEntity: PlaywaveContentEntity): Int
+    fun addPhotoToPlaywave(playwaveContentEntity: PlaywaveContentEntity)
 
     @Delete
-    fun removePhotoFromPlaywave(playwaveEntity: PlaywaveContentEntity): Int
+    fun removePhotoFromPlaywave(playwaveEntity: PlaywaveContentEntity)
 
     @Query(QUERY_ALL)
     fun getPlaywavesLiveData(): LiveData<List<PlaywaveEntity>>
@@ -36,9 +36,11 @@ interface PlaywaveDAO {
     fun getPlaywaves(): List<PlaywaveEntity>
 
     @Query(QUERY_ALL)
+    @Transaction
     fun getPlaywavesWithPhotos(): List<PlaywaveWithPhotos>
 
     @Query(QUERY_ALL)
+    @Transaction
     fun getPlaywavesWithPhotosLiveData(): LiveData<List<PlaywaveWithPhotos>>
 
     @Query(QUERY_BY_ID)
@@ -48,9 +50,11 @@ interface PlaywaveDAO {
     fun getPlaywaveLiveData(playwaveId: Int): LiveData<PlaywaveEntity>
 
     @Query(QUERY_BY_ID)
+    @Transaction
     fun getPlaywaveWithPhotos(playwaveId: Int): PlaywaveWithPhotos
 
     @Query(QUERY_BY_ID)
+    @Transaction
     fun getPlaywaveWithPhotosLiveData(playwaveId: Int): LiveData<PlaywaveWithPhotos>
 
 }

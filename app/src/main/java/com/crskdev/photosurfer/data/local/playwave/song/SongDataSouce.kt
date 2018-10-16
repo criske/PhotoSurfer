@@ -48,9 +48,10 @@ class SongDataSource(contentResolver: ContentResolver, filterSearch: String? = n
 }
 
 
-data class Song(val id: Int,
+data class Song(val id: Long,
                 val path: String, val title: String, val artist: String,
-                val duration: Int) {
+                val duration: Long,
+                val exists: Boolean) {
 
     companion object {
         private const val UNKNOWN_ARTIST = "<unknown>"

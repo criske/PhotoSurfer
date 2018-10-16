@@ -8,13 +8,25 @@ import com.crskdev.photosurfer.data.local.playwave.song.Song
 /**
  * Created by Cristian Pela on 15.10.2018.
  */
-fun PlaywaveEntity.toPlaywave(song: Song?): Playwave =
-        Playwave(this.id, title, song, emptyList())
+fun PlaywaveEntity.toPlaywave(exists: Boolean): Playwave =
+        Playwave(this.id, title, Song(
+                songId,
+                songPath,
+                songTitle,
+                songArtist,
+                songDuration,
+                exists), emptyList())
 
-fun PlaywaveWithPhotos.toPlaywave(song: Song?): Playwave =
+fun PlaywaveWithPhotos.toPlaywave(exists: Boolean): Playwave =
         Playwave(playwaveEntity.id,
                 playwaveEntity.title,
-                song,
+                Song(playwaveEntity.songId,
+                        playwaveEntity.songPath,
+                        playwaveEntity.songTitle,
+                        playwaveEntity.songArtist,
+                        playwaveEntity.songDuration,
+                        exists
+                ),
                 playwaveContents.asSequence().map {
                     it.toPlaywavePhoto()
                 }.toList())
@@ -24,8 +36,11 @@ fun PlaywaveContentEntity.toPlaywavePhoto(): PlaywavePhoto =
 
 fun Playwave.toDB(): PlaywaveEntity =
         PlaywaveEntity().apply {
-            songId = this@toDB.song?.id ?: -1
+            songId = this@toDB.song.id
             title = this@toDB.title
+            songTitle = this@toDB.song.title
+            songArtist = this@toDB.song.artist
+            songDuration = this@toDB.song.duration
         }
 
 fun PlaywavePhoto.toDb(playwaveId: Int): PlaywaveContentEntity =

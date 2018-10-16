@@ -11,7 +11,8 @@ import com.crskdev.photosurfer.data.local.Contract
  */
 @Entity(tableName = Contract.TABLE_PLAYWAVE_CONTENT,
         foreignKeys = [ForeignKey(entity = PlaywaveEntity::class,
-                parentColumns = ["id"], childColumns = ["playwaveId"])])
+                parentColumns = ["id"], childColumns = ["playwaveId"])],
+        indices = [Index(value = ["playwaveId"])])
 class PlaywaveContentEntity {
     @PrimaryKey(autoGenerate = true)
     var id: Int = -1

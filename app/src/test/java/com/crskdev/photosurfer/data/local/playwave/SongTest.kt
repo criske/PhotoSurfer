@@ -33,12 +33,12 @@ class SongTest {
                     val end = s.indexOf(",", it).takeIf { it != -1 } ?: s.indexOf(")", it)
                     s.substring(it + mark.length, end)
                 }
-        val id = extract("id=").toInt()
+        val id = extract("id=").toLong()
         val path = extract("path=")
         val title = extract("title=")
         val author = extract("artist=")
-        val duration = extract("duration=").toInt()
-        return Song(id, path, title, author, duration)
+        val duration = extract("duration=").toLong()
+        return Song(id, path, title, author, duration, true)
     }
 
 }

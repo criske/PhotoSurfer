@@ -37,7 +37,7 @@ android {
     }
     flavorDimensions "default"
     productFlavors{
-        prod{
+        production{
 
         }
         mock{
