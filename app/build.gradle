@@ -35,6 +35,15 @@ android {
             it.buildConfigField 'String', 'REDIRECT_URI', redirectURI // from gradle.properties
         }
     }
+    flavorDimensions "default"
+    productFlavors{
+        prod{
+
+        }
+        mock{
+
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

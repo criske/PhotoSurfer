@@ -33,7 +33,7 @@ import com.crskdev.photosurfer.data.local.user.UserEntity
             PlaywaveEntity::class,
             PlaywaveContentEntity::class
         ],
-        version = 26,
+        version = 27,
         exportSchema = false
 )
 @TypeConverters(DataTypeConverters::class)

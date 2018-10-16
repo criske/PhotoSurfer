@@ -14,4 +14,5 @@ class PlaywaveEntity {
     @PrimaryKey(autoGenerate = true)
     var id: Int = -1
     var songId: Int = -1
+    lateinit var title: String
 }

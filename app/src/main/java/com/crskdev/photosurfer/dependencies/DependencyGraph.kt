@@ -3,51 +3,36 @@
 package com.crskdev.photosurfer.dependencies
 
 import android.content.Context
-import android.os.Environment
-import com.crskdev.photosurfer.BuildConfig
-import com.crskdev.photosurfer.data.local.*
+import com.crskdev.photosurfer.data.local.DaoManager
+import com.crskdev.photosurfer.data.local.PhotoSurferDB
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.photo.external.ExternalDirectory
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDB
-import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDBImpl
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
-import com.crskdev.photosurfer.data.local.search.SearchTermTrackerImpl
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
-import com.crskdev.photosurfer.data.remote.*
-import com.crskdev.photosurfer.data.remote.auth.*
+import com.crskdev.photosurfer.data.remote.APICallDispatcher
+import com.crskdev.photosurfer.data.remote.auth.AuthToken
+import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
 import com.crskdev.photosurfer.data.remote.collections.CollectionsAPI
-import com.crskdev.photosurfer.data.remote.download.*
+import com.crskdev.photosurfer.data.remote.download.DownloadManager
+import com.crskdev.photosurfer.data.remote.download.PhotoDownloader
 import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrar
-import com.crskdev.photosurfer.data.remote.download.ProgressListenerRegistrarImpl
 import com.crskdev.photosurfer.data.remote.photo.PhotoAPI
-import com.crskdev.photosurfer.data.remote.user.UserAPI
 import com.crskdev.photosurfer.data.repository.collection.CollectionRepository
-import com.crskdev.photosurfer.data.repository.collection.CollectionRepositoryImpl
 import com.crskdev.photosurfer.data.repository.photo.PhotoRepository
-import com.crskdev.photosurfer.data.repository.photo.PhotoRepositoryImpl
 import com.crskdev.photosurfer.data.repository.user.UserRepository
-import com.crskdev.photosurfer.data.repository.user.UserRepositoryImpl
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
 import com.crskdev.photosurfer.services.NetworkCheckService
-import com.crskdev.photosurfer.services.NetworkCheckServiceImpl
-import com.crskdev.photosurfer.services.executors.*
-import com.crskdev.photosurfer.services.messaging.DevicePushMessageManagerImpl
+import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.services.executors.KExecutor
+import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
-import com.crskdev.photosurfer.services.messaging.remote.FCMTokeProviderImpl
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
-import com.crskdev.photosurfer.services.messaging.remote.messagingRetrofit
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
-import com.crskdev.photosurfer.services.schedule.ScheduledWorkManagerImpl
 import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
-import com.franmontiel.persistentcookiejar.PersistentCookieJar
-import com.franmontiel.persistentcookiejar.cache.SetCookieCache
-import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
-import com.google.firebase.iid.FirebaseInstanceId
-import com.squareup.moshi.Moshi
 import retrofit2.Retrofit
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -56,20 +41,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 object DependencyGraph {
 
-    private var isInit: AtomicBoolean = AtomicBoolean(false)
+    internal var isInit: AtomicBoolean = AtomicBoolean(false)
 
     //EXECUTORS
-    val threadCallChecker: ThreadCallChecker = AndroidThreadCallChecker()
-    val uiThreadExecutor: KExecutor = UIThreadExecutor(threadCallChecker)
-    val diskThreadExecutor: KExecutor = DiskThreadExecutor()
-    val ioThreadExecutor: KExecutor = IOThreadExecutor()
-    val executorManager: ExecutorsManager = ExecutorsManager(
-            EnumMap<ExecutorType, KExecutor>(ExecutorType::class.java)
-                    .apply {
-                        put(ExecutorType.DISK, diskThreadExecutor)
-                        put(ExecutorType.NETWORK, ioThreadExecutor)
-                        put(ExecutorType.UI, uiThreadExecutor)
-                    })
+    lateinit var threadCallChecker: ThreadCallChecker
+    lateinit var uiThreadExecutor: KExecutor
+    lateinit var diskThreadExecutor: KExecutor
+    lateinit var ioThreadExecutor: KExecutor
+    lateinit var executorManager: ExecutorsManager
 
     //DB
     lateinit var db: PhotoSurferDB
@@ -83,13 +62,16 @@ object DependencyGraph {
     lateinit var externalPhotoGalleryDAO: ExternalPhotoGalleryDAO
         private set
     lateinit var externalPhotosDirectory: ExternalDirectory
+        private set
 
-    //serialization
-    //todo unify this moshi with the one from retrofit converter
-    val moshi: Moshi = Moshi.Builder().build()
+//    //serialization
+//    //todo unify this moshi with the one from retrofit converter
+//    lateinit var moshi: Moshi
+//        private set
 
     //NETWORK
-    val apiCallDispatcher: APICallDispatcher = APICallDispatcher(threadCallChecker)
+    lateinit var apiCallDispatcher: APICallDispatcher
+        private set
 
     lateinit var networkCheckService: NetworkCheckService
         private set
@@ -141,112 +123,83 @@ object DependencyGraph {
         private set
 
 
-    fun init(context: Context) {
+    fun install(provider: () -> VariantDependencyGraph) {
         if (isInit.get()) return
 
-        val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
+        val graph = provider()
+
+        //THREADS
+        threadCallChecker = graph.threadCallChecker
+        uiThreadExecutor = graph.uiThreadExecutor
+        diskThreadExecutor = graph.diskThreadExecutor
+        ioThreadExecutor = graph.ioThreadExecutor
+        executorManager = graph.executorManager
+
+        // val preferences = context.getSharedPreferences("photo_surfer_prefs", Context.MODE_PRIVATE)
 
         //SCHEDULE
-        workQueueBookKeeper = WorkQueueBookKeeper(context)
-        scheduledWorkManager = ScheduledWorkManagerImpl.withDefaultSchedulers(workQueueBookKeeper)
+        workQueueBookKeeper = graph.workQueueBookKeeper
+        scheduledWorkManager = graph.scheduledWorkManager
 
 
         //NETWORK
-        networkCheckService = NetworkCheckServiceImpl(context)
-        authTokenStorage = AuthTokenStorageImpl(preferences).apply {
-            listenableAuthState = this
-        }
+        networkCheckService = graph.networkCheckService
+        authTokenStorage = graph.authTokenStorage
+
         //authTokenStorage = InMemoryAuthTokenStorage()
-        val persistentCookieJar = PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
-        val retrofitClient = RetrofitClient(NetworkClient(
-                authTokenStorage,
-                APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY, BuildConfig.REDIRECT_URI),
-                persistentCookieJar
-        ))
-        retrofit = retrofitClient.retrofit
-        progressListenerRegistrar = ProgressListenerRegistrarImpl(retrofitClient)
+        retrofit = graph.retrofit
+        apiCallDispatcher = graph.apiCallDispatcher
+        progressListenerRegistrar = graph.progressListenerRegistrar
+        listenableAuthState = graph.listenableAuthState
 
         //messaging
-        messagingAPI = messagingRetrofit(false, FCMTokeProviderImpl(FirebaseInstanceId.getInstance()),
-                authTokenStorage).create()
-        devicePushMessagingManager = DevicePushMessageManagerImpl(context, messagingAPI,
-                authTokenStorage as ObservableAuthTokenStorage)
+        messagingAPI = graph.messagingAPI
+        devicePushMessagingManager = graph.devicePushMessagingManager
 
         //db
-        db = PhotoSurferDB.create(context, false)
-        staleDataTrackSupervisor = StaleDataTrackSupervisor.install(networkCheckService, db)
-        daoManager = DaoManager(DatabaseOpsImpl(db, TransactionRunnerImpl(db)),
-                mapOf(
-                        Contract.TABLE_PHOTOS to db.photoDAO(),
-                        Contract.TABLE_LIKE_PHOTOS to db.photoLikeDAO(),
-                        Contract.TABLE_USER_PHOTOS to db.photoUserDAO(),
-                        Contract.TABLE_SEARCH_PHOTOS to db.photoSearchDAO(),
-                        Contract.TABLE_USERS to db.userDAO(),
-                        Contract.TABLE_COLLECTIONS to db.collectionsDAO(),
-                        Contract.TABLE_COLLECTION_PHOTOS to db.collectionPhotoDAO()
-                ))
+        db = graph.db
+        staleDataTrackSupervisor = graph.staleDataTrackSupervisor
+        daoManager = graph.daoManager
 
 
         //external
-        externalPhotosDirectory = ExternalDirectory(Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES))
-        externalDb = ExternalPhotoGalleryDBImpl(context, externalPhotosDirectory)
-        externalPhotoGalleryDAO = externalDb.dao()
+        externalPhotosDirectory = graph.externalPhotosDirectory
+        externalDb = graph.externalDb
+        externalPhotoGalleryDAO = graph.externalPhotoGalleryDAO
 
+        //scheduled
+        scheduledWorkManager = graph.scheduledWorkManager
+        workQueueBookKeeper = graph.workQueueBookKeeper
 
         //photo
-        photoAPI = retrofit.create(PhotoAPI::class.java)
-        photoDownloader = PhotoDownloaderImpl(apiCallDispatcher, photoAPI)
+        photoAPI = graph.photoAPI
+        photoDownloader = graph.photoDownloader
 //        downloadManager = DownloadManager.MOCK
-        downloadManager = DownloadManager(progressListenerRegistrar, photoDownloader, externalPhotoGalleryDAO)
-        photoDAOFacade = PhotoDAOFacade(daoManager)
-        photoRepository = PhotoRepositoryImpl(
-                executorManager,
-                photoDAOFacade,
-                externalPhotoGalleryDAO,
-                apiCallDispatcher,
-                photoAPI,
-                downloadManager,
-                scheduledWorkManager
-        )
+        downloadManager = graph.downloadManager
+        photoDAOFacade = graph.photoDAOFacade
+        photoRepository = graph.photoRepository
 
-        collectionsAPI = retrofit.create(CollectionsAPI::class.java)
-        collectionsRepository = CollectionRepositoryImpl(
-                executorManager,
-                daoManager,
-                photoDAOFacade,
-                scheduledWorkManager,
-                apiCallDispatcher,
-                collectionsAPI,
-                authTokenStorage,
-                devicePushMessagingManager
-        )
-
+        collectionsAPI = graph.collectionsAPI
+        collectionsRepository = graph.collectionsRepository
 
         //search
-        searchTermTracker = SearchTermTrackerImpl(preferences)
+        searchTermTracker = graph.searchTermTracker
 
         //user and auth
-        val userAPI = retrofit.create(UserAPI::class.java)
-        val authAPI: AuthAPI = retrofit.create(AuthAPI::class.java)
-        userRepository = UserRepositoryImpl(
-                executorManager,
-                daoManager,
-                scheduledWorkManager,
-                staleDataTrackSupervisor,
-                apiCallDispatcher,
-                userAPI,
-                authAPI,
-                authTokenStorage,
-                PersistentSessionClearable(persistentCookieJar))
+        userRepository = graph.userRepository
 
-        authNavigatorMiddleware = AuthNavigatorMiddleware(authTokenStorage)
+        authNavigatorMiddleware = graph.authNavigatorMiddleware
 
         isInit.compareAndSet(false, true)
     }
 
 }
 
-fun Context.injectDependencyGraph() = DependencyGraph.init(this)
-
-fun Context.dependencyGraph(): DependencyGraph = DependencyGraph
+fun Context.dependencyGraph(): DependencyGraph {
+    if (!DependencyGraph.isInit.get()) { // safe guard - in case of schedulers call without install
+        DependencyGraph.install {
+            ProdDependencyGraph(this)
+        }
+    }
+    return DependencyGraph
+}

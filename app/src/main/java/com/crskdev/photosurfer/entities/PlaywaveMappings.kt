@@ -9,10 +9,11 @@ import com.crskdev.photosurfer.data.local.playwave.song.Song
  * Created by Cristian Pela on 15.10.2018.
  */
 fun PlaywaveEntity.toPlaywave(song: Song?): Playwave =
-        Playwave(this.id, song, emptyList())
+        Playwave(this.id, title, song, emptyList())
 
 fun PlaywaveWithPhotos.toPlaywave(song: Song?): Playwave =
         Playwave(playwaveEntity.id,
+                playwaveEntity.title,
                 song,
                 playwaveContents.asSequence().map {
                     it.toPlaywavePhoto()
@@ -24,6 +25,7 @@ fun PlaywaveContentEntity.toPlaywavePhoto(): PlaywavePhoto =
 fun Playwave.toDB(): PlaywaveEntity =
         PlaywaveEntity().apply {
             songId = this@toDB.song?.id ?: -1
+            title = this@toDB.title
         }
 
 fun PlaywavePhoto.toDb(playwaveId: Int): PlaywaveContentEntity =

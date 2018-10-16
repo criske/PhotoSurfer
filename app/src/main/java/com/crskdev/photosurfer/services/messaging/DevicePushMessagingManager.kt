@@ -4,6 +4,8 @@ import android.content.Context
 import com.crskdev.photosurfer.data.remote.auth.AuthToken
 import com.crskdev.photosurfer.data.remote.auth.ObservableAuthTokenStorage
 import com.crskdev.photosurfer.dependencies.dependencyGraph
+import com.crskdev.photosurfer.services.executors.DiskThreadExecutor
+import com.crskdev.photosurfer.services.executors.IOThreadExecutor
 import com.crskdev.photosurfer.services.messaging.command.*
 import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.messaging.messages.Topic
@@ -31,16 +33,12 @@ interface DevicePushMessagingManager {
 class DevicePushMessageManagerImpl(
         context: Context,
         private val messagingAPI: MessagingAPI,
+        private val ioExecutor: IOThreadExecutor,
+        private val diskExecutor: DiskThreadExecutor,
         private val authTokenStorage: ObservableAuthTokenStorage,
         providedCommands: Map<Topic, Command> = emptyMap()) : DevicePushMessagingManager {
 
-    private val dependencyGraph = context.dependencyGraph()
-
     private val instanceId = FirebaseInstanceId.getInstance()
-
-    private val ioExecutor = dependencyGraph.ioThreadExecutor
-
-    private val diskExecutor = dependencyGraph.diskThreadExecutor
 
     init {
         authTokenStorage.addListener(object : Listenable.Listener<AuthToken> {
