@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.ListAdapter
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 import kotlinx.android.synthetic.main.item_playwave.view.*
+import com.chauthai.swipereveallayout.ViewBinderHelper
+
 
 /**
  * Created by Cristian Pela on 16.10.2018.
@@ -22,16 +24,31 @@ class PlaywavesAdapter(private val layoutInflater: LayoutInflater,
             override fun areItemsTheSame(oldItem: PlaywaveUI, newItem: PlaywaveUI): Boolean = oldItem.id == newItem.id
             override fun areContentsTheSame(oldItem: PlaywaveUI, newItem: PlaywaveUI): Boolean = oldItem == newItem
         }) {
+
+    private val swipeViewBinderHelper = ViewBinderHelper()
+
+    init {
+        setHasStableIds(true)
+    }
+
+    override fun getItemId(position: Int): Long {
+        return getItem(position).id.toLong()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaywavesVH =
             PlaywavesVH(layoutInflater.inflate(R.layout.item_playwave, parent, false), action)
 
     override fun onBindViewHolder(holder: PlaywavesVH, position: Int) {
-        holder.bind(getItem(position))
+        val model = getItem(position)
+        swipeViewBinderHelper.bind(holder.itemView.swipeLayoutPlaywave, model.id.toString())
+        holder.bind(model)
     }
 }
 
 sealed class PlaywaveAction {
     class Play(val playwaveId: Int) : PlaywaveAction()
+    class Edit(val playwaveId: Int) : PlaywaveAction()
+    class Delete(val playwaveId: Int) : PlaywaveAction()
     class Error(val message: String) : PlaywaveAction()
 }
 
@@ -47,6 +64,16 @@ class PlaywavesVH(view: View, action: (PlaywaveAction) -> Unit) : BindViewHolder
                         PlaywaveAction.Play(it.id)
                     }
                     action(play)
+                }
+            }
+            btnPlaywaveEdit.setOnClickListener { _->
+                model?.let {
+                    action(PlaywaveAction.Edit(it.id))
+                }
+            }
+            btnPlaywaveDelete.setOnClickListener { _->
+                model?.let {
+                    action(PlaywaveAction.Delete(it.id))
                 }
             }
         }

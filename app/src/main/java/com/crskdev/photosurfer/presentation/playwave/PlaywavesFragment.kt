@@ -10,6 +10,8 @@ import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 
 import com.crskdev.photosurfer.R
@@ -41,6 +43,13 @@ class PlaywavesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val context = view.context
+
+        val navController = view.findNavController()
+
+        toolbarPlaywaves.setNavigationOnClickListener {
+            navController.popBackStack()
+        }
+
         val playwavesAdapter = PlaywavesAdapter(LayoutInflater.from(context)) {
             when (it) {
                 is PlaywaveAction.Play -> {
@@ -48,6 +57,12 @@ class PlaywavesFragment : Fragment() {
                 }
                 is PlaywaveAction.Error -> {
                     Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                }
+                is PlaywaveAction.Edit ->{
+                    Toast.makeText(context, "TODO: edit playwave", Toast.LENGTH_SHORT).show()
+                }
+                is PlaywaveAction.Delete ->{
+                    Toast.makeText(context, "TODO: delete playwave", Toast.LENGTH_SHORT).show()
                 }
             }
         }

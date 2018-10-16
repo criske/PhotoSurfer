@@ -35,7 +35,7 @@ class StaleDataTrackWorker (context: Context, params: WorkerParameters) : Worker
     override fun doWork(): Result {
         //we make sure user is not interacting with app, otherwise run the stale check
         if (isAppInForeground()) {
-            applicationContext.systemNotification("Periodic stale data track run postponed. Application is in foreground")
+            //applicationContext.systemNotification("Periodic stale data track run postponed. Application is in foreground")
             return Result.RETRY
         }
         val dependencyGraph = applicationContext.dependencyGraph()

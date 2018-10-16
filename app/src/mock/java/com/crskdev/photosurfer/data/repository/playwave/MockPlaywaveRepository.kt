@@ -14,20 +14,23 @@ import java.util.concurrent.TimeUnit
  */
 class MockPlaywaveRepository : PlaywaveRepository {
 
+    private val playwavesLiveData = MutableLiveData<List<Playwave>>().apply {
+        postValue(listOf(
+                Playwave(1, "Play wave test title", Song(
+                        1, "Foo", "Some Title Song", "DJ NaN", TimeUnit.MINUTES.toMillis(5), true
+                ), emptyList()),
+                Playwave(1, "Play wave test title", Song(
+                        1, "Foo", "Some Title Song", "DJ NaN", 2342429, false
+                ), emptyList())))
+    }
+
     override fun getAvailableSongs(filterSearch: String?): DataSource.Factory<Int, Song> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getPlaywaves(includePhotos: Boolean): LiveData<List<Playwave>> =
-            MutableLiveData<List<Playwave>>().apply {
-                postValue(listOf(
-                        Playwave(1, "Play wave test title", Song(
-                                1, "Foo", "Some Title Song", "DJ NaN",  TimeUnit.MINUTES.toMillis(5), true
-                        ), emptyList()),
-                        Playwave(1, "Play wave test title", Song(
-                                1, "Foo", "Some Title Song", "DJ NaN", 2342429, false
-                        ), emptyList())))
-            }
+    override fun getPlaywaves(includePhotos: Boolean): LiveData<List<Playwave>> {
+        return playwavesLiveData
+    }
 
     override fun getPlaywave(playwaveId: Int): LiveData<Playwave> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

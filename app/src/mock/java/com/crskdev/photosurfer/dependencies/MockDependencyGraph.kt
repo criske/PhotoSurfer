@@ -10,4 +10,5 @@ import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 class MockDependencyGraph(context: Context): ProdDependencyGraph(context) {
 
     override val playwaveRepository: PlaywaveRepository = MockPlaywaveRepository()
+
 }
