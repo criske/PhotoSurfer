@@ -8,8 +8,8 @@ import com.crskdev.photosurfer.data.local.playwave.song.Song
 /**
  * Created by Cristian Pela on 15.10.2018.
  */
-fun PlaywaveEntity.toPlaywave(exists: Boolean): Playwave =
-        Playwave(this.id, title, Song(
+fun PlaywaveEntity.toPlaywave(exists: Boolean, size: Int): Playwave =
+        Playwave(this.id, title, size, Song(
                 songId,
                 songPath,
                 songTitle,
@@ -20,6 +20,7 @@ fun PlaywaveEntity.toPlaywave(exists: Boolean): Playwave =
 fun PlaywaveWithPhotos.toPlaywave(exists: Boolean): Playwave =
         Playwave(playwaveEntity.id,
                 playwaveEntity.title,
+                playwaveContents.size,
                 Song(playwaveEntity.songId,
                         playwaveEntity.songPath,
                         playwaveEntity.songTitle,

@@ -22,6 +22,9 @@ import android.util.TypedValue
 import android.view.*
 import androidx.annotation.ColorRes
 import androidx.annotation.FloatRange
+import androidx.annotation.StringRes
+import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -194,4 +197,36 @@ fun View.getDrawingRect(): Rect = Rect().apply {
 
 fun View.getHitRect(): Rect = Rect().apply {
     getHitRect(this)
+}
+
+inline fun Menu.addSearch(context: Context, @StringRes title: Int, expandedByDefault: Boolean,
+                          crossinline onChange: (String) -> Unit = {},
+                          crossinline onSubmit: (String) -> Unit = {}) {
+
+    add(title).apply {
+        actionView = SearchView(ContextThemeWrapper(context,
+                R.style.ThemeOverlay_MaterialComponents_Light_TintedIcon))
+                .apply {
+                    maxWidth = Int.MAX_VALUE
+                    setIconifiedByDefault(false)
+                    val sv = this
+                    setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                        override fun onQueryTextSubmit(query: String): Boolean {
+                            onSubmit(query)
+                            sv.clearFocus()
+                            return true
+                        }
+
+                        override fun onQueryTextChange(newText: String): Boolean {
+                            onChange(newText)
+                            return true
+                        }
+                    })
+                }
+        icon = ContextCompat.getDrawable(context, R.drawable.ic_search_white_24dp)
+        setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW.or(MenuItem.SHOW_AS_ACTION_ALWAYS))
+        if (expandedByDefault) {
+            expandActionView()
+        }
+    }
 }

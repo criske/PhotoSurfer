@@ -5,8 +5,6 @@
     android:id="@+id/main_graph"
     app:startDestination="@id/fragment_list_photos">
 
-
-
     <fragment
         android:id="@+id/fragment_list_photos"
         android:name="com.crskdev.photosurfer.presentation.photo.ListPhotosFragment"
@@ -134,6 +132,22 @@
         android:id="@+id/fragment_playwaves"
         android:name="com.crskdev.photosurfer.presentation.playwave.PlaywavesFragment"
         android:label="fragment_playwaves"
-        tools:layout="@layout/fragment_playwaves" />
+        tools:layout="@layout/fragment_playwaves" >
+        <action
+            android:id="@+id/action_fragment_playwaves_to_addPlaywaveFragment"
+            app:destination="@id/addPlaywaveFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addPlaywaveFragment"
+        android:name="com.crskdev.photosurfer.presentation.playwave.AddPlaywaveFragment"
+        android:label="AddPlaywaveFragment" >
+        <action
+            android:id="@+id/action_addPlaywaveFragment_to_searchSongFragment"
+            app:destination="@id/searchSongFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/searchSongFragment"
+        android:name="com.crskdev.photosurfer.presentation.playwave.SearchSongFragment"
+        android:label="SearchSongFragment" />
 
 </navigation>

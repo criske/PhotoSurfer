@@ -2,25 +2,25 @@ package com.crskdev.photosurfer.presentation.playwave
 
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
-
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.PlaywavePhoto
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_playwaves.*
-import java.util.concurrent.TimeUnit
+
 
 class PlaywavesFragment : Fragment() {
 
@@ -46,8 +46,18 @@ class PlaywavesFragment : Fragment() {
 
         val navController = view.findNavController()
 
-        toolbarPlaywaves.setNavigationOnClickListener {
-            navController.popBackStack()
+        toolbarPlaywaves.apply {
+            inflateMenu(R.menu.menu_single_add)
+            setNavigationOnClickListener {
+                navController.popBackStack()
+            }
+            setOnMenuItemClickListener {
+                if (it.itemId == R.id.menu_action_add) {
+                    navController.navigate(PlaywavesFragmentDirections.actionFragmentPlaywavesToAddPlaywaveFragment(),
+                            defaultTransitionNavOptions())
+                }
+                true
+            }
         }
 
         val playwavesAdapter = PlaywavesAdapter(LayoutInflater.from(context)) {
@@ -58,10 +68,10 @@ class PlaywavesFragment : Fragment() {
                 is PlaywaveAction.Error -> {
                     Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 }
-                is PlaywaveAction.Edit ->{
+                is PlaywaveAction.Edit -> {
                     Toast.makeText(context, "TODO: edit playwave", Toast.LENGTH_SHORT).show()
                 }
-                is PlaywaveAction.Delete ->{
+                is PlaywaveAction.Delete -> {
                     Toast.makeText(context, "TODO: delete playwave", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -76,6 +86,13 @@ class PlaywavesFragment : Fragment() {
             playwavesAdapter.submitList(it)
         })
     }
+
+
+    override fun onResume() {
+        super.onResume()
+        toolbarPlaywaves.tintIcons()
+    }
+
 }
 
 
@@ -84,18 +101,8 @@ class PlaywavesViewModel(
 
     val playwavesLiveData = Transformations.map(playwavesRepository.getPlaywaves()) { l ->
         l.asSequence().map { p ->
-            //TODO refactor this mapping into a utility
-            val songInfo =
-                    p.song.let { it ->
-                        val minutes = TimeUnit.MILLISECONDS.toMinutes(it.duration)
-                        val seconds = TimeUnit.MILLISECONDS.toSeconds(it.duration) - TimeUnit.MINUTES.toSeconds(minutes)
-                        val minutesFormat = if (minutes < 10) "%02d" else "%d"
-                        val secondsFormat = if (seconds < 10) "%02d" else "%d"
-                        val duration = String.format("$minutesFormat:$secondsFormat", minutes, seconds)
-                        "${it.artist} - ${it.title} ($duration)"
-                    }
             val hasError = !p.song.exists
-            PlaywaveUI(p.id, p.title, songInfo, 0, hasError, p.photos)
+            PlaywaveUI(p.id, p.title, p.song.toString(), p.size, hasError, p.photos)
         }.toList()
     }
 }

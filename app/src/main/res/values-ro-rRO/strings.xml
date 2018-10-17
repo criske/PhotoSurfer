@@ -20,7 +20,7 @@
     <string name="new_collection">Colectie Noua</string>
     <string name="collection_description">Descriere</string>
     <string name="collection_private">Privat</string>
-    <string name="collection_title">Titlu</string>
+    <string name="title">Titlu</string>
     <string name="error_collection_title">Titlul Colectiei Lipseste!</string>
     <string name="edit_collection">Editeaza Colectia</string>
     <string name="message_collection_edited">Colectia a fost moddificata!</string>
@@ -41,4 +41,7 @@
     </plurals>
     <string name="error_playwave_no_song">Playwave-ul nu are piesa</string>
     <string name="error_playwave_no_song_in_media">Pieasa nu mai exista in libraria telefonului</string>
+    <string name="confirm">Confirm</string>
+    <string name="search_songs">Cauta Piese</string>
+    <string name="new_playwave">Playwave Nou</string>
 </resources>

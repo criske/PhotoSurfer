@@ -43,7 +43,7 @@
     <string name="new_collection">New Collection</string>
     <string name="collection_description">Description</string>
     <string name="collection_private">Private</string>
-    <string name="collection_title">Title</string>
+    <string name="title">Title</string>
     <string name="error_collection_title">Collection Title is Missing!</string>
     <string name="edit_collection">Edit Collection</string>
     <string name="message_collection_edited">Collection Edited</string>
@@ -59,4 +59,7 @@
     <string name="photo_info_created">Created at: %1$s</string>
     <string name="error_playwave_no_song">Playwave has no song set</string>
     <string name="error_playwave_no_song_in_media">Song doesn\'t exist in your media library anymore</string>
+    <string name="confirm">Confirm</string>
+    <string name="search_songs">Search Songs</string>
+    <string name="new_playwave">New Playwave</string>
 </resources>

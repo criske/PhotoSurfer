@@ -31,6 +31,7 @@ import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.User
 import com.crskdev.photosurfer.presentation.SearchTermTrackerLiveData
 import com.crskdev.photosurfer.services.executors.KExecutor
+import com.crskdev.photosurfer.util.addSearch
 import com.crskdev.photosurfer.util.dpToPx
 import com.crskdev.photosurfer.util.livedata.SingleLiveEvent
 import com.crskdev.photosurfer.util.livedata.defaultConfigBuild
@@ -63,34 +64,14 @@ class SearchUsersFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val searchView = SearchView(ContextThemeWrapper(view.context,
-                R.style.ThemeOverlay_MaterialComponents_Light_TintedIcon))
-                .apply {
-                    maxWidth = Int.MAX_VALUE
-                    setIconifiedByDefault(false)
-                    val sv = this
-                    setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                        override fun onQueryTextSubmit(query: String): Boolean {
-                            viewModel.search(query)
-                            sv.clearFocus()
-                            return true
-                        }
-
-                        override fun onQueryTextChange(newText: String): Boolean = false
-                    })
-                }
 
         with(toolbarSearchUsers) {
-            menu.add(R.string.search_users).apply {
-                actionView = searchView
-                icon = ContextCompat.getDrawable(context, R.drawable.ic_search_white_24dp)
-                setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW.or(MenuItem.SHOW_AS_ACTION_ALWAYS))
-                expandActionView()
-            }
+            menu.addSearch(context, R.string.search_users, true, onSubmit = {
+                viewModel.search(it)
+            })
             setNavigationOnClickListener {
                 findNavController().popBackStack()
             }
-            tintIcons()
         }
         with(recyclerSearchUsers) {
             adapter = SearchUsersAdapter(layoutInflater,
@@ -124,6 +105,11 @@ class SearchUsersFragment : Fragment() {
         viewModel.errorLiveData.observe(this, Observer {
             Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
         })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        toolbarSearchUsers.tintIcons()
     }
 }
 

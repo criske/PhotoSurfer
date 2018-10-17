@@ -82,4 +82,13 @@ data class Song(val id: Long,
         return copy(title = title1, artist = artist1)
     }
 
+    fun prettyDuration(): String {
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(duration)
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(duration) - TimeUnit.MINUTES.toSeconds(minutes)
+        val minutesFormat = if (minutes < 10) "%02d" else "%d"
+        val secondsFormat = if (seconds < 10) "%02d" else "%d"
+        return String.format("$minutesFormat:$secondsFormat", minutes, seconds)
+    }
+
+    override fun toString(): String = "$artist - $title (${prettyDuration()})"
 }

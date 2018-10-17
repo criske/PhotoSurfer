@@ -35,7 +35,7 @@
                     android:layout_height="match_parent"
                     android:maxLines="1"
                     android:inputType="text"
-                    android:hint="@string/collection_title" />
+                    android:hint="@string/title" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <CheckBox

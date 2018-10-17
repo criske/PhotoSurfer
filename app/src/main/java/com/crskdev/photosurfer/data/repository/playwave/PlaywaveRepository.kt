@@ -50,7 +50,6 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
                 Transformations.map(playwaveDAO.getPlaywavesWithPhotosLiveData()) { l ->
                     l.asSequence().map { pwp ->
                         val exists = songDAO.exists(pwp.playwaveEntity.songId)
-                        val photos = pwp.playwaveContents.map { it.toPlaywavePhoto() }
                         pwp.toPlaywave(exists)
                     }.toList()
                 }
@@ -58,7 +57,8 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
                 Transformations.map(playwaveDAO.getPlaywavesLiveData()) { l ->
                     l.asSequence().map {
                         val exists = songDAO.exists(it.songId)
-                        it.toPlaywave(exists)
+                        val size = playwaveDAO.getPlaywaveSize(it.id)
+                        it.toPlaywave(exists, size)
                     }.toList()
                 }
             }
@@ -66,7 +66,6 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
     override fun getPlaywave(playwaveId: Int): LiveData<Playwave> =
             Transformations.map(playwaveDAO.getPlaywaveWithPhotosLiveData(playwaveId)) { pwp ->
                 val exists = songDAO.exists(pwp.playwaveEntity.songId)
-                val photos = pwp.playwaveContents.map { it.toPlaywavePhoto() }
                 pwp.toPlaywave(exists)
             }
 
@@ -121,7 +120,7 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun addPhotoToPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>?) {
         diskExecutor {
-           playwaveDAO.addPhotoToPlaywave(photo.toDb(playwaveId))
+            playwaveDAO.addPhotoToPlaywave(photo.toDb(playwaveId))
             val added = true // TODO added return is not supported now?
             callback?.run {
                 uiExecutor {
@@ -137,7 +136,7 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
 
     override fun removePhotoFromPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>?) {
         diskExecutor {
-             playwaveDAO.removePhotoFromPlaywave(photo.toDb(playwaveId))
+            playwaveDAO.removePhotoFromPlaywave(photo.toDb(playwaveId))
             val removed = true // TODO removed return is not supported now?
             callback?.run {
                 uiExecutor {

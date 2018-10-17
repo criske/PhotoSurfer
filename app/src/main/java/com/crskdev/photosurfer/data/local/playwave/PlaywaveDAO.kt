@@ -57,4 +57,7 @@ interface PlaywaveDAO {
     @Transaction
     fun getPlaywaveWithPhotosLiveData(playwaveId: Int): LiveData<PlaywaveWithPhotos>
 
+    @Query("SELECT COUNT(*) FROM playwave_contents WHERE playwaveId =:playwaveId")
+    fun getPlaywaveSize(playwaveId: Int): Int
+
 }

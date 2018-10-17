@@ -60,9 +60,9 @@
             tools:text="Winter Moods" />
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/textPlaywaveSong"
+            android:id="@+id/textPlaywaveSongInfo"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="13dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp"
@@ -70,7 +70,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textPlaywaveTitle"
-            tools:text="Wayward - Silver" />
+            tools:text="Wayward - Silver (30:20)" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/textPlaywaveSize"
@@ -81,13 +81,13 @@
             android:layout_marginBottom="8dp"
             android:textSize="30sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/imageBtnPlaywavePlay"
+            app:layout_constraintEnd_toStartOf="@+id/imgBtnPlaywaveSongPlay"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.48000002"
             tools:text="10" />
 
         <ImageButton
-            android:id="@+id/imageBtnPlaywavePlay"
+            android:id="@+id/imgBtnPlaywaveSongPlay"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"

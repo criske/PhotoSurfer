@@ -24,7 +24,6 @@ import com.crskdev.photosurfer.entities.Collection
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.util.IntentUtils
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
-import com.crskdev.photosurfer.util.getHitRect
 import com.crskdev.photosurfer.util.glide.*
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
@@ -72,14 +71,14 @@ class CollectionsFragment : Fragment() {
             addItemDecoration(HorizontalSpaceDivider.default(context))
         }
         toolbarCollections.apply {
-            inflateMenu(R.menu.menu_collections)
+            inflateMenu(R.menu.menu_single_add)
             val navController = findNavController()
             setNavigationOnClickListener {
                 navController.popBackStack()
             }
             setOnMenuItemClickListener {
                 when (it.itemId) {
-                    R.id.menu_action_add_collection -> {
+                    R.id.menu_action_add -> {
                         navController.navigate(CollectionsFragmentDirections
                                 .actionFragmentCollectionsToNewCollectionFragment(null), defaultTransitionNavOptions())
                     }

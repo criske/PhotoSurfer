@@ -7,6 +7,13 @@ import android.os.Looper
  */
 abstract class ThreadCallChecker {
 
+    companion object {
+        val SUPPRESED_CHECK = object : ThreadCallChecker(){
+            override fun isOnMainThread(): Boolean = true
+
+        }
+    }
+
     fun assertOnMainThread(failMessage: String = "Call must be executed on main thread") {
         if (!isOnMainThread()) {
             throw IllegalAccessException(failMessage)
@@ -26,11 +33,5 @@ abstract class ThreadCallChecker {
 
 class AndroidThreadCallChecker : ThreadCallChecker() {
 
-    companion object {
-        val SUPPRESED = object : ThreadCallChecker(){
-            override fun isOnMainThread(): Boolean = true
-
-        }
-    }
     override fun isOnMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
 }

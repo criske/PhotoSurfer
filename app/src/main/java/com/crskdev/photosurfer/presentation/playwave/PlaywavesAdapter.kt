@@ -56,7 +56,7 @@ class PlaywavesVH(view: View, action: (PlaywaveAction) -> Unit) : BindViewHolder
 
     init {
         with(itemView) {
-            imageBtnPlaywavePlay.setOnClickListener { _ ->
+            imgBtnPlaywaveSongPlay.setOnClickListener { _ ->
                 model?.let {
                     val play = if (it.hasError) {
                         PlaywaveAction.Error(resources.getString(R.string.error_playwave_no_song_in_media))
@@ -82,11 +82,11 @@ class PlaywavesVH(view: View, action: (PlaywaveAction) -> Unit) : BindViewHolder
     override fun onBindModel(model: PlaywaveUI) {
         with(itemView) {
             textPlaywaveTitle.text = model.title
-            textPlaywaveSong.text = model.songInfo
+            textPlaywaveSongInfo.text = model.songInfo
             textPlaywaveSize.text = model.size.toString()
             if (model.hasError) {
-                textPlaywaveSong.setTextColor(ContextCompat.getColor(context, R.color.colorLike))
-                imageBtnPlaywavePlay.colorFilter = PorterDuff.Mode.SRC_IN.toColorFilter(Color.DKGRAY)
+                textPlaywaveSongInfo.setTextColor(ContextCompat.getColor(context, R.color.colorLike))
+                imgBtnPlaywaveSongPlay.colorFilter = PorterDuff.Mode.SRC_IN.toColorFilter(Color.DKGRAY)
             }
         }
     }
