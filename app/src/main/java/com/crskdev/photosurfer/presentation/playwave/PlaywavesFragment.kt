@@ -53,7 +53,7 @@ class PlaywavesFragment : Fragment() {
             }
             setOnMenuItemClickListener {
                 if (it.itemId == R.id.menu_action_add) {
-                    navController.navigate(PlaywavesFragmentDirections.actionFragmentPlaywavesToAddPlaywaveFragment(),
+                    navController.navigate(PlaywavesFragmentDirections.actionFragmentPlaywavesToUpsertPlaywaveFragment(R.id.addPlaywaveFragment),
                             defaultTransitionNavOptions())
                 }
                 true

@@ -23,7 +23,7 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = viewModelFromProvider(activity!!) {
+        viewModel = viewModelFromProvider(parentFragment!!) {
             val graph = context!!.dependencyGraph()
             UpsertPlaywaveViewModel(graph.diskThreadExecutor, graph.playwaveRepository)
         }

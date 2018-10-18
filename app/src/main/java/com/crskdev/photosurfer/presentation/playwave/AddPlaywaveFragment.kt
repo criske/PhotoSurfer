@@ -6,12 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.navigation.NavController
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.popNavigationBackStack
 import kotlinx.android.synthetic.main.fragment_add_playwave.*
 
 /**
@@ -24,7 +28,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //this model will be shared
-        viewModel = viewModelFromProvider(activity!!) {
+        viewModel = viewModelFromProvider(parentFragment!!) {
             val graph = context!!.dependencyGraph()
             UpsertPlaywaveViewModel(graph.diskThreadExecutor, graph.playwaveRepository)
         }
@@ -35,14 +39,14 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             inflater.inflate(R.layout.fragment_add_playwave, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val navController by lazy(LazyThreadSafetyMode.NONE) { findNavController() };
+        val navController = view.findNavController()
         imgBtnAddPlaywaveSearch.setOnClickListener {
             navController.navigate(AddPlaywaveFragmentDirections.actionAddPlaywaveFragmentToSearchSongFragment(),
                     defaultTransitionNavOptions())
         }
         toolbarAddPlaywave.apply {
             setNavigationOnClickListener {
-                navController.popBackStack()
+                popNavigationBackStack()
             }
         }
         viewModel.selectedSongLiveData.observe(this, Observer {
@@ -57,3 +61,4 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
 }
+

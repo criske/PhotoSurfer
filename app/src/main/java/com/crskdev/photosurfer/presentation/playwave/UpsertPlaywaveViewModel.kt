@@ -18,7 +18,7 @@ class UpsertPlaywaveViewModel(
         private val playwaveRepository: PlaywaveRepository) : ViewModel() {
 
 
-    val searchQueryLiveData: MutableLiveData<String?> = MutableLiveData<String?>().apply {
+    private val searchQueryLiveData: MutableLiveData<String?> = MutableLiveData<String?>().apply {
         value = null
     }
 
@@ -62,6 +62,9 @@ class UpsertPlaywaveViewModel(
         (selectedSongLiveData as MutableLiveData).value = song
     }
 
+    override fun onCleared() {
+        super.onCleared()
+    }
 }
 
 sealed class PlayingSongState() {

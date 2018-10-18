@@ -6,22 +6,15 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.BackgroundColorSpan
-import android.text.style.ImageSpan
-import android.text.style.StyleSpan
 import android.util.TypedValue
 import android.view.*
 import androidx.annotation.ColorRes
 import androidx.annotation.FloatRange
+import androidx.annotation.NavigationRes
 import androidx.annotation.StringRes
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
@@ -33,10 +26,13 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.iterator
+import androidx.fragment.app.Fragment
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph
 import androidx.navigation.NavOptions
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.crskdev.photosurfer.R
-import com.google.android.material.chip.ChipDrawable
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -229,4 +225,24 @@ inline fun Menu.addSearch(context: Context, @StringRes title: Int, expandedByDef
             expandActionView()
         }
     }
+}
+
+fun Fragment.popNavigationBackStack(): Boolean {
+    var popped = false
+    var parent: Fragment? = this
+    while (!popped) {
+        popped = parent?.findNavController()?.popBackStack() ?: false
+        if (!popped) {
+            parent = parent?.parentFragment
+            if (parent == null)
+                break
+        }
+    }
+    return popped
+}
+
+inline fun NavController.attachNavGraph(@NavigationRes graphId: Int, customize: NavGraph.() -> Unit) {
+    val inflatedGraph = navInflater.inflate(graphId)
+    inflatedGraph.customize()
+    graph = inflatedGraph
 }

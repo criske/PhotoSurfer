@@ -5,6 +5,12 @@
     android:id="@+id/main_graph"
     app:startDestination="@id/fragment_list_photos">
 
+    <!-- global actions -->
+    <action
+        android:id="@+id/action_global_login"
+        app:destination="@id/fragment_login" />
+    <!--#-->
+
     <fragment
         android:id="@+id/fragment_list_photos"
         android:name="com.crskdev.photosurfer.presentation.photo.ListPhotosFragment"
@@ -113,10 +119,7 @@
             app:nullable="true" />
     </fragment>
 
-    <!-- global actions -->
-    <action
-        android:id="@+id/action_global_login"
-        app:destination="@id/fragment_login" />
+
     <fragment
         android:id="@+id/editCollectionFragment"
         android:name="com.crskdev.photosurfer.presentation.collection.EditCollectionFragment"
@@ -126,28 +129,23 @@
             android:name="id"
             app:argType="integer" />
     </fragment>
-    <!--<include app:graph="@navigation/nav_play_wave" />-->
-    <!--TODO: include is currently bugged in navigation lib? Getting error when gen: Destination with actions must have name-->
     <fragment
         android:id="@+id/fragment_playwaves"
         android:name="com.crskdev.photosurfer.presentation.playwave.PlaywavesFragment"
         android:label="fragment_playwaves"
         tools:layout="@layout/fragment_playwaves" >
         <action
-            android:id="@+id/action_fragment_playwaves_to_addPlaywaveFragment"
-            app:destination="@id/addPlaywaveFragment" />
+            android:id="@+id/action_fragment_playwaves_to_upsertPlaywaveFragment"
+            app:destination="@id/upsertPlaywaveFragment" />
     </fragment>
     <fragment
-        android:id="@+id/addPlaywaveFragment"
-        android:name="com.crskdev.photosurfer.presentation.playwave.AddPlaywaveFragment"
-        android:label="AddPlaywaveFragment" >
-        <action
-            android:id="@+id/action_addPlaywaveFragment_to_searchSongFragment"
-            app:destination="@id/searchSongFragment" />
+        android:id="@+id/upsertPlaywaveFragment"
+        android:name="com.crskdev.photosurfer.presentation.playwave.UpsertPlaywaveFragment"
+        android:label="fragment_upsert_playwave"
+        tools:layout="@layout/fragment_upsert_playwave" >
+        <argument
+            android:name="upsertType"
+            app:argType="integer" />
     </fragment>
-    <fragment
-        android:id="@+id/searchSongFragment"
-        android:name="com.crskdev.photosurfer.presentation.playwave.SearchSongFragment"
-        android:label="SearchSongFragment" />
 
 </navigation>
