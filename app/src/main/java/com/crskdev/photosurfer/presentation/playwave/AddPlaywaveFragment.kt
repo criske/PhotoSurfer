@@ -27,7 +27,10 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
         //this model will be shared
         viewModel = viewModelFromProvider(parentFragment!!) {
             val graph = context!!.dependencyGraph()
-            UpsertPlaywaveViewModel(graph.diskThreadExecutor, graph.playwaveRepository)
+            UpsertPlaywaveViewModel(
+                    graph.diskThreadExecutor,
+                    graph.playwaveRepository,
+                    graph.playwaveSoundPlayer)
         }
     }
 

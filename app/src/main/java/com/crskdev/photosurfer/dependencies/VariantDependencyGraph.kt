@@ -27,6 +27,7 @@ import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
@@ -112,5 +113,8 @@ interface VariantDependencyGraph {
 
     //nav
     val authNavigatorMiddleware: AuthNavigatorMiddleware
+
+    //play wave
+    val playwaveSoundPlayer: PlaywaveSoundPlayer
 
 }

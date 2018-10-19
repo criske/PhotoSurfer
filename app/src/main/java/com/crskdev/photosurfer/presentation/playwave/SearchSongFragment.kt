@@ -25,7 +25,9 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
         super.onCreate(savedInstanceState)
         viewModel = viewModelFromProvider(parentFragment!!) {
             val graph = context!!.dependencyGraph()
-            UpsertPlaywaveViewModel(graph.diskThreadExecutor, graph.playwaveRepository)
+            UpsertPlaywaveViewModel(graph.diskThreadExecutor,
+                    graph.playwaveRepository,
+                    graph.playwaveSoundPlayer)
         }
     }
 
@@ -53,7 +55,7 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
                     viewModel.selectSong(it.song)
                     navController.popBackStack()
                 }
-                is SearchSongAction.Play -> viewModel.playSong(it.song)
+                is SearchSongAction.Play -> viewModel.selectSong(it.song)
             }
         }
         recyclerSearchSongs.apply {

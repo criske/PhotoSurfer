@@ -29,6 +29,8 @@ import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
+import com.crskdev.photosurfer.services.playwave.MockPlaywaveSoundPlayer
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
@@ -41,9 +43,13 @@ class MockDependencyGraph(context: Context): ProdDependencyGraph(context) {
 
     override val playwaveRepository: PlaywaveRepository = MockPlaywaveRepository()
 
+    override val playwaveSoundPlayer: PlaywaveSoundPlayer = MockPlaywaveSoundPlayer()
+
 }
 
 class RealMockDependencyGraph: VariantDependencyGraph{
+    override val playwaveSoundPlayer: PlaywaveSoundPlayer
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 
     override val threadCallChecker: ThreadCallChecker = ThreadCallChecker.SUPPRESED_CHECK
 

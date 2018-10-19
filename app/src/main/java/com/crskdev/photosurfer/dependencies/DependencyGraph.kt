@@ -30,6 +30,7 @@ import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
@@ -124,6 +125,9 @@ object DependencyGraph {
     //nav
     lateinit var authNavigatorMiddleware: AuthNavigatorMiddleware
         private set
+
+    //sound player
+    lateinit var playwaveSoundPlayer: PlaywaveSoundPlayer
 
 
     fun install(provider: () -> VariantDependencyGraph) {

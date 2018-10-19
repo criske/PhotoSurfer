@@ -64,12 +64,19 @@ class PlayerViewTest {
         assertView<PlayerView>(R.id.playerViewTest) { !isVisible }
 
         //start play song
-        player.postThis { changeState(PlayingSongState.Playing(song, 0, 100)) }
+        player.postThis { changeState(PlayingSongState.Started(song)) }
         assertView<PlayerView>(R.id.playerViewTest) { isVisible }
         assertView<TextView>(R.id.textPlayerSongInfo) { text == song.fullInfo }
+        assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) {
+            val actual = drawable.copy().wash()
+            val expected = context.getDrawableCompat(R.drawable.ic_play_arrow_white_24dp)?.wash()
+            isVisible && actual.equalsPixels(expected)
+        }
+        assertView<ImageButton>(R.id.imgBtnPlayerPause) { !isVisible }
+        assertView<SeekBar>(R.id.seekBarPlayer) { !isEnabled }
 
         //song position in time
-        player.postThis { changeState(PlayingSongState.Playing(song, 10, 100)) }
+        player.postThis { changeState(PlayingSongState.Playing(song, 10)) }
         assertView<SeekBar>(R.id.seekBarPlayer) { progress == 10 }
         assertView<ImageButton>(R.id.imgBtnPlayerPause) { isVisible }
         assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) {
@@ -77,9 +84,13 @@ class PlayerViewTest {
             val expected = context.getDrawableCompat(R.drawable.ic_stop_white_24dp)?.wash()
             actual.equalsPixels(expected)
         }
+        assertView<SeekBar>(R.id.seekBarPlayer) { isEnabled }
 
         //pause
-        player.postThis { changeState(PlayingSongState.Paused(song, 20, 100)) }
+        player.postThis {
+            changeState(PlayingSongState.Playing(song, 20))
+            changeState(PlayingSongState.Paused(song))
+        }
         assertView<SeekBar>(R.id.seekBarPlayer) { progress == 20 }
         assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) {
             val actual = drawable.copy().wash()
@@ -88,7 +99,7 @@ class PlayerViewTest {
         }
 
         //pause
-        player.postThis { changeState(PlayingSongState.Playing(song, 20, 100)) }
+        player.postThis { changeState(PlayingSongState.Playing(song, 20)) }
         assertView<SeekBar>(R.id.seekBarPlayer) { progress == 20 }
         assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) {
             val actual = drawable.copy().wash()
@@ -104,6 +115,7 @@ class PlayerViewTest {
             val expected = context.getDrawableCompat(R.drawable.ic_play_arrow_white_24dp)?.wash()
             actual.equalsPixels(expected)
         }
+        assertView<ImageButton>(R.id.imgBtnPlayerPause) { !isVisible }
     }
 
     @Test
@@ -190,7 +202,7 @@ fun Drawable.equalsPixels(other: Drawable?): Boolean {
     return Arrays.equals(thisPixels, otherPixels)
 }
 
-inline fun <T: View> T.postThis(crossinline block: T.() -> Unit) {
+inline fun <T : View> T.postThis(crossinline block: T.() -> Unit) {
     this.post {
         this@postThis.block()
     }

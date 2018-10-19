@@ -8,16 +8,17 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.services.executors.KExecutor
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
-import kotlin.math.roundToLong
+import kotlin.math.roundToInt
 
 /**
  * Created by Cristian Pela on 17.10.2018.
  */
 class UpsertPlaywaveViewModel(
         private val executor: KExecutor,
-        private val playwaveRepository: PlaywaveRepository) : ViewModel() {
-
+        private val playwaveRepository: PlaywaveRepository,
+        private val playwaveSoundPlayer: PlaywaveSoundPlayer) : ViewModel() {
 
     private val searchQueryLiveData: MutableLiveData<String?> = MutableLiveData<String?>().apply {
         value = null
@@ -49,16 +50,6 @@ class UpsertPlaywaveViewModel(
 
     fun clear() {
         removeSelectedSong()
-        stopPlayerIfNeeded()
-    }
-
-    fun stopPlayerIfNeeded() {
-        playState().value = PlayingSongState.None
-    }
-
-    fun playSong(songUI: SongUI) {
-        selectedSong().value = songUI
-        playState().value = PlayingSongState.Playing(songUI, 0, songUI.durationLong)
     }
 
     fun stopSelectedSong() {
@@ -71,7 +62,8 @@ class UpsertPlaywaveViewModel(
         selectedSong().value?.let {
             val playState = playState()
             if (playState.value is PlayingSongState.Playing) {
-                playState.value = PlayingSongState.Paused(it, (playState.value as PlayingSongState.Playing).position, it.durationLong)
+                playState.value = PlayingSongState.Paused(it)
+                playwaveSoundPlayer.pause()
             }
         }
     }
@@ -80,11 +72,9 @@ class UpsertPlaywaveViewModel(
         selectedSong().value?.let {
             val playState = playState()
             if (jumpToPercent == null && playState.value is PlayingSongState.Paused) {
-                playState.value = PlayingSongState.Playing(it, (playState.value as PlayingSongState.Paused).position,
-                        it.durationLong)
+                playwaveSoundPlayer.start()
             } else if (jumpToPercent != null) {
-                playState.value = PlayingSongState.Playing(it, ((jumpToPercent / 100f) * it.durationLong).roundToLong(),
-                        it.durationLong)
+                playwaveSoundPlayer.seekTo(jumpToPercent * it.durationLong)
             }
         }
 
@@ -92,31 +82,32 @@ class UpsertPlaywaveViewModel(
 
     fun selectSong(song: SongUI) {
         selectedSong().value = song
-        playState().value = PlayingSongState.Stopped(song)
-
+        playState().value = PlayingSongState.Started(song)
+        playwaveSoundPlayer.load(song.path)
     }
 
     fun removeSelectedSong() {
-        val currentSong = selectedSongLiveData.value
         selectedSong().value = null
         val state = playState()
-        if (state.value !is PlayingSongState.None && state.value?.song?.id == currentSong?.id) {
-            state.value = PlayingSongState.None
-        }
+        state.value = PlayingSongState.None
+        playwaveSoundPlayer.unload()
     }
 
     private fun playState() = (playingSongStateLiveData as MutableLiveData)
 
+    private fun calculateProgressPercent(position: Long, total: Long): Int = ((position / total.toFloat()) * 100).roundToInt()
+
     private fun selectedSong() = (selectedSongLiveData as MutableLiveData)
 
     override fun onCleared() {
-        stopPlayerIfNeeded()
+        playwaveSoundPlayer.release()
     }
 }
 
 sealed class PlayingSongState(val song: SongUI?) {
     object None : PlayingSongState(null)
+    class Started(song: SongUI) : PlayingSongState(song)
     class Stopped(song: SongUI) : PlayingSongState(song)
-    class Playing(song: SongUI, val position: Long, val total: Long) : PlayingSongState(song)
-    class Paused(song: SongUI, val position: Long, val total: Long) : PlayingSongState(song)
+    class Playing(song: SongUI, val percent: Int) : PlayingSongState(song)
+    class Paused(song: SongUI) : PlayingSongState(song)
 }

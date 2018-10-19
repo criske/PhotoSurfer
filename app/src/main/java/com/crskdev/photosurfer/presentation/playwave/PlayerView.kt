@@ -29,6 +29,7 @@ class PlayerView : ConstraintLayout {
         LayoutInflater.from(context).inflate(R.layout.player_layout, this, true)
         imgBtnPlayerClose.setOnClickListener {
             listener?.onAction(Action.Close)
+            isVisible = false
 
         }
         imgBtnPlayerPause.setOnClickListener {
@@ -53,30 +54,40 @@ class PlayerView : ConstraintLayout {
 
     fun changeState(state: PlayingSongState) {
         when (state) {
-            is PlayingSongState.Playing -> playing(state.song!!.fullInfo, state.position, state.total)
-            is PlayingSongState.Paused -> pause(state.position, state.total)
+            is PlayingSongState.Started -> prepare(state.song!!.fullInfo)
+            is PlayingSongState.Playing -> playing(state.percent)
+            is PlayingSongState.Paused -> pause()
             is PlayingSongState.Stopped -> stop()
             else -> close()
         }
     }
 
-    private fun playing(info: String, position: Long, total: Long) {
+    private fun prepare(fullInfo: String) {
         if (!isVisible)
             isVisible = true
-        textPlayerSongInfo.text = info
-        //TODO move this to view-model
-        val progress = ((position / total.toFloat()) * 100).roundToInt()
-        seekBarPlayer.progress = progress
+        textPlayerSongInfo.text = fullInfo
         imgBtnPlayerPlayStop.apply {
-            tag = true // mark this as playing
+            tag = true // mark this as playing/pending playing
+            setImageResource(R.drawable.ic_play_arrow_white_24dp)
+            isEnabled = false
+        }
+        seekBarPlayer.isEnabled = false
+
+    }
+
+    private fun playing(percent: Int) {
+        imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_stop_white_24dp)
+            isEnabled = true
+        }
+        seekBarPlayer.apply {
+            progress = percent
+            isEnabled = true
         }
         imgBtnPlayerPause.isVisible = true
     }
 
-    private fun pause(position: Long, total: Long) {
-        val progress = ((position / total.toFloat()) * 100).roundToInt()
-        seekBarPlayer.progress = progress
+    private fun pause() {
         imgBtnPlayerPlayStop.apply {
             tag = true //mark this as stopped/paused
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
@@ -85,7 +96,8 @@ class PlayerView : ConstraintLayout {
     }
 
     private fun stop() {
-        pause(0, 100)
+        pause()
+        seekBarPlayer.progress = 0
     }
 
 
