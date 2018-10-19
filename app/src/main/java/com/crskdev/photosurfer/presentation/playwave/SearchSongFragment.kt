@@ -84,6 +84,7 @@ data class SongUI(
         val title: String,
         val artist: String,
         val duration: String,
+        val fullInfo: String,
         val durationLong: Long,
         val exists: Boolean,
         val albumPath: String? = null)

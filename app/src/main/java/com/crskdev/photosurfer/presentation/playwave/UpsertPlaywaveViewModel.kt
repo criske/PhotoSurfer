@@ -9,6 +9,7 @@ import androidx.paging.PagedList
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
+import kotlin.math.roundToLong
 
 /**
  * Created by Cristian Pela on 17.10.2018.
@@ -29,7 +30,8 @@ class UpsertPlaywaveViewModel(
                             .getAvailableSongs(query)
                             .mapByPage { p ->
                                 p.asSequence().map {
-                                    SongUI(it.id, it.path, it.title, it.artist, it.prettyDuration(), it.duration, it.exists)
+                                    SongUI(it.id, it.path, it.title, it.artist, it.prettyDuration(), it.toString(),
+                                            it.duration, it.exists)
                                 }.toList()
                             }, c)
                             .setFetchExecutor(executor)
@@ -46,30 +48,75 @@ class UpsertPlaywaveViewModel(
     }
 
     fun clear() {
-        (selectedSongLiveData as MutableLiveData).value = null
+        removeSelectedSong()
         stopPlayerIfNeeded()
     }
 
     fun stopPlayerIfNeeded() {
-        (playingSongStateLiveData as MutableLiveData).value = PlayingSongState.None
+        playState().value = PlayingSongState.None
     }
 
     fun playSong(songUI: SongUI) {
+        selectedSong().value = songUI
+        playState().value = PlayingSongState.Playing(songUI, 0, songUI.durationLong)
+    }
+
+    fun stopSelectedSong() {
+        selectedSong().value?.let {
+            playState().value = PlayingSongState.Stopped(it)
+        }
+    }
+
+    fun pauseSelectedSong() {
+        selectedSong().value?.let {
+            val playState = playState()
+            if (playState.value is PlayingSongState.Playing) {
+                playState.value = PlayingSongState.Paused(it, (playState.value as PlayingSongState.Playing).position, it.durationLong)
+            }
+        }
+    }
+
+    fun playSelectedSong(jumpToPercent: Int? = null) {
+        selectedSong().value?.let {
+            val playState = playState()
+            if (jumpToPercent == null && playState.value is PlayingSongState.Paused) {
+                playState.value = PlayingSongState.Playing(it, (playState.value as PlayingSongState.Paused).position,
+                        it.durationLong)
+            } else if (jumpToPercent != null) {
+                playState.value = PlayingSongState.Playing(it, ((jumpToPercent / 100f) * it.durationLong).roundToLong(),
+                        it.durationLong)
+            }
+        }
 
     }
 
     fun selectSong(song: SongUI) {
-        (selectedSongLiveData as MutableLiveData).value = song
+        selectedSong().value = song
+        playState().value = PlayingSongState.Stopped(song)
+
     }
 
+    fun removeSelectedSong() {
+        val currentSong = selectedSongLiveData.value
+        selectedSong().value = null
+        val state = playState()
+        if (state.value !is PlayingSongState.None && state.value?.song?.id == currentSong?.id) {
+            state.value = PlayingSongState.None
+        }
+    }
+
+    private fun playState() = (playingSongStateLiveData as MutableLiveData)
+
+    private fun selectedSong() = (selectedSongLiveData as MutableLiveData)
+
     override fun onCleared() {
-        super.onCleared()
+        stopPlayerIfNeeded()
     }
 }
 
-sealed class PlayingSongState() {
-    object None : PlayingSongState()
-    class Stopped(val song: SongUI) : PlayingSongState()
-    class Started(val song: SongUI, val position: Long, val total: Long) : PlayingSongState()
-    class Paused(val song: SongUI, val position: Long, val total: Long) : PlayingSongState()
+sealed class PlayingSongState(val song: SongUI?) {
+    object None : PlayingSongState(null)
+    class Stopped(song: SongUI) : PlayingSongState(song)
+    class Playing(song: SongUI, val position: Long, val total: Long) : PlayingSongState(song)
+    class Paused(song: SongUI, val position: Long, val total: Long) : PlayingSongState(song)
 }

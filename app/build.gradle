@@ -18,7 +18,7 @@ android {
         applicationId "com.crskdev.photosurfer"
         minSdkVersion rootProject.minSdkVersion
         targetSdkVersion rootProject.targetSdkVersion
-        testInstrumentationRunner "com.crskdev.photosurfer.PhotoSurferTestRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         versionCode 1
         versionName "0.1.4"
         vectorDrawables.useSupportLibrary true
@@ -36,11 +36,11 @@ android {
         }
     }
     flavorDimensions "default"
-    productFlavors{
-        production{
+    productFlavors {
+        production {
 
         }
-        mock{
+        mock {
 
         }
     }
@@ -62,8 +62,8 @@ repositories {
 
 dependencies {
     implementation 'androidx.multidex:multidex:2.0.0'
-
     implementation "androidx.legacy:legacy-support-v4:$rootProject.legacyVersion"
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.2'
     kapt "com.github.bumptech.glide:compiler:$rootProject.glideVersion"
     implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.lifecycleVersion"
     implementation "android.arch.navigation:navigation-fragment-ktx:$rootProject.navigationVersion"
@@ -73,7 +73,6 @@ dependencies {
 
     //job scheduler
     implementation "android.arch.work:work-runtime-ktx:$rootProject.workVersion"
-
     implementation "androidx.core:core-ktx:$rootProject.ktxVersion"
     implementation "androidx.paging:paging-runtime:$rootProject.pagingVersion"
     implementation "androidx.constraintlayout:constraintlayout:$rootProject.constraintLayoutVersion"
@@ -92,26 +91,25 @@ dependencies {
     implementation "org.jsoup:jsoup:$rootProject.jsoupVersion"
     implementation "com.github.franmontiel:PersistentCookieJar:$rootProject.persistentCoookieJar"
     implementation 'org.nanohttpd:nanohttpd:2.2.0'
-
     implementation "com.github.bumptech.glide:glide:$rootProject.glideVersion"
     annotationProcessor "com.github.bumptech.glide:compiler:$rootProject.glideVersion"
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$rootProject.kotlinVersion"
 
     //crashlytics
     implementation "com.crashlytics.sdk.android:crashlytics:$rootProject.crashlyticsVersion"
 
     // Testing dependencies
-    androidTestImplementation "androidx.test:runner:1.1.0-beta02"
+    androidTestImplementation 'androidx.annotation:annotation:1.0.0'
+    androidTestImplementation 'androidx.test:runner:1.1.0-beta02'
+    //weird androidTestImplementation is not importing the plackage, had to use implementation
+    androidTestImplementation 'androidx.test:rules:1.1.0-beta02'
+    androidTestImplementation "androidx.test.espresso:espresso-core:$rootProject.espressoVersion"
+
     androidTestImplementation "androidx.test.espresso:espresso-intents:$rootProject.espressoVersion"
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$rootProject.espressoVersion"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$rootProject.espressoVersion"
-    androidTestImplementation "androidx.multidex:multidex-instrumentation:2.0.0"
+    androidTestImplementation 'androidx.multidex:multidex-instrumentation:2.0.0'
     testImplementation "junit:junit:$rootProject.junitVersion"
-
     implementation "com.google.firebase:firebase-messaging:$rootProject.firebaseMessaging"
-
     implementation 'com.jsibbold:zoomage:1.2.0'
     implementation 'com.chauthai.swipereveallayout:swipe-reveal-layout:1.4.1'
-
 }

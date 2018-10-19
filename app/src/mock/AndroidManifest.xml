@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.crskdev.photosurfer">
+    <application tools:ignore="GoogleAppIndexingWarning"
+        android:theme="@style/AppTheme"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:name=".MockApplication">
+        <activity
+            android:name="com.crskdev.photosurfer.MockActivity"
+            android:label="MOCK" />
+    </application>
+</manifest>

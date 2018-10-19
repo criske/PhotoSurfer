@@ -26,13 +26,8 @@
             android:clipToPadding="true"
             tools:listitem="@layout/item_list_search_song" />
     </LinearLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layoutSearchSongPlayer"
-        android:layout_gravity="bottom"
-        android:background="@color/colorPrimary"
+    <com.crskdev.photosurfer.presentation.playwave.PlayerView
         android:layout_width="match_parent"
-        android:layout_height="100dp">
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_gravity="bottom"
+        android:layout_height="100dp"/>
 </FrameLayout>

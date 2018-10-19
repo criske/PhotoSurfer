@@ -12,10 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.util.TypedValue
 import android.view.*
-import androidx.annotation.ColorRes
-import androidx.annotation.FloatRange
-import androidx.annotation.NavigationRes
-import androidx.annotation.StringRes
+import androidx.annotation.*
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
@@ -246,3 +243,6 @@ inline fun NavController.attachNavGraph(@NavigationRes graphId: Int, customize: 
     inflatedGraph.customize()
     graph = inflatedGraph
 }
+
+fun Context.getDrawableCompat(@DrawableRes id: Int): Drawable? =
+        ContextCompat.getDrawable(this, id)

@@ -6,10 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.navigation.NavController
 import androidx.navigation.findNavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
@@ -40,20 +37,38 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val navController = view.findNavController()
-        imgBtnAddPlaywaveSearch.setOnClickListener {
-            navController.navigate(AddPlaywaveFragmentDirections.actionAddPlaywaveFragmentToSearchSongFragment(),
-                    defaultTransitionNavOptions())
-        }
         toolbarAddPlaywave.apply {
             setNavigationOnClickListener {
                 popNavigationBackStack()
             }
         }
         viewModel.selectedSongLiveData.observe(this, Observer {
+            val isSelected = it != null
+            imgBtnAddPlaywaveSearch.apply {
+                setImageResource(
+                        if (isSelected)
+                            R.drawable.ic_close_white_24dp
+                        else
+                            R.drawable.ic_add_white_24dp
+                )
+                setOnClickListener { _ ->
+                    if (isSelected) {
+                        viewModel.removeSelectedSong()
+                    } else {
+                        navController.navigate(AddPlaywaveFragmentDirections.actionAddPlaywaveFragmentToSearchSongFragment(),
+                                defaultTransitionNavOptions())
+                    }
+                }
+            }
             textAddPlaywaveSongTitle.text = it?.title
             textAddPlaywaveSongArtist.text = it?.artist
             textAddPlaywaveSongDuration.text = it?.duration
         })
+
+        viewModel.playingSongStateLiveData.observe(this, Observer {
+            playerAddPlaywave.changeState(it)
+        })
+
     }
 
     override fun onBackOrUpPressed() {
