@@ -19,13 +19,13 @@ import com.crskdev.photosurfer.util.livedata.filter
  */
 class PhotoDAOFacade(daoManager: DaoManager) : DataAccessor {
 
-    private val daoPhotos: PhotoDAO = daoManager.getDao(Contract.TABLE_PHOTOS)
-    private val daoLikes: PhotoLikeDAO = daoManager.getDao(Contract.TABLE_LIKE_PHOTOS)
-    private val daoUserPhotos: PhotoUserDAO = daoManager.getDao(Contract.TABLE_USER_PHOTOS)
-    private val daoSearchDAO: PhotoSearchDAO = daoManager.getDao(Contract.TABLE_SEARCH_PHOTOS)
-    private val daoCollectionPhoto: CollectionPhotoDAO = daoManager.getDao(Contract.TABLE_COLLECTION_PHOTOS)
+    private val daoPhotos: PhotoDAO                     by lazy { daoManager.getDao<PhotoDAO>(Contract.TABLE_PHOTOS) }
+    private val daoLikes: PhotoLikeDAO                  by lazy { daoManager.getDao<PhotoLikeDAO>(Contract.TABLE_LIKE_PHOTOS) }
+    private val daoUserPhotos: PhotoUserDAO             by lazy { daoManager.getDao<PhotoUserDAO>(Contract.TABLE_USER_PHOTOS) }
+    private val daoSearchDAO: PhotoSearchDAO            by lazy { daoManager.getDao<PhotoSearchDAO>(Contract.TABLE_SEARCH_PHOTOS) }
+    private val daoCollectionPhoto: CollectionPhotoDAO  by lazy { daoManager.getDao<CollectionPhotoDAO>(Contract.TABLE_COLLECTION_PHOTOS) }
 
-    private val transactional: TransactionRunner = daoManager.transactionRunner()
+    private val transactional: TransactionRunner by lazy { daoManager.transactionRunner() }
 
     fun getPhotos(table: String): DataSource.Factory<Int, out PhotoEntity> {
         return when (table) {

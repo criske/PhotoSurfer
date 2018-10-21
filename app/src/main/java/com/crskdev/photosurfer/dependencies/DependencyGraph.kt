@@ -10,6 +10,7 @@ import com.crskdev.photosurfer.data.local.photo.external.ExternalDirectory
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDB
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
+import com.crskdev.photosurfer.data.local.track.IStaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.AuthToken
@@ -31,6 +32,7 @@ import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
+import com.crskdev.photosurfer.services.schedule.IWorkQueueBookKeeper
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
@@ -53,9 +55,7 @@ object DependencyGraph {
     lateinit var executorManager: ExecutorsManager
 
     //DB
-    lateinit var db: PhotoSurferDB
-        private set
-    lateinit var staleDataTrackSupervisor: StaleDataTrackSupervisor
+    lateinit var staleDataTrackSupervisor: IStaleDataTrackSupervisor
         private set
     lateinit var daoManager: DaoManager
         private set
@@ -81,8 +81,6 @@ object DependencyGraph {
         private set
     lateinit var listenableAuthState: Listenable<AuthToken>
         private set
-    lateinit var retrofit: Retrofit
-        private set
     lateinit var progressListenerRegistrar: ProgressListenerRegistrar
         private set
     lateinit var downloadManager: DownloadManager
@@ -97,7 +95,7 @@ object DependencyGraph {
     //SCHEDULE
     lateinit var scheduledWorkManager: ScheduledWorkManager
         private set
-    lateinit var workQueueBookKeeper: WorkQueueBookKeeper
+    lateinit var workQueueBookKeeper: IWorkQueueBookKeeper
         private set
 
     //APIs
@@ -154,7 +152,7 @@ object DependencyGraph {
         authTokenStorage = graph.authTokenStorage
 
         //authTokenStorage = InMemoryAuthTokenStorage()
-        retrofit = graph.retrofit
+       // retrofit = graph.retrofit
         apiCallDispatcher = graph.apiCallDispatcher
         progressListenerRegistrar = graph.progressListenerRegistrar
         listenableAuthState = graph.listenableAuthState
@@ -164,7 +162,6 @@ object DependencyGraph {
         devicePushMessagingManager = graph.devicePushMessagingManager
 
         //db
-        db = graph.db
         staleDataTrackSupervisor = graph.staleDataTrackSupervisor
         daoManager = graph.daoManager
 
@@ -189,7 +186,9 @@ object DependencyGraph {
         collectionsAPI = graph.collectionsAPI
         collectionsRepository = graph.collectionsRepository
 
+        //playwave
         playwaveRepository = graph.playwaveRepository
+        playwaveSoundPlayer = graph.playwaveSoundPlayer
 
         //search
         searchTermTracker = graph.searchTermTracker

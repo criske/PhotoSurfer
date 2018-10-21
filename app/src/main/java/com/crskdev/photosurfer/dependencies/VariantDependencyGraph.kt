@@ -7,6 +7,7 @@ import com.crskdev.photosurfer.data.local.photo.external.ExternalDirectory
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDB
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
+import com.crskdev.photosurfer.data.local.track.IStaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.AuthToken
@@ -28,6 +29,7 @@ import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
+import com.crskdev.photosurfer.services.schedule.IWorkQueueBookKeeper
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
@@ -43,9 +45,7 @@ interface VariantDependencyGraph {
     val executorManager: ExecutorsManager
 
     //DB
-    val db: PhotoSurferDB
-
-    val staleDataTrackSupervisor: StaleDataTrackSupervisor
+    val staleDataTrackSupervisor: IStaleDataTrackSupervisor
 
     val daoManager: DaoManager
 
@@ -72,7 +72,7 @@ interface VariantDependencyGraph {
 
     val listenableAuthState: Listenable<AuthToken>
 
-    val retrofit: Retrofit
+    //val retrofit: Retrofit
 
     val progressListenerRegistrar: ProgressListenerRegistrar
 
@@ -88,7 +88,7 @@ interface VariantDependencyGraph {
     //SCHEDULE
     val scheduledWorkManager: ScheduledWorkManager
 
-    val workQueueBookKeeper: WorkQueueBookKeeper
+    val workQueueBookKeeper: IWorkQueueBookKeeper
 
 
     //APIs

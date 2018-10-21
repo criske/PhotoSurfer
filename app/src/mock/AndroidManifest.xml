@@ -1,12 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.crskdev.photosurfer">
-    <application tools:ignore="GoogleAppIndexingWarning"
-        android:theme="@style/AppTheme"
+
+    <application
+        android:name=".MockApplication"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:name=".MockApplication">
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name="com.crskdev.photosurfer.MockActivity"
-            android:label="MOCK" />
+            android:name=".MockActivity"
+            android:label="MOCK">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".TestViewComponentsActivity"
+            android:label="TEST-COMPONENTS" />
     </application>
+
 </manifest>

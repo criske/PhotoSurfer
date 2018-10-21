@@ -13,6 +13,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.util.addSearch
+import com.crskdev.photosurfer.util.hideSoftKeyboard
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_search_song.*
@@ -50,12 +51,15 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
         }
 
         val searchSongsAdapter = SearchSongAdapter(LayoutInflater.from(view.context)) {
+            activity?.hideSoftKeyboard()
             when (it) {
                 is SearchSongAction.Add -> {
                     viewModel.selectSong(it.song)
                     navController.popBackStack()
                 }
-                is SearchSongAction.Play -> viewModel.selectSong(it.song)
+                is SearchSongAction.Play -> {
+                    viewModel.selectSong(it.song)
+                }
             }
         }
         recyclerSearchSongs.apply {

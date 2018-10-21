@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.presentation.playwave
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -23,6 +24,7 @@ import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
 import com.crskdev.photosurfer.MockActivity
 import com.crskdev.photosurfer.R
+import com.crskdev.photosurfer.TestViewComponentsActivity
 import com.crskdev.photosurfer.util.getDrawableCompat
 import org.hamcrest.Description
 import org.hamcrest.Matcher
@@ -43,7 +45,8 @@ class PlayerViewTest {
 
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule<MockActivity>(MockActivity::class.java, true, true)
+    val activityRule = ActivityTestRule<TestViewComponentsActivity>(TestViewComponentsActivity::class.java, true,
+            false)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -53,30 +56,35 @@ class PlayerViewTest {
 
     @Before
     fun setup() {
-        MockActivity.layout = R.layout.player_view_test_layout
+        TestViewComponentsActivity.layout = R.layout.player_view_test_layout
+        activityRule.launchActivity(Intent(context, TestViewComponentsActivity::class.java))
     }
 
     @Test
     fun testPlayerStates() {
-
         val activity = activityRule.activity
         val player = activity.findViewById<PlayerView>(R.id.playerViewTest)
         assertView<PlayerView>(R.id.playerViewTest) { !isVisible }
 
-        //start play song
-        player.postThis { changeState(PlayingSongState.Started(song)) }
-        assertView<PlayerView>(R.id.playerViewTest) { isVisible }
+        //prepare
+        player.postThis { changeState(PlayingSongState.Prepare(song)) }
         assertView<TextView>(R.id.textPlayerSongInfo) { text == song.fullInfo }
+        assertView<PlayerView>(R.id.playerViewTest) { isVisible }
         assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) {
             val actual = drawable.copy().wash()
             val expected = context.getDrawableCompat(R.drawable.ic_play_arrow_white_24dp)?.wash()
-            isVisible && actual.equalsPixels(expected)
+            isVisible && actual.equalsPixels(expected) && !isEnabled
         }
-        assertView<ImageButton>(R.id.imgBtnPlayerPause) { !isVisible }
         assertView<SeekBar>(R.id.seekBarPlayer) { !isEnabled }
 
+        //start play song
+        player.postThis { changeState(PlayingSongState.Ready(song)) }
+        assertView<ImageButton>(R.id.imgBtnPlayerPause) { !isVisible }
+        assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) { isEnabled }
+        assertView<SeekBar>(R.id.seekBarPlayer) { isEnabled }
+
         //song position in time
-        player.postThis { changeState(PlayingSongState.Playing(song, 10)) }
+        player.postThis { changeState(PlayingSongState.Playing(song, 10, "10")) }
         assertView<SeekBar>(R.id.seekBarPlayer) { progress == 10 }
         assertView<ImageButton>(R.id.imgBtnPlayerPause) { isVisible }
         assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) {
@@ -88,7 +96,7 @@ class PlayerViewTest {
 
         //pause
         player.postThis {
-            changeState(PlayingSongState.Playing(song, 20))
+            changeState(PlayingSongState.Playing(song, 20, "20"))
             changeState(PlayingSongState.Paused(song))
         }
         assertView<SeekBar>(R.id.seekBarPlayer) { progress == 20 }
@@ -99,7 +107,7 @@ class PlayerViewTest {
         }
 
         //pause
-        player.postThis { changeState(PlayingSongState.Playing(song, 20)) }
+        player.postThis { changeState(PlayingSongState.Playing(song, 20, "20")) }
         assertView<SeekBar>(R.id.seekBarPlayer) { progress == 20 }
         assertView<ImageButton>(R.id.imgBtnPlayerPlayStop) {
             val actual = drawable.copy().wash()

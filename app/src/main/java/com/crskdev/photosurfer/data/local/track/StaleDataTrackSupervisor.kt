@@ -8,6 +8,11 @@ import com.crskdev.photosurfer.data.local.PhotoSurferDB
 import com.crskdev.photosurfer.services.NetworkCheckService
 import java.util.concurrent.TimeUnit
 
+interface IStaleDataTrackSupervisor {
+    fun runStaleDataCheck()
+    fun runStaleDataCheckForTable(table: String, ignoreNetwork: Boolean = true)
+}
+
 /**
  * Created by Cristian Pela on 20.08.2018.
  */
@@ -16,7 +21,7 @@ class StaleDataTrackSupervisor private constructor(
         private val db: PhotoSurferDB,
         staleThreshold: Long,
         unit: TimeUnit,
-        private val nowTimeProvider: NowTimeProvider) {
+        private val nowTimeProvider: NowTimeProvider) : IStaleDataTrackSupervisor {
 
     interface NowTimeProvider {
         companion object {
@@ -49,7 +54,7 @@ class StaleDataTrackSupervisor private constructor(
         })
     }
 
-    fun runStaleDataCheck() {
+    override fun runStaleDataCheck() {
         if (!networkCheckService.isNetworkAvailableAndOnline())
             return
         val tables = dao.getTables()
@@ -66,7 +71,7 @@ class StaleDataTrackSupervisor private constructor(
         }
     }
 
-    fun runStaleDataCheckForTable(table: String, ignoreNetwork: Boolean = true) {
+    override fun runStaleDataCheckForTable(table: String, ignoreNetwork: Boolean) {
         if (!ignoreNetwork) {
             if (!networkCheckService.isNetworkAvailableAndOnline())
                 return

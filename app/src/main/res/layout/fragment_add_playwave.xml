@@ -101,57 +101,32 @@
             app:layout_constraintWidth_percent="0.7"
             tools:text="Pet Shop Boys" />
 
-        <TextView
-            android:id="@+id/textAddPlaywaveSongDuration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:layout_constraintEnd_toEndOf="@+id/imageSongAlbumArt"
-            app:layout_constraintStart_toStartOf="@+id/imageSongAlbumArt"
-            app:layout_constraintTop_toBottomOf="@+id/textAddPlaywaveSongTitle"
-            tools:text="05:14" />
-
 
         <ImageButton
             android:id="@+id/imgBtnAddPlaywavePlay"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
             android:tint="@color/colorAccent"
+            android:visibility="invisible"
+            tools:visibility="visible"
             app:layout_constraintBottom_toBottomOf="@+id/imageSongAlbumArt"
+            app:layout_constraintEnd_toEndOf="@+id/imageSongAlbumArt"
             app:layout_constraintStart_toStartOf="@+id/imageSongAlbumArt"
+            app:layout_constraintTop_toBottomOf="@+id/textAddPlaywaveSongTitle"
+            app:layout_constraintVertical_bias="0.0"
             app:srcCompat="@android:drawable/ic_media_play"
             tools:ignore="ContentDescription" />
-
-        <ImageButton
-            android:id="@+id/imgBtnAddPlaywavePause"
-            style="@style/Widget.AppCompat.Button.Borderless"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginBottom="8dp"
-            android:tint="@color/colorLike"
-            app:layout_constraintBottom_toBottomOf="@+id/imageSongAlbumArt"
-            app:layout_constraintStart_toEndOf="@+id/imgBtnAddPlaywavePlay"
-            app:srcCompat="@android:drawable/ic_media_pause"
-            tools:ignore="ContentDescription" />
-
-
-        <SeekBar
-            android:id="@+id/seekBarAddPlaywave"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/imgBtnAddPlaywavePause"
-            app:layout_constraintEnd_toEndOf="@+id/imageSongAlbumArt"
-            app:layout_constraintStart_toEndOf="@+id/imgBtnAddPlaywavePause"
-            app:layout_constraintTop_toTopOf="@+id/imgBtnAddPlaywavePause" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.crskdev.photosurfer.presentation.playwave.PlayerView
         android:id="@+id/playerAddPlaywave"
+        android:visibility="invisible"
+        tools:visibility="visible"
         android:layout_width="match_parent"
         android:background="@color/colorPrimary"
         android:layout_gravity="bottom"

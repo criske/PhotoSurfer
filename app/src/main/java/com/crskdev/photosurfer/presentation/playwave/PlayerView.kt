@@ -7,12 +7,8 @@ import android.widget.SeekBar
 import androidx.annotation.IntRange
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
 import com.crskdev.photosurfer.R
 import kotlinx.android.synthetic.main.player_layout.view.*
-import kotlin.math.roundToInt
 
 /**
  * Created by Cristian Pela on 19.10.2018.
@@ -29,7 +25,7 @@ class PlayerView : ConstraintLayout {
         LayoutInflater.from(context).inflate(R.layout.player_layout, this, true)
         imgBtnPlayerClose.setOnClickListener {
             listener?.onAction(Action.Close)
-            isVisible = false
+            close(null)
 
         }
         imgBtnPlayerPause.setOnClickListener {
@@ -38,56 +34,72 @@ class PlayerView : ConstraintLayout {
         imgBtnPlayerPlayStop?.setOnClickListener { v ->
             (v.tag as Boolean?)?.let {
                 val isPlaying = it
+                v.tag = !it // toggle  playing state
                 listener?.onAction(if (isPlaying) Action.Stop else Action.Play)
             }
         }
         seekBarPlayer.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) = Unit
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                listener?.onAction(Action.SkipTo(progress))
+            }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                listener?.onAction(Action.JumpTo(seekBar.progress))
+                listener?.onAction(Action.SkipTo(seekBar.progress, true))
             }
         })
     }
 
     fun changeState(state: PlayingSongState) {
         when (state) {
-            is PlayingSongState.Started -> prepare(state.song!!.fullInfo)
-            is PlayingSongState.Playing -> playing(state.percent)
-            is PlayingSongState.Paused -> pause()
-            is PlayingSongState.Stopped -> stop()
-            else -> close()
+            is PlayingSongState.Prepare -> prepare(state.song!!.fullInfo)
+            is PlayingSongState.Ready -> ready()
+            is PlayingSongState.Playing -> playing(state)
+            is PlayingSongState.Paused,
+            is PlayingSongState.Completed -> pauseOrComplete(state)
+            is PlayingSongState.Stopped -> stop(state)
+            else -> close(state)
         }
     }
 
+    private fun ready() {
+        seekBarPlayer.isEnabled = true
+        imgBtnPlayerPlayStop.isEnabled = true
+    }
+
     private fun prepare(fullInfo: String) {
-        if (!isVisible)
-            isVisible = true
+        isVisible = true
         textPlayerSongInfo.text = fullInfo
         imgBtnPlayerPlayStop.apply {
-            tag = true // mark this as playing/pending playing
+            tag = false // mark this as playing/pending playing
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
             isEnabled = false
         }
         seekBarPlayer.isEnabled = false
-
     }
 
-    private fun playing(percent: Int) {
+    private fun makeSureIsPreparedAndReady(state: PlayingSongState) {
+        if (!isVisible) {
+            prepare(state.song!!.fullInfo)
+            ready()
+        }
+    }
+
+    private fun playing(state: PlayingSongState.Playing) {
+        makeSureIsPreparedAndReady(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_stop_white_24dp)
-            isEnabled = true
         }
         seekBarPlayer.apply {
-            progress = percent
-            isEnabled = true
+            progress = state.percent
         }
         imgBtnPlayerPause.isVisible = true
+        textPlayerSeekPosition.text = state.positionDisplay
     }
 
-    private fun pause() {
+    private fun pauseOrComplete(state: PlayingSongState) {
+        makeSureIsPreparedAndReady(state)
         imgBtnPlayerPlayStop.apply {
             tag = true //mark this as stopped/paused
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
@@ -95,19 +107,21 @@ class PlayerView : ConstraintLayout {
         imgBtnPlayerPause.isVisible = false
     }
 
-    private fun stop() {
-        pause()
+    private fun stop(state: PlayingSongState) {
+        pauseOrComplete(state)
         seekBarPlayer.progress = 0
     }
 
-
-    fun onActionListener(closeListener: PlayerListener) {
-        this.listener = closeListener
+    fun setOnPlayerListener(listener: PlayerListener) {
+        this.listener = listener
     }
 
-    private fun close() {
-        stop()
+    private fun close(state: PlayingSongState?) {
+        state?.let {
+            stop(state)
+        }
         isVisible = false
+        textPlayerSongInfo.text = null
     }
 
     sealed class Action {
@@ -115,7 +129,7 @@ class PlayerView : ConstraintLayout {
         object Stop : Action()
         object Pause : Action()
         object Close : Action()
-        class JumpTo(@IntRange(from = 0, to = 100) val percent: Int) : Action()
+        class SkipTo(@IntRange(from = 0, to = 100) val percent: Int, val confirmedToPlay: Boolean = false) : Action()
     }
 
     interface PlayerListener {

@@ -15,9 +15,9 @@ interface PlaywaveSoundPlayer {
 
     }
 
-    fun load(songPath: String)
+    fun load(songPath: String, duration: Long)
 
-    fun start()
+    fun play()
 
     fun stop()
 
@@ -42,11 +42,11 @@ class PlaywaveSoundPlayerImpl: PlaywaveSoundPlayer{
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun load(songPath: String) {
+    override fun load(songPath: String, duration: Long) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun start() {
+    override fun play() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

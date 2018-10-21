@@ -1,6 +1,7 @@
 package com.crskdev.photosurfer.util
 
 import android.animation.Animator
+import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -12,6 +13,7 @@ import android.net.Uri
 import android.os.Build
 import android.util.TypedValue
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import androidx.annotation.*
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.SearchView
@@ -19,6 +21,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.GestureDetectorCompat
@@ -246,3 +249,8 @@ inline fun NavController.attachNavGraph(@NavigationRes graphId: Int, customize: 
 
 fun Context.getDrawableCompat(@DrawableRes id: Int): Drawable? =
         ContextCompat.getDrawable(this, id)
+
+fun Activity.hideSoftKeyboard() {
+    val view = currentFocus ?: View(this);
+    getSystemService<InputMethodManager>()?.hideSoftInputFromWindow(view.windowToken, 0);
+}

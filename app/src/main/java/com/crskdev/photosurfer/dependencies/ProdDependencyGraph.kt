@@ -74,7 +74,7 @@ open class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
             APIKeys(BuildConfig.ACCESS_KEY, BuildConfig.SECRET_KEY, BuildConfig.REDIRECT_URI),
             persistentCookieJar
     ))
-    override val retrofit = retrofitClient.retrofit!!
+    private val retrofit = retrofitClient.retrofit!!
     override val progressListenerRegistrar = ProgressListenerRegistrarImpl(retrofitClient)
 
     //messaging
@@ -86,7 +86,7 @@ open class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
             authTokenStorage as ObservableAuthTokenStorage)
 
     //db
-    override val db = PhotoSurferDB.create(context, false)
+    private val db = PhotoSurferDB.create(context, false)
     override val staleDataTrackSupervisor = StaleDataTrackSupervisor.install(networkCheckService, db)
     override val daoManager = DaoManager(DatabaseOpsImpl(db, TransactionRunnerImpl(db)),
             mapOf(

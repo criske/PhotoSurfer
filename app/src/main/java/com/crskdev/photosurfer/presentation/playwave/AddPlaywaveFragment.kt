@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
@@ -45,6 +46,20 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
                 popNavigationBackStack()
             }
         }
+        imgBtnAddPlaywaveSearch.setOnClickListener { v ->
+            val isSelected = (v.tag as Boolean?) ?: false
+            if (isSelected) {
+                viewModel.removeSelectedSong()
+            } else {
+                navController.navigate(AddPlaywaveFragmentDirections.actionAddPlaywaveFragmentToSearchSongFragment(),
+                        defaultTransitionNavOptions())
+            }
+        }
+        imgBtnAddPlaywavePlay.setOnClickListener { v ->
+            viewModel.playSelectedSong()
+            v.isVisible = false
+        }
+
         viewModel.selectedSongLiveData.observe(this, Observer {
             val isSelected = it != null
             imgBtnAddPlaywaveSearch.apply {
@@ -54,22 +69,34 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
                         else
                             R.drawable.ic_add_white_24dp
                 )
-                setOnClickListener { _ ->
-                    if (isSelected) {
-                        viewModel.removeSelectedSong()
-                    } else {
-                        navController.navigate(AddPlaywaveFragmentDirections.actionAddPlaywaveFragmentToSearchSongFragment(),
-                                defaultTransitionNavOptions())
-                    }
-                }
+
+                tag = isSelected
             }
+            playerAddPlaywave.isVisible = isSelected
+            imgBtnAddPlaywavePlay.isVisible = isSelected
             textAddPlaywaveSongTitle.text = it?.title
             textAddPlaywaveSongArtist.text = it?.artist
-            textAddPlaywaveSongDuration.text = it?.duration
         })
 
         viewModel.playingSongStateLiveData.observe(this, Observer {
             playerAddPlaywave.changeState(it)
+        })
+
+        playerAddPlaywave.setOnPlayerListener(object : PlayerView.PlayerListener{
+            override fun onAction(action: PlayerView.Action) {
+                when(action){
+                    is PlayerView.Action.Close ->{
+                        val isSelected = (imgBtnAddPlaywaveSearch.tag as Boolean?) ?: false
+                        if(isSelected)
+                            imgBtnAddPlaywavePlay.isVisible = true
+                    }
+                    is PlayerView.Action.Play -> viewModel.playSelectedSong()
+                    is PlayerView.Action.Pause -> viewModel.pauseSelectedSong()
+                    is PlayerView.Action.Stop -> viewModel.stopSelectedSong()
+                    is PlayerView.Action.SkipTo -> viewModel.skipTo(action.percent, action.confirmedToPlay)
+                }
+            }
+
         })
 
     }

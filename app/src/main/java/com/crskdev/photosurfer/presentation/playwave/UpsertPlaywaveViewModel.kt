@@ -31,7 +31,7 @@ class UpsertPlaywaveViewModel(
                             .getAvailableSongs(query)
                             .mapByPage { p ->
                                 p.asSequence().map {
-                                    SongUI(it.id, it.path, it.title, it.artist, it.prettyDuration(), it.toString(),
+                                    SongUI(it.id, it.path, it.title, it.artist, prettySongDuration(it.duration), it.toString(),
                                             it.duration, it.exists)
                                 }.toList()
                             }, c)
@@ -43,6 +43,31 @@ class UpsertPlaywaveViewModel(
     val playingSongStateLiveData: LiveData<PlayingSongState> = MutableLiveData()
 
     var selectedSongLiveData: LiveData<SongUI?> = MutableLiveData<SongUI>()
+
+    init {
+        playwaveSoundPlayer.setTrackListener(object : PlaywaveSoundPlayer.TrackListener {
+            override fun onReady() {
+                selectedSong().value?.let {
+                    playState().postValue(PlayingSongState.Ready(it))
+                }
+
+            }
+
+            override fun onTrack(position: Long) {
+                selectedSong().value?.let {
+                    val percent = positionPercent(position, it.durationLong)
+                    println("$position, ${it.durationLong} $percent")
+                    playState().postValue(PlayingSongState.Playing(it, percent, positionDisplay(percent, it.durationLong)))
+                }
+            }
+
+            override fun complete() {
+                selectedSong().value?.let {
+                    playState().postValue(PlayingSongState.Completed(it))
+                }
+            }
+        })
+    }
 
     fun search(query: String?) {
         searchQueryLiveData.value = query
@@ -68,22 +93,26 @@ class UpsertPlaywaveViewModel(
         }
     }
 
-    fun playSelectedSong(jumpToPercent: Int? = null) {
+    fun playSelectedSong() {
         selectedSong().value?.let {
-            val playState = playState()
-            if (jumpToPercent == null && playState.value is PlayingSongState.Paused) {
-                playwaveSoundPlayer.start()
-            } else if (jumpToPercent != null) {
-                playwaveSoundPlayer.seekTo(jumpToPercent * it.durationLong)
-            }
+            playwaveSoundPlayer.play()
         }
 
     }
 
+    fun skipTo(percent: Int, confirmedToPlayAt: Boolean = false) {
+        selectedSong().value?.let {
+            playState().value = PlayingSongState.Playing(it, percent, positionDisplay(percent, it.durationLong))
+            if (confirmedToPlayAt) {
+                playwaveSoundPlayer.seekTo(realPosition(percent, it.durationLong))
+            }
+        }
+    }
+
     fun selectSong(song: SongUI) {
         selectedSong().value = song
-        playState().value = PlayingSongState.Started(song)
-        playwaveSoundPlayer.load(song.path)
+        playState().value = PlayingSongState.Prepare(song)
+        playwaveSoundPlayer.load(song.path, song.durationLong)
     }
 
     fun removeSelectedSong() {
@@ -95,7 +124,15 @@ class UpsertPlaywaveViewModel(
 
     private fun playState() = (playingSongStateLiveData as MutableLiveData)
 
-    private fun calculateProgressPercent(position: Long, total: Long): Int = ((position / total.toFloat()) * 100).roundToInt()
+    private fun positionPercent(realPosition: Long, duration: Long): Int =
+            ((realPosition / duration.toFloat()) * 100).roundToInt()
+
+    private fun positionDisplay(percent: Int, duration: Long): String {
+        val realPosition = realPosition(percent, duration)
+        return prettySongDuration(realPosition)
+    }
+
+    private fun realPosition(percent: Int, duration: Long) = percent * duration
 
     private fun selectedSong() = (selectedSongLiveData as MutableLiveData)
 
@@ -106,8 +143,10 @@ class UpsertPlaywaveViewModel(
 
 sealed class PlayingSongState(val song: SongUI?) {
     object None : PlayingSongState(null)
-    class Started(song: SongUI) : PlayingSongState(song)
+    class Prepare(song: SongUI) : PlayingSongState(song)
+    class Ready(song: SongUI) : PlayingSongState(song)
     class Stopped(song: SongUI) : PlayingSongState(song)
-    class Playing(song: SongUI, val percent: Int) : PlayingSongState(song)
+    class Playing(song: SongUI, val percent: Int, val positionDisplay: String) : PlayingSongState(song)
     class Paused(song: SongUI) : PlayingSongState(song)
+    class Completed(song: SongUI) : PlayingSongState(song)
 }
