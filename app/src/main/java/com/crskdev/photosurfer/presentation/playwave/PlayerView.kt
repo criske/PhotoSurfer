@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.SeekBar
-import androidx.annotation.IntRange
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.crskdev.photosurfer.R
@@ -25,8 +24,6 @@ class PlayerView : ConstraintLayout {
         LayoutInflater.from(context).inflate(R.layout.player_layout, this, true)
         imgBtnPlayerClose.setOnClickListener {
             listener?.onAction(Action.Close)
-            close(null)
-
         }
         imgBtnPlayerPause.setOnClickListener {
             listener?.onAction(Action.Pause)
@@ -57,6 +54,7 @@ class PlayerView : ConstraintLayout {
 
     fun changeState(state: PlayingSongState) {
         when (state) {
+            is PlayingSongState.None -> reset()
             is PlayingSongState.Prepare -> prepare(state.song!!)
             is PlayingSongState.Ready -> ready()
             is PlayingSongState.Playing -> playing(state)
@@ -64,7 +62,6 @@ class PlayerView : ConstraintLayout {
             is PlayingSongState.Paused,
             is PlayingSongState.Completed -> pauseOrComplete(state)
             is PlayingSongState.Stopped -> stop(state)
-            else -> close(state)
         }
     }
 
@@ -125,18 +122,26 @@ class PlayerView : ConstraintLayout {
     private fun stop(state: PlayingSongState) {
         pauseOrComplete(state)
         seekBarPlayer.progress = 0
+        textPlayerSeekPosition.text = null
+    }
+
+    private fun reset() {
+        imgBtnPlayerPlayStop.apply {
+            setImageResource(R.drawable.ic_play_arrow_white_24dp)
+            isEnabled = false
+        }
+        imgBtnPlayerPause.isVisible = false
+        seekBarPlayer.apply {
+            progress = 0
+            isEnabled = false
+        }
+        textPlayerSongInfo.text = null
+        textPlayerSeekPosition.text = null
+        isVisible = false
     }
 
     fun setOnPlayerListener(listener: PlayerListener) {
         this.listener = listener
-    }
-
-    private fun close(state: PlayingSongState?) {
-        state?.let {
-            stop(state)
-        }
-        isVisible = false
-        textPlayerSongInfo.text = null
     }
 
     sealed class Action {

@@ -141,11 +141,8 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
     }
 
     fun justStop() {
-        val s = state.value
-        if (s !is PlayingSongState.None) {
-            state.postValue(PlayingSongState.Stopped(s!!.song!!))
-            soundPlayer.stop()
-        }
+        state.postValue(PlayingSongState.None)
+        soundPlayer.stop()
     }
 
     fun playOrStop() {
