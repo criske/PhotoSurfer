@@ -33,13 +33,16 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
     private val playingJob: Runnable = object : Runnable {
         override fun run() {
             val total = total.get()
-            val nextPosition = position.addAndGet(100)
+            assert(total > 0)
+            val nextPosition = position.addAndGet(ONE_SECOND)
             if (nextPosition >= total) {
                 listener?.complete()
+                position.set(0)
                 handler?.removeCallbacks(this)
             } else {
                 listener?.onTrack(nextPosition)
-                handler?.postDelayed(this, 100)
+                handler?.postDelayed(this, ONE_SECOND)
+                Integer.MAX_VALUE
             }
         }
     }
@@ -59,7 +62,7 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
     }
 
     override fun load(songPath: String, duration: Long) {
-        unload()
+        unload()//unload first
         total.set(duration)
         handler?.postDelayed(1000) {
             listener?.onReady()
@@ -67,15 +70,21 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
     }
 
     override fun play() {
+        assert(total.get() > 0) {
+            "Song not loaded"
+        }
+        handler?.removeCallbacks(playingJob)
         handler?.post(playingJob)
     }
 
     override fun stop() {
-        unload()
+        handler?.removeCallbacks(playingJob)
+        position.set(0)
     }
 
     override fun seekTo(position: Long) {
         this.position.set(position)
+        play()
     }
 
     override fun unload() {
@@ -87,6 +96,5 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
     override fun setTrackListener(trackListener: PlaywaveSoundPlayer.TrackListener) {
         this.listener = trackListener
     }
-
 
 }

@@ -32,30 +32,35 @@ class PlayerView : ConstraintLayout {
             listener?.onAction(Action.Pause)
         }
         imgBtnPlayerPlayStop?.setOnClickListener { v ->
-            (v.tag as Boolean?)?.let {
-                val isPlaying = it
-                v.tag = !it // toggle  playing state
-                listener?.onAction(if (isPlaying) Action.Stop else Action.Play)
-            }
+            listener?.onAction(Action.PlayOrStop)
         }
         seekBarPlayer.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+            var startManualSeek = false
+
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                listener?.onAction(Action.SkipTo(progress))
+                if (startManualSeek) {
+                    listener?.onAction(Action.SeekTo(progress))
+                }
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+                startManualSeek = true
+            }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                listener?.onAction(Action.SkipTo(seekBar.progress, true))
+                listener?.onAction(Action.SeekTo(seekBar.progress, true))
+                startManualSeek = false
             }
         })
     }
 
     fun changeState(state: PlayingSongState) {
         when (state) {
-            is PlayingSongState.Prepare -> prepare(state.song!!.fullInfo)
+            is PlayingSongState.Prepare -> prepare(state.song!!)
             is PlayingSongState.Ready -> ready()
             is PlayingSongState.Playing -> playing(state)
+            is PlayingSongState.Seeking -> seeking(state)
             is PlayingSongState.Paused,
             is PlayingSongState.Completed -> pauseOrComplete(state)
             is PlayingSongState.Stopped -> stop(state)
@@ -68,40 +73,50 @@ class PlayerView : ConstraintLayout {
         imgBtnPlayerPlayStop.isEnabled = true
     }
 
-    private fun prepare(fullInfo: String) {
+    private fun prepare(song: SongUI) {
         isVisible = true
-        textPlayerSongInfo.text = fullInfo
+        textPlayerSongInfo.text = song.fullInfo
         imgBtnPlayerPlayStop.apply {
-            tag = false // mark this as playing/pending playing
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
             isEnabled = false
         }
-        seekBarPlayer.isEnabled = false
+        seekBarPlayer.apply {
+            isEnabled = false
+            max = song.durationLong.toInt()
+        }
     }
 
     private fun makeSureIsPreparedAndReady(state: PlayingSongState) {
         if (!isVisible) {
-            prepare(state.song!!.fullInfo)
+            prepare(state.song!!)
             ready()
         }
     }
+
+    private fun seeking(state: PlayingSongState.Seeking) {
+        makeSureIsPreparedAndReady(state)
+        seekBarPlayer.apply {
+            progress = state.position.toInt()
+        }
+        textPlayerSeekPosition.text = state.positionDisplay
+    }
+
 
     private fun playing(state: PlayingSongState.Playing) {
         makeSureIsPreparedAndReady(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_stop_white_24dp)
         }
-        seekBarPlayer.apply {
-            progress = state.percent
-        }
         imgBtnPlayerPause.isVisible = true
+        seekBarPlayer.apply {
+            progress = state.position.toInt()
+        }
         textPlayerSeekPosition.text = state.positionDisplay
     }
 
     private fun pauseOrComplete(state: PlayingSongState) {
         makeSureIsPreparedAndReady(state)
         imgBtnPlayerPlayStop.apply {
-            tag = true //mark this as stopped/paused
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
         }
         imgBtnPlayerPause.isVisible = false
@@ -125,11 +140,10 @@ class PlayerView : ConstraintLayout {
     }
 
     sealed class Action {
-        object Play : Action()
-        object Stop : Action()
+        object PlayOrStop : Action()
         object Pause : Action()
         object Close : Action()
-        class SkipTo(@IntRange(from = 0, to = 100) val percent: Int, val confirmedToPlay: Boolean = false) : Action()
+        class SeekTo( val position: Int, val confirmedToPlay: Boolean = false) : Action()
     }
 
     interface PlayerListener {

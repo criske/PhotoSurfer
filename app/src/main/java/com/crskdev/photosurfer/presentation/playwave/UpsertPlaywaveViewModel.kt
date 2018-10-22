@@ -10,7 +10,8 @@ import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
-import kotlin.math.roundToInt
+import java.lang.Exception
+import java.lang.IllegalStateException
 
 /**
  * Created by Cristian Pela on 17.10.2018.
@@ -18,11 +19,13 @@ import kotlin.math.roundToInt
 class UpsertPlaywaveViewModel(
         private val executor: KExecutor,
         private val playwaveRepository: PlaywaveRepository,
-        private val playwaveSoundPlayer: PlaywaveSoundPlayer) : ViewModel() {
+        playwaveSoundPlayer: PlaywaveSoundPlayer) : ViewModel() {
 
     private val searchQueryLiveData: MutableLiveData<String?> = MutableLiveData<String?>().apply {
         value = null
     }
+
+    private val songStateController = PlayingSongStateController(playwaveSoundPlayer)
 
     val foundSongsLiveData: LiveData<PagedList<SongUI>> = Transformations.switchMap(searchQueryLiveData) { query ->
         defaultPageListConfig()
@@ -40,34 +43,9 @@ class UpsertPlaywaveViewModel(
                 }
     }
 
-    val playingSongStateLiveData: LiveData<PlayingSongState> = MutableLiveData()
+    val playingSongStateLiveData: LiveData<PlayingSongState> = songStateController.getStateLiveData()
 
     var selectedSongLiveData: LiveData<SongUI?> = MutableLiveData<SongUI>()
-
-    init {
-        playwaveSoundPlayer.setTrackListener(object : PlaywaveSoundPlayer.TrackListener {
-            override fun onReady() {
-                selectedSong().value?.let {
-                    playState().postValue(PlayingSongState.Ready(it))
-                }
-
-            }
-
-            override fun onTrack(position: Long) {
-                selectedSong().value?.let {
-                    val percent = positionPercent(position, it.durationLong)
-                    println("$position, ${it.durationLong} $percent")
-                    playState().postValue(PlayingSongState.Playing(it, percent, positionDisplay(percent, it.durationLong)))
-                }
-            }
-
-            override fun complete() {
-                selectedSong().value?.let {
-                    playState().postValue(PlayingSongState.Completed(it))
-                }
-            }
-        })
-    }
 
     fun search(query: String?) {
         searchQueryLiveData.value = query
@@ -77,67 +55,42 @@ class UpsertPlaywaveViewModel(
         removeSelectedSong()
     }
 
-    fun stopSelectedSong() {
-        selectedSong().value?.let {
-            playState().value = PlayingSongState.Stopped(it)
-        }
-    }
-
     fun pauseSelectedSong() {
-        selectedSong().value?.let {
-            val playState = playState()
-            if (playState.value is PlayingSongState.Playing) {
-                playState.value = PlayingSongState.Paused(it)
-                playwaveSoundPlayer.pause()
+        songStateController.pause()
+    }
+
+    fun playOrStopSelectedSong() {
+        try {
+            songStateController.playOrStop()
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            selectedSong().value?.let {
+                songStateController.prepare(it)
             }
         }
     }
 
-    fun playSelectedSong() {
-        selectedSong().value?.let {
-            playwaveSoundPlayer.play()
-        }
-
-    }
-
-    fun skipTo(percent: Int, confirmedToPlayAt: Boolean = false) {
-        selectedSong().value?.let {
-            playState().value = PlayingSongState.Playing(it, percent, positionDisplay(percent, it.durationLong))
-            if (confirmedToPlayAt) {
-                playwaveSoundPlayer.seekTo(realPosition(percent, it.durationLong))
-            }
-        }
+    fun seekTo(position: Long, confirmedToPlayAt: Boolean = false) {
+        songStateController.seekTo(position, confirmedToPlayAt)
     }
 
     fun selectSong(song: SongUI) {
         selectedSong().value = song
-        playState().value = PlayingSongState.Prepare(song)
-        playwaveSoundPlayer.load(song.path, song.durationLong)
     }
 
     fun removeSelectedSong() {
         selectedSong().value = null
-        val state = playState()
-        state.value = PlayingSongState.None
-        playwaveSoundPlayer.unload()
+        songStateController.clear()
     }
-
-    private fun playState() = (playingSongStateLiveData as MutableLiveData)
-
-    private fun positionPercent(realPosition: Long, duration: Long): Int =
-            ((realPosition / duration.toFloat()) * 100).roundToInt()
-
-    private fun positionDisplay(percent: Int, duration: Long): String {
-        val realPosition = realPosition(percent, duration)
-        return prettySongDuration(realPosition)
-    }
-
-    private fun realPosition(percent: Int, duration: Long) = percent * duration
 
     private fun selectedSong() = (selectedSongLiveData as MutableLiveData)
 
     override fun onCleared() {
-        playwaveSoundPlayer.release()
+        songStateController.release()
+    }
+
+    fun justStop() {
+        songStateController.justStop()
     }
 }
 
@@ -146,7 +99,135 @@ sealed class PlayingSongState(val song: SongUI?) {
     class Prepare(song: SongUI) : PlayingSongState(song)
     class Ready(song: SongUI) : PlayingSongState(song)
     class Stopped(song: SongUI) : PlayingSongState(song)
-    class Playing(song: SongUI, val percent: Int, val positionDisplay: String) : PlayingSongState(song)
-    class Paused(song: SongUI) : PlayingSongState(song)
+    class Playing(song: SongUI, val position: Long, val positionDisplay: String) : PlayingSongState(song)
+    class Seeking(song: SongUI, val position: Long, val positionDisplay: String, val stateBeforeSeek: PlayingSongState,
+                  val confirmedToPlayAt: Boolean) : PlayingSongState(song)
+
+    class Paused(song: SongUI, val position: Long, val positionDisplay: String) : PlayingSongState(song)
     class Completed(song: SongUI) : PlayingSongState(song)
+}
+
+class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) : PlaywaveSoundPlayer.TrackListener {
+
+    private val state: MutableLiveData<PlayingSongState> = MutableLiveData<PlayingSongState>().apply {
+        PlayingSongState.None
+    }
+
+    init {
+        soundPlayer.setTrackListener(this)
+    }
+
+    fun getStateLiveData(): LiveData<PlayingSongState> = state
+
+    fun clear() {
+        state.postValue(PlayingSongState.None)
+        soundPlayer.unload()
+    }
+
+    fun release() = soundPlayer.release()
+
+    fun prepare(song: SongUI) {
+        state.postValue(PlayingSongState.Prepare(song))
+        soundPlayer.load(song.path, song.durationLong)
+    }
+
+    fun pause() {
+        assert(state.value is PlayingSongState.Playing) {
+            "The state before PAUSE must be PLAYING"
+        }
+        val s = state.value!! as PlayingSongState.Playing
+        state.postValue(PlayingSongState.Paused(s.song!!, s.position, s.positionDisplay))
+        soundPlayer.pause()
+    }
+
+    fun justStop() {
+        val s = state.value
+        if (s !is PlayingSongState.None) {
+            state.postValue(PlayingSongState.Stopped(s!!.song!!))
+            soundPlayer.stop()
+        }
+    }
+
+    fun playOrStop() {
+        val s = state.value!!
+        val nextState = when (s) {
+            is PlayingSongState.Playing -> PlayingSongState.Stopped(s.song!!)
+                    .apply {
+                        soundPlayer.stop()
+                    }
+            is PlayingSongState.Stopped,
+            is PlayingSongState.Ready,
+            is PlayingSongState.Completed -> PlayingSongState.Playing(s.song!!, 0, prettySongPosition(0, s.song.durationLong))
+                    .apply {
+                        soundPlayer.play()
+                    }
+            is PlayingSongState.Paused -> PlayingSongState.Playing(s.song!!, s.position, s.positionDisplay)
+                    .apply {
+                        soundPlayer.play()
+                    }
+            is PlayingSongState.Seeking -> PlayingSongState.Playing(s.song!!, s.position, s.positionDisplay)
+                    .apply {
+                        soundPlayer.seekTo(position)
+                    }
+            else -> throw IllegalStateException("State before PLAY/STOP not allowed: $s") // should not reach this
+        }
+        state.postValue(nextState)
+    }
+
+    fun seekTo(position: Long, confirmedToPlayAt: Boolean) {
+        assert(state.value !is PlayingSongState.None
+                || state.value !is PlayingSongState.Prepare) {
+            "The state before SEEK must not be NONE or PREPARE"
+        }
+        val s = state.value!!
+        if (confirmedToPlayAt) {
+            assert(state.value is PlayingSongState.Seeking) {
+                "The state before confirmation SEEK must be SEEK"
+            }
+            val stateBeforeSeek = (s as PlayingSongState.Seeking).stateBeforeSeek
+            if (stateBeforeSeek is PlayingSongState.Playing) { // we only seek the system player if the last state before seek was play
+                soundPlayer.seekTo(position)
+            }
+            state.postValue(PlayingSongState.Seeking(s.song!!, position, prettySongDuration(position), stateBeforeSeek,
+                    true))
+        } else {
+            val stateBeforeSeek = if (s is PlayingSongState.Seeking) {
+                s.stateBeforeSeek
+            } else {
+                s
+            }
+            state.postValue(PlayingSongState.Seeking(s.song!!, position, prettySongDuration(position),
+                    stateBeforeSeek, false))
+        }
+    }
+
+
+    override fun onReady() {
+        assert(state.value is PlayingSongState.Prepare) {
+            "The state before READY must be PREPARE"
+        }
+        state.postValue(PlayingSongState.Ready(state.value!!.song!!))
+    }
+
+    override fun onTrack(position: Long) {
+        assert(state.value !is PlayingSongState.None) {
+            "The state before PLAYING must not be NONE"
+        }
+        val s = state.value!!
+        if (s !is PlayingSongState.Seeking || s.confirmedToPlayAt) { //while seeking and not confirmed from ui don't dispatch playing cues
+            val song = s.song!!
+            state.postValue(PlayingSongState.Playing(song,
+                    position,
+                    prettySongDuration(position))
+            )
+        }
+    }
+
+    override fun complete() {
+        assert(state.value is PlayingSongState.Playing) {
+            "The state before COMPLETED must be PLAYING"
+        }
+        state.postValue(PlayingSongState.Completed(state.value!!.song!!))
+    }
+
 }
