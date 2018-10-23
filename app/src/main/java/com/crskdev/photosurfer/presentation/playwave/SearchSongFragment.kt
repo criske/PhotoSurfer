@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
+import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
+import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.util.addSearch
 import com.crskdev.photosurfer.util.hideSoftKeyboard
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
@@ -20,7 +22,7 @@ import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_add_playwave.*
 import kotlinx.android.synthetic.main.fragment_search_song.*
 
-class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
+class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermissionAwareness {
 
     private lateinit var viewModel: UpsertPlaywaveViewModel
 
@@ -44,7 +46,7 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
 
         val navController by lazy(LazyThreadSafetyMode.NONE) { findNavController() }
         toolbarSearchSongs.apply {
-            menu.addSearch(context, R.string.search_songs, true, onChange = {
+            menu.addSearch(context, R.string.search_songs, false, onChange = {
                 viewModel.search(it)
             })
             setNavigationOnClickListener {
@@ -60,12 +62,16 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
                     navController.popBackStack()
                 }
                 is SearchSongAction.Play -> {
-                    viewModel.selectSongToPlay(it.song)
+                    if(AppPermissionsHelper.hasStoragePermission(view.context)){
+                        viewModel.selectSongToPlay(it.song)
+                    }else{
+                        AppPermissionsHelper.requestStoragePermission(activity!!)
+                    }
                 }
             }
         }
         recyclerSearchSongs.apply {
-            addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.HORIZONTAL))
+            addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
             adapter = searchSongsAdapter
         }
 
@@ -87,6 +93,10 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
                 }
             }
         })
+
+    }
+
+    override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
 
     }
 

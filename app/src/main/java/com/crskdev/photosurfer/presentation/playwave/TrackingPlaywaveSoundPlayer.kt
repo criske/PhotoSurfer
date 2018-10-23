@@ -1,8 +1,10 @@
-package com.crskdev.photosurfer.services.playwave
+package com.crskdev.photosurfer.presentation.playwave
 
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import androidx.core.os.postDelayed
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
@@ -10,7 +12,9 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * Created by Cristian Pela on 19.10.2018.
  */
-class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
+class TrackingPlaywaveSoundPlayer(val isReadyCalledFromOutSide: Boolean = true)
+    : PlaywaveSoundPlayer {
+
 
     private var handler: Handler? = null
 
@@ -51,6 +55,13 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
         playerThread.start()
     }
 
+    fun makeReady() {
+        if (isReadyCalledFromOutSide)
+            listener?.onReady()
+        else
+            Log.w(TrackingPlaywaveSoundPlayer::javaClass.name, "listener#onReady() is set to be called internaly. " +
+                    "You can change that in constructor")
+    }
 
     override fun pause() {
         handler?.removeCallbacks(playingJob)
@@ -59,20 +70,24 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
     override fun release() {
         listener = null
         handler?.removeCallbacks(playingJob)
+        playerThread.quit()
     }
 
     override fun load(songPath: String, duration: Long) {
         unload()//unload first
         total.set(duration)
-        handler?.postDelayed(ONE_SECOND) {
-            listener?.onReady()
+        if (isReadyCalledFromOutSide) {
+            handler?.postDelayed(2000) {
+                listener?.onReady()
+            }
         }
     }
 
-    override fun play() {
+    override fun play(position: Long) {
         assert(total.get() > 0) {
             "Song not loaded"
         }
+        this.position.set(position)
         handler?.removeCallbacks(playingJob)
         handler?.post(playingJob)
     }
@@ -83,8 +98,7 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
     }
 
     override fun seekTo(position: Long) {
-        this.position.set(position)
-        play()
+        play(position)
     }
 
     override fun unload() {

@@ -45,8 +45,9 @@ import com.crskdev.photosurfer.services.messaging.messages.Message
 import com.crskdev.photosurfer.services.messaging.remote.FCMMessage
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
 import com.crskdev.photosurfer.services.messaging.remote.UserDevices
-import com.crskdev.photosurfer.services.playwave.MockPlaywaveSoundPlayer
+import com.crskdev.photosurfer.presentation.playwave.TrackingPlaywaveSoundPlayer
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayerImpl
 import com.crskdev.photosurfer.services.schedule.*
 import com.crskdev.photosurfer.util.Listenable
 import okhttp3.ResponseBody
@@ -62,7 +63,7 @@ class MockDependencyGraph(context: Context) : ProdDependencyGraph(context) {
 
     override val playwaveRepository: PlaywaveRepository = MockPlaywaveRepository()
 
-    override val playwaveSoundPlayer: PlaywaveSoundPlayer = MockPlaywaveSoundPlayer()
+    override val playwaveSoundPlayer: PlaywaveSoundPlayer = TrackingPlaywaveSoundPlayer()
 
 }
 
@@ -79,7 +80,7 @@ class RealMockDependencyGraph : VariantDependencyGraph {
 
     override val playwaveRepository: PlaywaveRepository = MockPlaywaveRepository()
 
-    override val playwaveSoundPlayer: PlaywaveSoundPlayer = MockPlaywaveSoundPlayer()
+    override val playwaveSoundPlayer: PlaywaveSoundPlayer = PlaywaveSoundPlayerImpl()
 
     override val threadCallChecker: ThreadCallChecker = ThreadCallChecker.SUPPRESED_CHECK
 

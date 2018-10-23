@@ -20,7 +20,7 @@ class SongDAOImpl(private val contentResolver: ContentResolver) : SongDAO {
 
     override fun getSongs(filterSearch: String?): DataSource.Factory<Int, Song> =
             object : DataSource.Factory<Int, Song>() {
-                override fun create(): DataSource<Int, Song> = SongDataSource(contentResolver)
+                override fun create(): DataSource<Int, Song> = SongDataSource(contentResolver, filterSearch)
             }
 
     override fun getSongById(id: Long): Song? {

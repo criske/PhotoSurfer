@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.SeekBar
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
 import com.crskdev.photosurfer.R
 import kotlinx.android.synthetic.main.player_layout.view.*
@@ -12,7 +12,7 @@ import kotlinx.android.synthetic.main.player_layout.view.*
 /**
  * Created by Cristian Pela on 19.10.2018.
  */
-class PlayerView : ConstraintLayout {
+class PlayerView : CardView {
 
     private var listener: PlayerListener? = null
 
@@ -56,7 +56,7 @@ class PlayerView : ConstraintLayout {
         when (state) {
             is PlayingSongState.None -> reset()
             is PlayingSongState.Prepare -> prepare(state.song!!)
-            is PlayingSongState.Ready -> ready()
+            is PlayingSongState.Ready -> ready(state)
             is PlayingSongState.Playing -> playing(state)
             is PlayingSongState.Seeking -> seeking(state)
             is PlayingSongState.Paused,
@@ -65,7 +65,8 @@ class PlayerView : ConstraintLayout {
         }
     }
 
-    private fun ready() {
+    private fun ready(state: PlayingSongState) {
+        restore(state)
         seekBarPlayer.isEnabled = true
         imgBtnPlayerPlayStop.isEnabled = true
     }
@@ -74,6 +75,7 @@ class PlayerView : ConstraintLayout {
         isVisible = true
         textPlayerSongInfo.text = song.fullInfo
         textPlayerSeekPosition.text = null
+        imgBtnPlayerPause.isVisible = false
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
             isEnabled = false
@@ -85,7 +87,7 @@ class PlayerView : ConstraintLayout {
         }
     }
 
-    private fun makeSureIsPreparedAndReady(state: PlayingSongState) {
+    private fun restore(state: PlayingSongState) {
         if (!isVisible) {
             isVisible = true
             val song = state.song
@@ -94,12 +96,11 @@ class PlayerView : ConstraintLayout {
                 isEnabled = true
                 max = song?.durationLong?.toInt() ?: 0
             }
-            ready()
         }
     }
 
     private fun seeking(state: PlayingSongState.Seeking) {
-        makeSureIsPreparedAndReady(state)
+        restore(state)
         seekBarPlayer.apply {
             progress = state.position.toInt()
         }
@@ -108,7 +109,7 @@ class PlayerView : ConstraintLayout {
 
 
     private fun playing(state: PlayingSongState.Playing) {
-        makeSureIsPreparedAndReady(state)
+        restore(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_stop_white_24dp)
         }
@@ -118,7 +119,7 @@ class PlayerView : ConstraintLayout {
     }
 
     private fun pauseOrComplete(state: PlayingSongState.Dynamic) {
-        makeSureIsPreparedAndReady(state)
+        restore(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
         }
@@ -128,7 +129,7 @@ class PlayerView : ConstraintLayout {
     }
 
     private fun stop(state: PlayingSongState) {
-        makeSureIsPreparedAndReady(state)
+        restore(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
         }

@@ -11,17 +11,21 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
+import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
+import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_playwaves.*
 
 
-class PlaywavesFragment : Fragment() {
+class PlaywavesFragment : Fragment(), HasAppPermissionAwareness {
+
 
     private lateinit var viewModel: PlaywavesViewModel
 
@@ -52,8 +56,12 @@ class PlaywavesFragment : Fragment() {
             }
             setOnMenuItemClickListener {
                 if (it.itemId == R.id.menu_action_add) {
-                    navController.navigate(PlaywavesFragmentDirections.actionFragmentPlaywavesToUpsertPlaywaveFragment(R.id.addPlaywaveFragment),
-                            defaultTransitionNavOptions())
+                    if( AppPermissionsHelper.hasStoragePermission(context)) {
+                        navController.navigate(PlaywavesFragmentDirections.actionFragmentPlaywavesToUpsertPlaywaveFragment(R.id.addPlaywaveFragment),
+                                defaultTransitionNavOptions())
+                    }else{
+                        AppPermissionsHelper.requestStoragePermission(activity!!)
+                    }
                 }
                 true
             }
@@ -86,6 +94,10 @@ class PlaywavesFragment : Fragment() {
         })
     }
 
+    override fun onPermissionsGranted(permissions: List<String>, enqueuedActionArg: String?) {
+        findNavController().navigate(PlaywavesFragmentDirections.actionFragmentPlaywavesToUpsertPlaywaveFragment(R.id.addPlaywaveFragment),
+                defaultTransitionNavOptions())
+    }
 
     override fun onResume() {
         super.onResume()

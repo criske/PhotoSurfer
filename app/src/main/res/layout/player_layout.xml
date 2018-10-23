@@ -1,98 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="100dp"
-    android:elevation="5dp"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
+    app:cardElevation="5dp"
+    app:cardCornerRadius="10dp"
+    app:cardBackgroundColor="@color/colorPrimary"
+    android:layout_marginBottom="-3dp"
+    tools:parentTag="androidx.cardview.widget.CardView">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/textPlayerSongInfo"
-        android:layout_width="0dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="8dp"
-        android:ellipsize="marquee"
-        android:gravity="center_vertical"
-        android:singleLine="true"
-        app:autoSizeMaxTextSize="14sp"
-        app:autoSizeMinTextSize="12sp"
-        app:autoSizeTextType="uniform"
-        app:fontFamily="sans-serif-condensed"
-        app:layout_constraintBottom_toBottomOf="@+id/imgBtnPlayerClose"
-        app:layout_constraintEnd_toStartOf="@+id/imgBtnPlayerClose"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imgBtnPlayerClose"
-        app:layout_constraintWidth_percent="0.85"
-        tools:text="Pet Shop Boys - Between two islands (05:14)" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <ImageButton
-        android:id="@+id/imgBtnPlayerClose"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:alpha="0.7"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_close_white_24dp"
-        tools:ignore="ContentDescription" />
 
-    <ImageButton
-        android:id="@+id/imgBtnPlayerPlayStop"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textPlayerSongInfo"
-        app:srcCompat="@android:drawable/ic_media_play"
-        tools:ignore="ContentDescription" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/textPlayerSongInfo"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="marquee"
+            android:gravity="center_vertical"
+            android:singleLine="true"
+            app:autoSizeMaxTextSize="14sp"
+            app:autoSizeMinTextSize="12sp"
+            app:autoSizeTextType="uniform"
+            app:fontFamily="sans-serif-condensed"
+            app:layout_constraintBottom_toBottomOf="@+id/imgBtnPlayerClose"
+            app:layout_constraintEnd_toStartOf="@+id/imgBtnPlayerClose"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imgBtnPlayerClose"
+            app:layout_constraintWidth_percent="0.85"
+            tools:text="Pet Shop Boys - Between two islands (05:14)" />
 
-    <ImageButton
-        android:id="@+id/imgBtnPlayerPause"
-        style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="0dp"
-        android:tint="@color/colorLike"
-        android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@+id/imgBtnPlayerPlayStop"
-        app:layout_constraintTop_toTopOf="@+id/imgBtnPlayerPlayStop"
-        app:srcCompat="@android:drawable/ic_media_pause"
-        tools:ignore="ContentDescription"
-        tools:visibility="visible" />
+        <ImageButton
+            android:id="@+id/imgBtnPlayerClose"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
+            android:alpha="0.7"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_close_white_24dp"
+            tools:ignore="ContentDescription" />
 
-    <SeekBar
-        android:id="@+id/seekBarPlayer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:indeterminate="false"
-        android:max="100"
-        app:layout_constraintBottom_toBottomOf="@+id/imgBtnPlayerPlayStop"
-        app:layout_constraintEnd_toStartOf="@+id/textPlayerSeekPosition"
-        app:layout_constraintStart_toEndOf="@+id/imgBtnPlayerPause"
-        app:layout_constraintTop_toTopOf="@+id/imgBtnPlayerPlayStop" />
+        <ImageButton
+            android:id="@+id/imgBtnPlayerPlayStop"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textPlayerSongInfo"
+            app:srcCompat="@android:drawable/ic_media_play"
+            tools:ignore="ContentDescription" />
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/textPlayerSeekPosition"
-        android:layout_width="32dp"
-        android:layout_height="25dp"
-        app:autoSizeMaxTextSize="12sp"
-        app:autoSizeMinTextSize="8sp"
-        app:autoSizeTextType="uniform"
-        android:layout_marginEnd="12dp"
-        android:gravity="center"
-        android:maxLines="2"
-        android:ellipsize="end"
-        app:layout_constraintBottom_toBottomOf="@+id/seekBarPlayer"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/seekBarPlayer"
-        tools:text="02:10" />
+        <ImageButton
+            android:id="@+id/imgBtnPlayerPause"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="0dp"
+            android:tint="@color/colorLike"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@+id/imgBtnPlayerPlayStop"
+            app:layout_constraintTop_toTopOf="@+id/imgBtnPlayerPlayStop"
+            app:srcCompat="@android:drawable/ic_media_pause"
+            tools:ignore="ContentDescription"
+            tools:visibility="visible" />
+
+        <SeekBar
+            android:id="@+id/seekBarPlayer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:indeterminate="false"
+            android:max="100"
+            app:layout_constraintBottom_toBottomOf="@+id/imgBtnPlayerPlayStop"
+            app:layout_constraintEnd_toStartOf="@+id/textPlayerSeekPosition"
+            app:layout_constraintStart_toEndOf="@+id/imgBtnPlayerPause"
+            app:layout_constraintTop_toTopOf="@+id/imgBtnPlayerPlayStop" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/textPlayerSeekPosition"
+            android:layout_width="32dp"
+            android:layout_height="25dp"
+            android:layout_marginEnd="12dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="2"
+            app:autoSizeMaxTextSize="12sp"
+            app:autoSizeMinTextSize="8sp"
+            app:autoSizeTextType="uniform"
+            app:layout_constraintBottom_toBottomOf="@+id/seekBarPlayer"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/seekBarPlayer"
+            tools:text="02:10" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </merge>

@@ -26,7 +26,7 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
     fun release() = soundPlayer.release()
 
     fun prepare(song: SongUI) {
-        state.postValue(PlayingSongState.Prepare(song))
+        state.postValue(PlayingSongState.Prepare(song, 0, prettySongDuration( 0)))
         soundPlayer.load(song.path, song.durationLong)
     }
 
@@ -47,23 +47,26 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
     fun playOrStop() {
         val s = state.value!!
         val nextState = when (s) {
-            is PlayingSongState.Playing -> PlayingSongState.Stopped(s.song!!)
+            is PlayingSongState.Playing -> PlayingSongState.Stopped(s.song!!, 0, prettySongDuration(0))
                     .apply {
                         soundPlayer.stop()
                     }
-            is PlayingSongState.Stopped,
-            is PlayingSongState.Ready,
-            is PlayingSongState.Completed -> PlayingSongState.Playing(s.song!!, 0, prettySongPosition(0, s.song.durationLong))
+            is PlayingSongState.Stopped -> PlayingSongState.Playing(s.song!!, 0, prettySongDuration(0))
                     .apply {
-                        soundPlayer.play()
+                        soundPlayer.play(0)
+                    }
+            is PlayingSongState.Ready,
+            is PlayingSongState.Completed -> PlayingSongState.Playing(s.song!!, 0, prettySongDuration(0))
+                    .apply {
+                        soundPlayer.play(0)
                     }
             is PlayingSongState.Paused -> PlayingSongState.Playing(s.song!!, s.position, s.positionDisplay)
                     .apply {
-                        soundPlayer.play()
+                        soundPlayer.play(position)
                     }
             is PlayingSongState.Seeking -> PlayingSongState.Playing(s.song!!, s.position, s.positionDisplay)
                     .apply {
-                        soundPlayer.seekTo(position)
+                        soundPlayer.play(position)
                     }
             else -> throw IllegalStateException("State before PLAY/STOP not allowed: $s") // should not reach this
         }
@@ -80,6 +83,8 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
             assert(state.value is PlayingSongState.Seeking) {
                 "The state before confirmation SEEK must be SEEK"
             }
+
+            println("SEEK THREAD " + Thread.currentThread())
             val stateBeforeSeek = (s as PlayingSongState.Seeking).stateBeforeSeek
             if (stateBeforeSeek is PlayingSongState.Playing) {
                 // we dispatch the seek to system player
@@ -104,7 +109,7 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
         assert(state.value is PlayingSongState.Prepare) {
             "The state before READY must be PREPARE"
         }
-        state.postValue(PlayingSongState.Ready(state.value!!.song!!))
+        state.postValue(PlayingSongState.Ready(state.value!!.song!!, 0, prettySongDuration(0)))
     }
 
     override fun onTrack(position: Long) {

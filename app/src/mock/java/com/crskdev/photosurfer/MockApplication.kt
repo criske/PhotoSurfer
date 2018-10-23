@@ -12,7 +12,7 @@ class MockApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         DependencyGraph.install {
-            RealMockDependencyGraph()
+            RealMockDependencyGraph
         }
     }
 }
