@@ -1,5 +1,7 @@
 package com.crskdev.photosurfer.presentation.playwave
 
+import com.crskdev.photosurfer.data.local.playwave.song.Song
+import com.crskdev.photosurfer.entities.Playwave
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -23,3 +25,11 @@ internal fun prettySongPosition(percent: Int, duration: Long): String =
 
 internal fun realPosition(percent: Int, duration: Long): Long =
         percent.toFloat().div(100).times(duration).roundToLong()
+
+
+internal fun Song.toUI(): SongUI = SongUI(id, path, title, artist, prettySongDuration(duration), toString(), duration, exists)
+
+internal fun SongUI.toEntity(): Song = Song(id, path, title, artist, durationLong, exists)
+
+internal fun Playwave.toUI(): PlaywaveUI = PlaywaveUI(this.id, this.title, this.size, this.song.toUI(),
+        !this.song.exists, this.photos)

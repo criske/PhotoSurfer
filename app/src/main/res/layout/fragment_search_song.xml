@@ -27,7 +27,11 @@
             tools:listitem="@layout/item_list_search_song" />
     </LinearLayout>
     <com.crskdev.photosurfer.presentation.playwave.PlayerView
+        android:background="@color/colorPrimary"
+        android:id="@+id/playerSearchSongs"
         android:layout_width="match_parent"
         android:layout_gravity="bottom"
+        android:visibility="invisible"
+        tools:visibility="visible"
         android:layout_height="100dp"/>
 </FrameLayout>

@@ -49,7 +49,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
         imgBtnAddPlaywaveSearch.setOnClickListener { v ->
             val isSelected = (v.tag as Boolean?) ?: false
             if (isSelected) {
-                viewModel.removeSelectedSong()
+                viewModel.removePlaywaveSong()
             } else {
                 navController.navigate(AddPlaywaveFragmentDirections.actionAddPlaywaveFragmentToSearchSongFragment(),
                         defaultTransitionNavOptions())
@@ -57,25 +57,27 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
         }
         imgBtnAddPlaywavePlay.setOnClickListener { v ->
             playerAddPlaywave.isVisible = true
-            viewModel.playOrStopSelectedSong()
             v.isVisible = false
+            (v.tag as SongUI?)?.let {
+                viewModel.selectSongToPlay(it)
+            }
         }
 
-        viewModel.selectedSongLiveData.observe(this, Observer {
-            val isSelected = it != null
+        viewModel.playwaveLiveData.observe(this, Observer {
+            val hasSong = it.song != null
             imgBtnAddPlaywaveSearch.apply {
                 setImageResource(
-                        if (isSelected)
+                        if (hasSong)
                             R.drawable.ic_close_white_24dp
                         else
                             R.drawable.ic_add_white_24dp
                 )
-                tag = isSelected
+                tag = hasSong
             }
-            imgBtnAddPlaywavePlay.tag = isSelected
-            imgBtnAddPlaywavePlay.isVisible = isSelected
-            textAddPlaywaveSongTitle.text = it?.title
-            textAddPlaywaveSongArtist.text = it?.artist
+            imgBtnAddPlaywavePlay.tag = it.song
+            imgBtnAddPlaywavePlay.isVisible = hasSong
+            textAddPlaywaveSongTitle.text = it?.song?.title
+            textAddPlaywaveSongArtist.text = it?.song?.artist
         })
 
         viewModel.playingSongStateLiveData.observe(this, Observer {
@@ -92,8 +94,8 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
                         }
                         viewModel.justStop()
                     }
-                    is PlayerView.Action.PlayOrStop -> viewModel.playOrStopSelectedSong()
-                    is PlayerView.Action.Pause -> viewModel.pauseSelectedSong()
+                    is PlayerView.Action.PlayOrStop -> viewModel.playOrStopSong()
+                    is PlayerView.Action.Pause -> viewModel.pausePlayingSong()
                     is PlayerView.Action.SeekTo -> viewModel.seekTo(action.position.toLong(), action.confirmedToPlay)
                 }
             }
@@ -102,7 +104,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
     override fun onBackOrUpPressed() {
-        viewModel.clear()
+        viewModel.clearPlayingSong()
     }
 
 }

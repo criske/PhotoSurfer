@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
-import com.crskdev.photosurfer.entities.PlaywavePhoto
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.tintIcons
@@ -95,21 +94,11 @@ class PlaywavesFragment : Fragment() {
 
 }
 
-
 class PlaywavesViewModel(
         playwavesRepository: PlaywaveRepository) : ViewModel() {
 
     val playwavesLiveData = Transformations.map(playwavesRepository.getPlaywaves()) { l ->
-        l.asSequence().map { p ->
-            val hasError = !p.song.exists
-            PlaywaveUI(p.id, p.title, p.song.toString(), p.size, hasError, p.photos)
-        }.toList()
+        l.asSequence().map { p -> p.toUI() }.toList()
     }
 }
 
-data class PlaywaveUI(val id: Int,
-                      val title: String,
-                      val songInfo: String,
-                      val size: Int,
-                      val hasError: Boolean,
-                      val photos: List<PlaywavePhoto>)

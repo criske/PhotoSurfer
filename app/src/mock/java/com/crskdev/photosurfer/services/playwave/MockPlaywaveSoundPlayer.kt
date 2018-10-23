@@ -64,7 +64,7 @@ class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
     override fun load(songPath: String, duration: Long) {
         unload()//unload first
         total.set(duration)
-        handler?.postDelayed(1000) {
+        handler?.postDelayed(ONE_SECOND) {
             listener?.onReady()
         }
     }

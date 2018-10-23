@@ -60,7 +60,7 @@ class PlayerView : ConstraintLayout {
             is PlayingSongState.Playing -> playing(state)
             is PlayingSongState.Seeking -> seeking(state)
             is PlayingSongState.Paused,
-            is PlayingSongState.Completed -> pauseOrComplete(state)
+            is PlayingSongState.Completed -> pauseOrComplete(state as PlayingSongState.Dynamic)
             is PlayingSongState.Stopped -> stop(state)
         }
     }
@@ -73,11 +73,13 @@ class PlayerView : ConstraintLayout {
     private fun prepare(song: SongUI) {
         isVisible = true
         textPlayerSongInfo.text = song.fullInfo
+        textPlayerSeekPosition.text = null
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
             isEnabled = false
         }
         seekBarPlayer.apply {
+            progress = 0
             isEnabled = false
             max = song.durationLong.toInt()
         }
@@ -85,7 +87,13 @@ class PlayerView : ConstraintLayout {
 
     private fun makeSureIsPreparedAndReady(state: PlayingSongState) {
         if (!isVisible) {
-            prepare(state.song!!)
+            isVisible = true
+            val song = state.song
+            textPlayerSongInfo.text = song?.fullInfo
+            seekBarPlayer.apply {
+                isEnabled = true
+                max = song?.durationLong?.toInt() ?: 0
+            }
             ready()
         }
     }
@@ -105,22 +113,26 @@ class PlayerView : ConstraintLayout {
             setImageResource(R.drawable.ic_stop_white_24dp)
         }
         imgBtnPlayerPause.isVisible = true
-        seekBarPlayer.apply {
-            progress = state.position.toInt()
-        }
+        seekBarPlayer.progress = state.position.toInt()
         textPlayerSeekPosition.text = state.positionDisplay
     }
 
-    private fun pauseOrComplete(state: PlayingSongState) {
+    private fun pauseOrComplete(state: PlayingSongState.Dynamic) {
         makeSureIsPreparedAndReady(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
         }
         imgBtnPlayerPause.isVisible = false
+        seekBarPlayer.progress = state.position.toInt()
+        textPlayerSeekPosition.text = state.positionDisplay
     }
 
     private fun stop(state: PlayingSongState) {
-        pauseOrComplete(state)
+        makeSureIsPreparedAndReady(state)
+        imgBtnPlayerPlayStop.apply {
+            setImageResource(R.drawable.ic_play_arrow_white_24dp)
+        }
+        imgBtnPlayerPause.isVisible = false
         seekBarPlayer.progress = 0
         textPlayerSeekPosition.text = null
     }
@@ -148,13 +160,12 @@ class PlayerView : ConstraintLayout {
         object PlayOrStop : Action()
         object Pause : Action()
         object Close : Action()
-        class SeekTo( val position: Int, val confirmedToPlay: Boolean = false) : Action()
+        class SeekTo(val position: Int, val confirmedToPlay: Boolean = false) : Action()
     }
 
     interface PlayerListener {
         fun onAction(action: Action)
     }
-
 
 }
 

@@ -82,7 +82,7 @@ class PlaywavesVH(view: View, action: (PlaywaveAction) -> Unit) : BindViewHolder
     override fun onBindModel(model: PlaywaveUI) {
         with(itemView) {
             textPlaywaveTitle.text = model.title
-            textPlaywaveSongInfo.text = model.songInfo
+            textPlaywaveSongInfo.text = model.song?.fullInfo
             textPlaywaveSize.text = model.size.toString()
             if (model.hasError) {
                 textPlaywaveSongInfo.setTextColor(ContextCompat.getColor(context, R.color.colorLike))

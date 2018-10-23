@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -16,6 +17,7 @@ import com.crskdev.photosurfer.util.addSearch
 import com.crskdev.photosurfer.util.hideSoftKeyboard
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.tintIcons
+import kotlinx.android.synthetic.main.fragment_add_playwave.*
 import kotlinx.android.synthetic.main.fragment_search_song.*
 
 class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
@@ -54,11 +56,11 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
             activity?.hideSoftKeyboard()
             when (it) {
                 is SearchSongAction.Add -> {
-                    viewModel.selectSong(it.song)
+                    viewModel.setPlaywaveSong(it.song)
                     navController.popBackStack()
                 }
                 is SearchSongAction.Play -> {
-                    viewModel.selectSong(it.song)
+                    viewModel.selectSongToPlay(it.song)
                 }
             }
         }
@@ -69,6 +71,21 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
 
         viewModel.foundSongsLiveData.observe(this, Observer {
             searchSongsAdapter.submitList(it)
+        })
+
+        viewModel.playingSongStateLiveData.observe(this, Observer {
+            playerSearchSongs.changeState(it)
+        })
+
+        playerSearchSongs.setOnPlayerListener(object : PlayerView.PlayerListener {
+            override fun onAction(action: PlayerView.Action) {
+                when (action) {
+                    is PlayerView.Action.Close -> viewModel.justStop()
+                    is PlayerView.Action.PlayOrStop -> viewModel.playOrStopSong()
+                    is PlayerView.Action.Pause -> viewModel.pausePlayingSong()
+                    is PlayerView.Action.SeekTo -> viewModel.seekTo(action.position.toLong(), action.confirmedToPlay)
+                }
+            }
         })
 
     }
@@ -84,13 +101,3 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness {
 
 }
 
-data class SongUI(
-        val id: Long,
-        val path: String,
-        val title: String,
-        val artist: String,
-        val duration: String,
-        val fullInfo: String,
-        val durationLong: Long,
-        val exists: Boolean,
-        val albumPath: String? = null)
