@@ -2,18 +2,16 @@ package com.crskdev.photosurfer.presentation.playwave
 
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Log
 import androidx.core.os.postDelayed
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicInteger
 
 
 /**
  * Created by Cristian Pela on 19.10.2018.
  */
-class TrackingPlaywaveSoundPlayer(val isReadyCalledFromOutSide: Boolean = true)
-    : PlaywaveSoundPlayer {
+class MockPlaywaveSoundPlayer : PlaywaveSoundPlayer {
 
 
     private var handler: Handler? = null
@@ -30,15 +28,15 @@ class TrackingPlaywaveSoundPlayer(val isReadyCalledFromOutSide: Boolean = true)
 
     private var listener: PlaywaveSoundPlayer.TrackListener? = null
 
-    private val position: AtomicLong = AtomicLong(0)
+    private val position = AtomicInteger(0)
 
-    private val total: AtomicLong = AtomicLong(0)
+    private val total = AtomicInteger(0)
 
     private val playingJob: Runnable = object : Runnable {
         override fun run() {
             val total = total.get()
             assert(total > 0)
-            val nextPosition = position.addAndGet(ONE_SECOND)
+            val nextPosition = position.addAndGet(ONE_SECOND.toInt())
             if (nextPosition >= total) {
                 listener?.complete()
                 position.set(0)
@@ -46,21 +44,12 @@ class TrackingPlaywaveSoundPlayer(val isReadyCalledFromOutSide: Boolean = true)
             } else {
                 listener?.onTrack(nextPosition)
                 handler?.postDelayed(this, ONE_SECOND)
-                Integer.MAX_VALUE
             }
         }
     }
 
     init {
         playerThread.start()
-    }
-
-    fun makeReady() {
-        if (isReadyCalledFromOutSide)
-            listener?.onReady()
-        else
-            Log.w(TrackingPlaywaveSoundPlayer::javaClass.name, "listener#onReady() is set to be called internaly. " +
-                    "You can change that in constructor")
     }
 
     override fun pause() {
@@ -73,17 +62,15 @@ class TrackingPlaywaveSoundPlayer(val isReadyCalledFromOutSide: Boolean = true)
         playerThread.quit()
     }
 
-    override fun load(songPath: String, duration: Long) {
+    override fun loadAndPlay(songPath: String, duration: Int, atPosition: Int) {
         unload()//unload first
         total.set(duration)
-        if (isReadyCalledFromOutSide) {
-            handler?.postDelayed(2000) {
-                listener?.onReady()
-            }
+        handler?.postDelayed(2000) {
+            listener?.onReady()
         }
     }
 
-    override fun play(position: Long) {
+    override fun play(position: Int) {
         assert(total.get() > 0) {
             "Song not loaded"
         }
@@ -97,7 +84,7 @@ class TrackingPlaywaveSoundPlayer(val isReadyCalledFromOutSide: Boolean = true)
         position.set(0)
     }
 
-    override fun seekTo(position: Long) {
+    override fun seekTo(position: Int) {
         play(position)
     }
 

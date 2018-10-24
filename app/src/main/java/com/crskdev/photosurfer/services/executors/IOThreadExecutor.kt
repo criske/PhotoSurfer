@@ -1,6 +1,8 @@
 package com.crskdev.photosurfer.services.executors
 
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 class IOThreadExecutor : KExecutor {
 
@@ -15,4 +17,6 @@ class IOThreadExecutor : KExecutor {
             command.run()
         }
     }
+
+    override fun <V> call(callable: () -> V): Future<V> = executorService.submit(Callable<V> { callable() })
 }

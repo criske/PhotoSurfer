@@ -59,9 +59,9 @@ class PlayerView : CardView {
             is PlayingSongState.Ready -> ready(state)
             is PlayingSongState.Playing -> playing(state)
             is PlayingSongState.Seeking -> seeking(state)
-            is PlayingSongState.Paused,
-            is PlayingSongState.Completed -> pauseOrComplete(state as PlayingSongState.Dynamic)
-            is PlayingSongState.Stopped -> stop(state)
+            is PlayingSongState.Paused -> pause(state)
+            is PlayingSongState.Completed,
+            is PlayingSongState.Stopped -> stopOrComplete(state)
         }
     }
 
@@ -83,7 +83,7 @@ class PlayerView : CardView {
         seekBarPlayer.apply {
             progress = 0
             isEnabled = false
-            max = song.durationLong.toInt()
+            max = song.durationInt
         }
     }
 
@@ -94,7 +94,7 @@ class PlayerView : CardView {
             textPlayerSongInfo.text = song?.fullInfo
             seekBarPlayer.apply {
                 isEnabled = true
-                max = song?.durationLong?.toInt() ?: 0
+                max = song?.durationInt ?: 0
             }
         }
     }
@@ -118,17 +118,18 @@ class PlayerView : CardView {
         textPlayerSeekPosition.text = state.positionDisplay
     }
 
-    private fun pauseOrComplete(state: PlayingSongState.Dynamic) {
+    private fun pause(state: PlayingSongState.Paused) {
         restore(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_play_arrow_white_24dp)
         }
         imgBtnPlayerPause.isVisible = false
-        seekBarPlayer.progress = state.position.toInt()
+        seekBarPlayer.progress = state.position
         textPlayerSeekPosition.text = state.positionDisplay
     }
 
-    private fun stop(state: PlayingSongState) {
+
+    private fun stopOrComplete(state: PlayingSongState) {
         restore(state)
         imgBtnPlayerPlayStop.apply {
             setImageResource(R.drawable.ic_play_arrow_white_24dp)

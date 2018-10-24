@@ -50,6 +50,7 @@ class SongDataSource(contentResolver: ContentResolver, filterSearch: String? = n
 
 
 data class Song(val id: Long,
+                val albumId: Long,
                 val path: String, val title: String, val artist: String,
                 val duration: Long,
                 val exists: Boolean) {
@@ -61,6 +62,7 @@ data class Song(val id: Long,
             "(https?://(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?://(?:www\\.|(?!www))[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]\\.[^\\s]{2,})"
                     .toRegex()
         }
+        val NO_SONG = Song(-1, -1,"", "", "", -1L, false)
     }
 
     fun sanitize(): Song {

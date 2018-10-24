@@ -8,13 +8,17 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.request.RequestOptions
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
-import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.*
+import com.crskdev.photosurfer.util.glide.onError
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
-import com.crskdev.photosurfer.util.popNavigationBackStack
 import kotlinx.android.synthetic.main.fragment_add_playwave.*
+import kotlin.math.roundToInt
 
 /**
  * Created by Cristian Pela on 17.10.2018.
@@ -42,8 +46,16 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val navController = view.findNavController()
         toolbarAddPlaywave.apply {
+            inflateTintedMenu(R.menu.menu_single_add)
             setNavigationOnClickListener {
                 popNavigationBackStack()
+            }
+            setOnMenuItemClickListener {
+                if (it.itemId == R.id.menu_action_add) {
+                    activity?.hideSoftKeyboard()
+                    viewModel.upsertPlaywave(editAddPlaywaveTitle.text.toString())
+                }
+                true
             }
         }
         imgBtnAddPlaywaveSearch.setOnClickListener { v ->
@@ -78,6 +90,11 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             imgBtnAddPlaywavePlay.isVisible = hasSong
             textAddPlaywaveSongTitle.text = it?.song?.title
             textAddPlaywaveSongArtist.text = it?.song?.artist
+            Glide.with(this)
+                    .asDrawable()
+                    .load(it.song?.albumPath)
+                    .apply(RequestOptions().transform(RoundedCorners(5.dpToPx(resources).roundToInt())).centerCrop())
+                    .into(imageSongAlbumArt)
         })
 
         viewModel.playingSongStateLiveData.observe(this, Observer {
@@ -96,7 +113,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
                     }
                     is PlayerView.Action.PlayOrStop -> viewModel.playOrStopSong()
                     is PlayerView.Action.Pause -> viewModel.pausePlayingSong()
-                    is PlayerView.Action.SeekTo -> viewModel.seekTo(action.position.toLong(), action.confirmedToPlay)
+                    is PlayerView.Action.SeekTo -> viewModel.seekTo(action.position, action.confirmedToPlay)
                 }
             }
         })

@@ -8,6 +8,7 @@ import android.provider.MediaStore
  */
 internal fun toSong(cursor: Cursor, sanitize: Boolean = true): Song =
         Song(cursor.getLong(cursor.getColumnIndexOrThrow(SONG_ID)),
+                cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)),
                 cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
                 cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
                 cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
@@ -27,6 +28,7 @@ internal val SONGS_URI = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
 
 internal val SONGS_PROJECTION = arrayOf(
         SONG_ID,
+        MediaStore.Audio.Media.ALBUM_ID,
         MediaStore.Audio.Media.DATA,
         MediaStore.Audio.Media.TITLE,
         MediaStore.Audio.Media.ARTIST,

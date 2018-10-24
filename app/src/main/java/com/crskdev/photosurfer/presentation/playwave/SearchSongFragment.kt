@@ -89,7 +89,7 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermis
                     is PlayerView.Action.Close -> viewModel.justStop()
                     is PlayerView.Action.PlayOrStop -> viewModel.playOrStopSong()
                     is PlayerView.Action.Pause -> viewModel.pausePlayingSong()
-                    is PlayerView.Action.SeekTo -> viewModel.seekTo(action.position.toLong(), action.confirmedToPlay)
+                    is PlayerView.Action.SeekTo -> viewModel.seekTo(action.position, action.confirmedToPlay)
                 }
             }
         })

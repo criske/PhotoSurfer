@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.RecyclerView
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 import kotlinx.android.synthetic.main.item_list_search_song.view.*
@@ -21,6 +22,14 @@ class SearchSongAdapter(private val inflater: LayoutInflater,
             override fun areContentsTheSame(oldItem: SongUI, newItem: SongUI): Boolean =
                     oldItem == newItem
         }) {
+
+    init {
+        setHasStableIds(true)
+    }
+
+    override fun getItemId(position: Int): Long {
+        return getItem(position)?.id ?: RecyclerView.NO_ID
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongVH =
             SongVH(inflater.inflate(R.layout.item_list_search_song, parent, false), action)

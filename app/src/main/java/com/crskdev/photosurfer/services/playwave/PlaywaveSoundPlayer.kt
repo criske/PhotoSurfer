@@ -5,7 +5,8 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.MediaPlayer.MEDIA_ERROR_SERVER_DIED
 import android.os.Build
-import com.crskdev.photosurfer.presentation.playwave.TrackingPlaywaveSoundPlayer
+import android.os.Handler
+import android.os.Looper
 
 /**
  * Created by Cristian Pela on 19.10.2018.
@@ -16,21 +17,21 @@ interface PlaywaveSoundPlayer {
 
         fun onReady()
 
-        fun onTrack(position: Long)
+        fun onTrack(position: Int)
 
         fun complete()
 
     }
 
-    fun load(songPath: String, duration: Long)
+    fun loadAndPlay(songPath: String, duration: Int, atPosition: Int = 0)
 
-    fun play(position: Long)
+    fun play(position: Int)
 
     fun stop()
 
     fun pause()
 
-    fun seekTo(position: Long)
+    fun seekTo(position: Int)
 
     fun unload()
 
@@ -45,27 +46,60 @@ class PlaywaveSoundPlayerImpl : PlaywaveSoundPlayer {
 
     private var startMediaPlayerSeverFailedAttempts = 0
 
-    private val trackingPlaywaveSoundPlayer = TrackingPlaywaveSoundPlayer()
+    private val trackHandler = Handler(Looper.getMainLooper())
 
-    private var onPrepareListener: MediaPlayer.OnPreparedListener = MediaPlayer.OnPreparedListener {
-        trackingPlaywaveSoundPlayer.makeReady()
+    private var trackListener: PlaywaveSoundPlayer.TrackListener? = null
+
+    private var startAtPosition: Int? = null
+
+    private val trackRunnable = object : Runnable {
+        override fun run() {
+            mediaPlayer?.let {
+                trackListener?.onTrack(it.currentPosition)
+                trackHandler.postDelayed(this, 1000)
+            }
+        }
+
+    }
+
+    private val onPrepareListener: MediaPlayer.OnPreparedListener = MediaPlayer.OnPreparedListener {
+        trackListener?.onReady()
         startMediaPlayerSeverFailedAttempts = 0
+        it.start()
+        val sp = startAtPosition
+        if (sp != null) {
+            it.seekTo(sp)
+        }
+        trackHandler.post(trackRunnable)
+    }
+
+    private val onCompleteListener: MediaPlayer.OnCompletionListener = MediaPlayer.OnCompletionListener {
+        trackHandler.removeCallbacks(trackRunnable)
+        trackListener?.complete()
+    }
+
+    private val onSeekCompleteListener: MediaPlayer.OnSeekCompleteListener = MediaPlayer.OnSeekCompleteListener {
+        if (!it.isPlaying)
+            it.start()
     }
 
     override fun pause() {
         mediaPlayer?.pause()
-        trackingPlaywaveSoundPlayer.pause()
+        trackHandler.removeCallbacks(trackRunnable)
     }
 
     override fun release() {
+        trackHandler.removeCallbacks(trackRunnable)
         mediaPlayer?.release()
         mediaPlayer = null
-        trackingPlaywaveSoundPlayer.release()
+        trackListener = null
+        startAtPosition = null
     }
 
-    override fun load(songPath: String, duration: Long) {
-        trackingPlaywaveSoundPlayer.load(songPath, duration)
-        mediaPlayer?.release()
+    override fun loadAndPlay(songPath: String, duration: Int, atPosition: Int) {
+        trackHandler.removeCallbacks(trackRunnable)
+        mediaPlayer?.reset()
+        startAtPosition = atPosition.takeIf { it > 0 }
         mediaPlayer = MediaPlayer().apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 setAudioAttributes(AudioAttributes
@@ -78,11 +112,13 @@ class PlaywaveSoundPlayerImpl : PlaywaveSoundPlayer {
             }
             setDataSource(songPath)
             setOnPreparedListener(onPrepareListener)
+            setOnCompletionListener(onCompleteListener)
+            setOnSeekCompleteListener(onSeekCompleteListener)
             setOnErrorListener { mp, what, extra ->
                 if (what == MEDIA_ERROR_SERVER_DIED) {
                     startMediaPlayerSeverFailedAttempts += 1
                     if (startMediaPlayerSeverFailedAttempts < 3)
-                        load(songPath, duration)
+                        loadAndPlay(songPath, duration, atPosition)
                     else {
                         throw Exception("Could not start player server")
                     }
@@ -93,22 +129,23 @@ class PlaywaveSoundPlayerImpl : PlaywaveSoundPlayer {
         }
     }
 
-    override fun play(position: Long) {
-        mediaPlayer?.start()
+    override fun play(position: Int) {
+        trackHandler.removeCallbacks(trackRunnable)
         if (position > 0) {
-            mediaPlayer?.seekTo(position.toInt())
+            mediaPlayer?.seekTo(position)
+        } else {
+            mediaPlayer?.start()
         }
-        trackingPlaywaveSoundPlayer.play(position)
+        trackHandler.post(trackRunnable)
     }
 
     override fun stop() {
         mediaPlayer?.stop()
-        trackingPlaywaveSoundPlayer.stop()
+        trackHandler.removeCallbacks(trackRunnable)
     }
 
-    override fun seekTo(position: Long) {
-        mediaPlayer?.seekTo(position.toInt())
-        trackingPlaywaveSoundPlayer.seekTo(position)
+    override fun seekTo(position: Int) {
+        mediaPlayer?.seekTo(position)
     }
 
     //TODO maybe remove.. release is enough?
@@ -117,7 +154,7 @@ class PlaywaveSoundPlayerImpl : PlaywaveSoundPlayer {
     }
 
     override fun setTrackListener(trackListener: PlaywaveSoundPlayer.TrackListener) {
-        trackingPlaywaveSoundPlayer.setTrackListener(trackListener)
+        this.trackListener = trackListener
     }
 
 }

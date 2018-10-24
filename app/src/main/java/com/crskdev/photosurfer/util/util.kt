@@ -161,6 +161,11 @@ fun Toolbar.tintIcons(@ColorRes color: Int = android.R.color.darker_gray) {
     }
 }
 
+fun Toolbar.inflateTintedMenu(@MenuRes menu: Int, @ColorRes color: Int = android.R.color.darker_gray){
+    inflateMenu(menu)
+    tintIcons(color)
+}
+
 fun Toolbar.tintIcon(menuItemId: Int, @ColorRes color: Int = android.R.color.darker_gray) {
     post {
         val c = ContextCompat.getColor(context, color)

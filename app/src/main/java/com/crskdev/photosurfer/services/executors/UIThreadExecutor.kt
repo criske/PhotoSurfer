@@ -2,7 +2,7 @@ package com.crskdev.photosurfer.services.executors
 
 import android.os.Handler
 import android.os.Looper
-import java.util.concurrent.Executor
+import java.util.concurrent.Future
 
 class UIThreadExecutor(private val threadCallChecker: ThreadCallChecker) : KExecutor {
 
@@ -17,4 +17,8 @@ class UIThreadExecutor(private val threadCallChecker: ThreadCallChecker) : KExec
             mHandler.post(command)
         }
     }
+
+    override fun <V> call(callable: () -> V): Future<V> = throw UnsupportedOperationException("Submitting futures on main not allowed")
+
+
 }

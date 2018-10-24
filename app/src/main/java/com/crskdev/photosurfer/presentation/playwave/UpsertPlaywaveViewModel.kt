@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
+import com.crskdev.photosurfer.entities.Playwave
 import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.util.livedata.defaultPageListConfig
@@ -50,6 +51,20 @@ class UpsertPlaywaveViewModel(
         (selectedPlaywaveLiveData as MutableLiveData).value = id
     }
 
+    fun upsertPlaywave(title: String) {
+        val t = title.trim()
+        if (t.isNotEmpty()) {
+            playwaveLiveData.value?.let {
+                val playwave = it.copy(title = title).toEntity()
+                if (playwave.id == -1) {
+                    playwaveRepository.createPlaywave(playwave)
+                } else {
+                    playwaveRepository.updatePlaywave(playwave)
+                }
+            }
+        }
+    }
+
     fun search(query: String?) {
         searchQueryLiveData.value = query
     }
@@ -66,7 +81,7 @@ class UpsertPlaywaveViewModel(
         songStateController.playOrStop()
     }
 
-    fun seekTo(position: Long, confirmedToPlayAt: Boolean = false) {
+    fun seekTo(position: Int, confirmedToPlayAt: Boolean = false) {
         songStateController.seekTo(position, confirmedToPlayAt)
     }
 

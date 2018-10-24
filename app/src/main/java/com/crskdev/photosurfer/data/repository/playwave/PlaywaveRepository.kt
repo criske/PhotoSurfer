@@ -55,11 +55,14 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
                 }
             } else {
                 Transformations.map(playwaveDAO.getPlaywavesLiveData()) { l ->
-                    l.asSequence().map {
-                        val exists = songDAO.exists(it.songId)
-                        val size = playwaveDAO.getPlaywaveSize(it.id)
-                        it.toPlaywave(exists, size)
-                    }.toList()
+                    //TODO: super hacky - blocking to please ROOM's query thread calling outside main policy
+                    diskExecutor.call {
+                        l.asSequence().map {
+                            val exists = songDAO.exists(it.songId)
+                            val size = playwaveDAO.getPlaywaveSize(it.id)
+                            it.toPlaywave(exists, size)
+                        }.toList()
+                    }.get()
                 }
             }
 
