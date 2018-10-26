@@ -24,6 +24,7 @@ import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.services.schedule.Tag
 import com.crskdev.photosurfer.services.schedule.WorkData
 import com.crskdev.photosurfer.services.schedule.WorkType
+import com.crskdev.photosurfer.util.livedata.map
 import com.crskdev.photosurfer.util.runOn
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
@@ -288,7 +289,7 @@ class PhotoRepositoryImpl(
     }
 
     override fun getPhotoLiveData(id: String): LiveData<Photo> {
-        return Transformations.map(daoPhotoFacade.getPhotoFromEitherTableLiveData(id)) {
+        return daoPhotoFacade.getPhotoFromEitherTableLiveData(id).map {
             it.toPhoto()
         }
     }

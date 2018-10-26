@@ -25,6 +25,7 @@ import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
 import com.crskdev.photosurfer.services.schedule.worker.CreateCollectionWorker
 import com.crskdev.photosurfer.services.schedule.worker.DeleteCollectionWorker
 import com.crskdev.photosurfer.services.schedule.worker.EditCollectionWorker
+import com.crskdev.photosurfer.util.livedata.map
 import com.crskdev.photosurfer.util.runOn
 
 /**
@@ -152,7 +153,7 @@ class CollectionRepositoryImpl(
     }
 
     override fun getCollectionLiveData(collectionId: Int): LiveData<Collection> =
-            Transformations.map(collectionDAO.getCollectionLiveData(collectionId)) { c ->
+            collectionDAO.getCollectionLiveData(collectionId).map { c ->
                 c.toCollection()
             }
 

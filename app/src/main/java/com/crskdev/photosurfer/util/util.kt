@@ -161,7 +161,7 @@ fun Toolbar.tintIcons(@ColorRes color: Int = android.R.color.darker_gray) {
     }
 }
 
-fun Toolbar.inflateTintedMenu(@MenuRes menu: Int, @ColorRes color: Int = android.R.color.darker_gray){
+fun Toolbar.inflateTintedMenu(@MenuRes menu: Int, @ColorRes color: Int = android.R.color.darker_gray) {
     inflateMenu(menu)
     tintIcons(color)
 }
@@ -252,8 +252,13 @@ inline fun NavController.attachNavGraph(@NavigationRes graphId: Int, customize: 
     graph = inflatedGraph
 }
 
-fun Context.getDrawableCompat(@DrawableRes id: Int): Drawable? =
-        ContextCompat.getDrawable(this, id)
+fun Context.getDrawableCompat(@DrawableRes id: Int): Drawable? = ContextCompat.getDrawable(this, id)
+
+@ColorInt
+fun Context.getColorCompat(@ColorRes id: Int): Int = ContextCompat.getColor(this, id)
+
+
+fun Int.colorResToInt(context: Context) = context.getColorCompat(this)
 
 fun Activity.hideSoftKeyboard() {
     val view = currentFocus ?: View(this);

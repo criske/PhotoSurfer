@@ -40,16 +40,14 @@
 
         <ImageView
             android:id="@+id/imageSongAlbumArt"
-            android:src="@drawable/ic_avatar_placeholder"
             android:layout_width="0dp"
             android:layout_height="0dp"
-           android:layout_margin="8dp"
+            android:layout_margin="8dp"
             android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editAddPlaywaveTitleLayout"
-             />
+            app:layout_constraintTop_toBottomOf="@+id/editAddPlaywaveTitleLayout" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/imgBtnAddPlaywaveSearch"
@@ -109,24 +107,24 @@
             android:layout_marginBottom="8dp"
             android:tint="@color/colorAccent"
             android:visibility="invisible"
-            tools:visibility="visible"
             app:layout_constraintBottom_toBottomOf="@+id/imageSongAlbumArt"
             app:layout_constraintEnd_toEndOf="@+id/imageSongAlbumArt"
             app:layout_constraintStart_toStartOf="@+id/imageSongAlbumArt"
             app:layout_constraintTop_toBottomOf="@+id/textAddPlaywaveSongTitle"
             app:layout_constraintVertical_bias="0.0"
             app:srcCompat="@android:drawable/ic_media_play"
-            tools:ignore="ContentDescription" />
+            tools:ignore="ContentDescription"
+            tools:visibility="visible" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.crskdev.photosurfer.presentation.playwave.PlayerView
         android:id="@+id/playerAddPlaywave"
-        android:visibility="invisible"
-        tools:visibility="visible"
         android:layout_width="match_parent"
-        android:layout_margin="8dp"
+        android:layout_height="@dimen/player_size"
         android:layout_gravity="bottom"
-        android:layout_height="@dimen/player_size"/>
+        android:layout_margin="8dp"
+        android:visibility="invisible"
+        tools:visibility="visible" />
 
 </FrameLayout>

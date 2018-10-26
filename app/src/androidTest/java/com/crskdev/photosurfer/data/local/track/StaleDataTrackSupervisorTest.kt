@@ -1,20 +1,15 @@
 package com.crskdev.photosurfer.data.local.track
 
 
-import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
-import androidx.arch.core.executor.ArchTaskExecutor
-import androidx.arch.core.executor.TaskExecutor
 import com.crskdev.photosurfer.data.local.BaseDBTest
 import com.crskdev.photosurfer.data.local.Contract
-import com.crskdev.photosurfer.data.local.PhotoSurferDB
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.services.NetworkCheckService
-import org.junit.After
+import com.crskdev.photosurfer.services.schedule.NowTimeProvider
 import org.junit.Test
 
 import org.junit.Assert.*
-import org.junit.Before
 import org.junit.runner.RunWith
 
 
@@ -73,7 +68,7 @@ class StaleDataTrackSupervisorTest: BaseDBTest() {
 
 }
 
-class MockNowTimeProvider : StaleDataTrackSupervisor.NowTimeProvider {
+class MockNowTimeProvider : NowTimeProvider {
 
     var now = -1L
 

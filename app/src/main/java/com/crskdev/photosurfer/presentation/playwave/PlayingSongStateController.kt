@@ -25,7 +25,7 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
 
     fun release() = soundPlayer.release()
 
-    fun prepare(song: SongUI) {
+    fun loadAndPlay(song: SongUI) {
         state.postValue(PlayingSongState.Prepare(song))
         soundPlayer.loadAndPlay(song.path, song.durationInt)
     }

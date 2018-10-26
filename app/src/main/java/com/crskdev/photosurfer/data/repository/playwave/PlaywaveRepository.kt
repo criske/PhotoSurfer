@@ -1,8 +1,9 @@
 package com.crskdev.photosurfer.data.repository.playwave
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import androidx.paging.DataSource
+import com.crskdev.photosurfer.data.local.TransactionRunner
+import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.playwave.PlaywaveDAO
 import com.crskdev.photosurfer.data.local.playwave.song.Song
 import com.crskdev.photosurfer.data.local.playwave.song.SongDAO
@@ -10,6 +11,7 @@ import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.entities.*
 import com.crskdev.photosurfer.services.executors.ExecutorType
 import com.crskdev.photosurfer.services.executors.ExecutorsManager
+import com.crskdev.photosurfer.util.livedata.map
 
 /**
  * Created by Cristian Pela on 14.10.2018.
@@ -20,6 +22,8 @@ interface PlaywaveRepository : Repository {
 
     fun getPlaywaves(includePhotos: Boolean = false): LiveData<List<Playwave>>
 
+    fun getPlaywavesForPhoto(photoId: String): LiveData<List<PlaywaveForPhoto>>
+
     fun getPlaywave(playwaveId: Int): LiveData<Playwave>
 
     fun createPlaywave(playwave: Playwave, callback: Repository.Callback<Playwave>? = null)
@@ -28,13 +32,15 @@ interface PlaywaveRepository : Repository {
 
     fun deletePlaywave(playwave: Playwave, callback: Repository.Callback<Playwave>? = null)
 
-    fun addPhotoToPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>? = null)
+    fun addPhotoToPlaywave(playwaveId: Int, photoId: String, callback: Repository.Callback<Unit>? = null)
 
-    fun removePhotoFromPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>? = null)
+    fun removePhotoFromPlaywave(playwaveId: Int, photoId: String, callback: Repository.Callback<Unit>? = null)
 
 }
 
 class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
+                             private val transactional: TransactionRunner,
+                             private val photoDAOFacade: PhotoDAOFacade,
                              private val songDAO: SongDAO,
                              private val playwaveDAO: PlaywaveDAO) : PlaywaveRepository {
 
@@ -45,16 +51,23 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
     override fun getAvailableSongs(filterSearch: String?): DataSource.Factory<Int, Song> =
             songDAO.getSongs(filterSearch)
 
+    override fun getPlaywavesForPhoto(photoId: String): LiveData<List<PlaywaveForPhoto>> =
+            playwaveDAO.getPlaywavesForPhoto(photoId).map { l ->
+                l.asSequence().map {
+                    PlaywaveForPhoto(it.playwaveId, it.playwaveTitle, it.playwaveSize, photoId, it.photoId != null)
+                }.toList()
+            }
+
     override fun getPlaywaves(includePhotos: Boolean): LiveData<List<Playwave>> =
             if (includePhotos) {
-                Transformations.map(playwaveDAO.getPlaywavesWithPhotosLiveData()) { l ->
+                playwaveDAO.getPlaywavesWithPhotosLiveData().map { l ->
                     l.asSequence().map { pwp ->
                         val exists = songDAO.exists(pwp.playwaveEntity.songId)
                         pwp.toPlaywave(exists)
                     }.toList()
                 }
             } else {
-                Transformations.map(playwaveDAO.getPlaywavesLiveData()) { l ->
+                playwaveDAO.getPlaywavesLiveData().map { l ->
                     //TODO: super hacky - blocking to please ROOM's query thread calling outside main policy
                     diskExecutor.call {
                         l.asSequence().map {
@@ -67,7 +80,7 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
             }
 
     override fun getPlaywave(playwaveId: Int): LiveData<Playwave> =
-            Transformations.map(playwaveDAO.getPlaywaveWithPhotosLiveData(playwaveId)) { pwp ->
+           playwaveDAO.getPlaywaveWithPhotosLiveData(playwaveId).map { pwp ->
                 val exists = songDAO.exists(pwp.playwaveEntity.songId)
                 pwp.toPlaywave(exists)
             }
@@ -121,9 +134,15 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
         }
     }
 
-    override fun addPhotoToPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>?) {
+    override fun addPhotoToPlaywave(playwaveId: Int, photoId: String, callback: Repository.Callback<Unit>?) {
         diskExecutor {
-            playwaveDAO.addPhotoToPlaywave(photo.toDb(playwaveId))
+            transactional {
+                photoDAOFacade.getPhotoFromEitherTable(photoId)?.let {
+                    playwaveDAO.addPhotoToPlaywave(it.toPlaywaveContentEntity(playwaveId))
+                    val size = playwaveDAO.getPlaywaveSize(playwaveId)
+                    playwaveDAO.setPlaywaveSize(playwaveId, size)
+                }
+            }
             val added = true // TODO added return is not supported now?
             callback?.run {
                 uiExecutor {
@@ -137,9 +156,15 @@ class PlaywaveRepositoryImpl(executorsManager: ExecutorsManager,
         }
     }
 
-    override fun removePhotoFromPlaywave(playwaveId: Int, photo: PlaywavePhoto, callback: Repository.Callback<Unit>?) {
+    override fun removePhotoFromPlaywave(playwaveId: Int, photoId: String, callback: Repository.Callback<Unit>?) {
         diskExecutor {
-            playwaveDAO.removePhotoFromPlaywave(photo.toDb(playwaveId))
+            transactional {
+                photoDAOFacade.getPhotoFromEitherTable(photoId)?.let {
+                    playwaveDAO.removePhotoFromPlaywave(it.toPlaywaveContentEntity(playwaveId))
+                    val size = playwaveDAO.getPlaywaveSize(playwaveId)
+                    playwaveDAO.setPlaywaveSize(playwaveId, size)
+                }
+            }
             val removed = true // TODO removed return is not supported now?
             callback?.run {
                 uiExecutor {

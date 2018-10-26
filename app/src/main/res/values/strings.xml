@@ -62,4 +62,5 @@
     <string name="confirm">Confirm</string>
     <string name="search_songs">Search Songs</string>
     <string name="new_playwave">New Playwave</string>
+    <string name="create_new_playwave_with_photo">New Playwave With Photo</string>
 </resources>

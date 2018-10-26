@@ -195,7 +195,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                     R.id.menu_action_collections -> {
                         authNavigatorMiddleware.navigate(navController, R.id.fragment_collections)
                     }
-                    R.id.menu_item_play_waves ->{
+                    R.id.menu_item_play_waves -> {
                         navController.navigate(ListPhotosFragmentDirections.actionFragmentListPhotosToPlaywaves(), defaultTransitionNavOptions())
                     }
                 }
@@ -292,7 +292,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
         }
     }
 
-    val authStateLiveData = Transformations.map(ListenableLiveData(listenableAuthState)) {
+    val authStateLiveData = ListenableLiveData(listenableAuthState).map {
         it.username
     }!!
 

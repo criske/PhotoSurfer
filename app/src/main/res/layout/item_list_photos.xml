@@ -63,20 +63,18 @@
         android:layout_margin="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        tools:tint="@color/colorLike"
         android:alpha="0.5"
         android:background="?android:attr/selectableItemBackground"
         android:contentDescription="@null"
         android:src="@drawable/ic_thumb_up_white_24dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:tint="@color/colorLike" />
 
     <ImageButton
         android:id="@+id/imgCollection"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:alpha="0.5"
@@ -85,6 +83,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_collections_white_24dp" />
+
+    <ImageButton
+        android:id="@+id/imgPlaywave"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="4dp"
+        android:alpha="0.5"
+        android:background="?android:attr/selectableItemBackground"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toTopOf="@+id/imgCollection"
+        app:layout_constraintEnd_toEndOf="@+id/imgCollection"
+        app:layout_constraintStart_toStartOf="@+id/imgCollection"
+        app:srcCompat="@drawable/ic_music_note_white_24dp" />
 
     <TextView
         android:id="@+id/textUnsplash"
@@ -108,10 +120,11 @@
         android:layout_marginTop="8dp"
         android:alpha="0.5"
         app:chipBackgroundColor="@color/colorAccent"
+        app:chipStrokeColor="@color/colorPrimaryLight"
         app:layout_constraintEnd_toEndOf="@+id/imgLike"
         app:layout_constraintStart_toStartOf="@+id/imgLike"
         app:layout_constraintTop_toBottomOf="@+id/imgLike"
-        app:chipStrokeColor="@color/colorPrimaryLight"
         tools:text="2.9k" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

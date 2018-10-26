@@ -92,7 +92,7 @@ class MockPlaywaveRepository : PlaywaveRepository {
         return playwavesLiveData
     }
 
-    override fun getPlaywave(playwaveId: Int): LiveData<Playwave> = Transformations.map(playwavesLiveData) { l ->
+    override fun getPlaywave(playwaveId: Int): LiveData<Playwave> = playwavesLiveData.map { l ->
         l.first { it.id == playwaveId }
     }
 

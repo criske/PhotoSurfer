@@ -11,6 +11,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.entities.parcelize
 import com.crskdev.photosurfer.presentation.AuthNavigatorMiddleware
+import com.crskdev.photosurfer.presentation.photo.ListPhotosFragmentDirections
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 
@@ -75,6 +76,10 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
                     ActionWhat.PHOTO_INFO -> {
                         showInfo(photo)
                     }
+                    ActionWhat.PLAYWAVE ->{
+                        navController.navigate(ListPhotosFragmentDirections.actionFragmentListPhotosToAddToPlaywaveFragment(photo.id),
+                                defaultTransitionNavOptions())
+                    }
                 }
             }
         }
@@ -114,7 +119,13 @@ class ListPhotosAdapter(private val layoutInflater: LayoutInflater,
     }
 
     enum class ActionWhat {
-        PHOTO_FULL_SCREEN, SAVED_PHOTO_FULL_SCREEN, DELETE_SAVED_PHOTO, AUTHOR, LIKE, COLLECTION, PHOTO_INFO
+        PHOTO_FULL_SCREEN,
+        SAVED_PHOTO_FULL_SCREEN,
+        DELETE_SAVED_PHOTO, AUTHOR,
+        LIKE,
+        COLLECTION,
+        PHOTO_INFO,
+        PLAYWAVE
     }
 
 }

@@ -38,6 +38,14 @@
                 android:name="collectionId"
                 app:argType="integer" />
         </action>
+        <action
+            android:id="@+id/action_fragment_list_photos_to_addToPlaywaveFragment"
+            app:destination="@id/addToPlaywaveFragment">
+            <argument
+                android:name="photoId"
+                app:argType="string" />
+        </action>
+
     </fragment>
     <fragment
         android:id="@+id/fragment_photo_details"
@@ -133,18 +141,38 @@
         android:id="@+id/fragment_playwaves"
         android:name="com.crskdev.photosurfer.presentation.playwave.PlaywavesFragment"
         android:label="fragment_playwaves"
-        tools:layout="@layout/fragment_playwaves" >
+        tools:layout="@layout/fragment_playwaves">
         <action
             android:id="@+id/action_fragment_playwaves_to_upsertPlaywaveFragment"
             app:destination="@id/upsertPlaywaveFragment" />
+        <action
+            android:id="@+id/action_fragment_playwaves_to_playwaveSlideShowFragment"
+            app:destination="@id/playwaveSlideShowFragment" />
     </fragment>
     <fragment
         android:id="@+id/upsertPlaywaveFragment"
         android:name="com.crskdev.photosurfer.presentation.playwave.UpsertPlaywaveFragment"
         android:label="fragment_upsert_playwave"
-        tools:layout="@layout/fragment_upsert_playwave" >
+        tools:layout="@layout/fragment_upsert_playwave">
         <argument
             android:name="upsertType"
+            app:argType="integer" />
+    </fragment>
+    <fragment
+        android:id="@+id/addToPlaywaveFragment"
+        android:name="com.crskdev.photosurfer.presentation.playwave.AddToPlaywaveFragment"
+        android:label="AddToPlaywaveFragment" >
+        <argument
+            android:name="photoId"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/playwaveSlideShowFragment"
+        android:name="com.crskdev.photosurfer.presentation.playwave.PlaywaveSlideShowFragment"
+        android:label="fragment_playwave_slide_show"
+        tools:layout="@layout/fragment_playwave_slide_show" >
+        <argument
+            android:name="playwaveId"
             app:argType="integer" />
     </fragment>
 

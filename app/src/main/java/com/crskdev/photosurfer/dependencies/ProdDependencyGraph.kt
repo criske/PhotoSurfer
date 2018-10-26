@@ -88,7 +88,8 @@ open class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
     //db
     private val db = PhotoSurferDB.create(context, false)
     override val staleDataTrackSupervisor = StaleDataTrackSupervisor.install(networkCheckService, db)
-    override val daoManager = DaoManager(DatabaseOpsImpl(db, TransactionRunnerImpl(db)),
+    private val transactionRunner = TransactionRunnerImpl(db)
+    override val daoManager = DaoManager(DatabaseOpsImpl(db, transactionRunner),
             mapOf(
                     Contract.TABLE_PHOTOS to db.photoDAO(),
                     Contract.TABLE_LIKE_PHOTOS to db.photoLikeDAO(),
@@ -150,7 +151,9 @@ open class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
 
     //playwave
     override val playwaveRepository: PlaywaveRepository =
-            PlaywaveRepositoryImpl(executorManager, SongDAOImpl(context.contentResolver), db.playwaveDAO())
+            PlaywaveRepositoryImpl(executorManager, transactionRunner,
+                    photoDAOFacade,
+                    SongDAOImpl(context.contentResolver), db.playwaveDAO())
     override val playwaveSoundPlayer: PlaywaveSoundPlayer = PlaywaveSoundPlayerImpl()
 
 }

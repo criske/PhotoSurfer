@@ -37,11 +37,11 @@ interface PlaywaveDAO {
 
     @Query(QUERY_ALL)
     @Transaction
-    fun getPlaywavesWithPhotos(): List<PlaywaveWithPhotos>
+    fun getPlaywavesWithPhotos(): List<PlaywaveWithPhotosEntity>
 
     @Query(QUERY_ALL)
     @Transaction
-    fun getPlaywavesWithPhotosLiveData(): LiveData<List<PlaywaveWithPhotos>>
+    fun getPlaywavesWithPhotosLiveData(): LiveData<List<PlaywaveWithPhotosEntity>>
 
     @Query(QUERY_BY_ID)
     fun getPlaywave(playwaveId: Int): PlaywaveEntity
@@ -51,13 +51,22 @@ interface PlaywaveDAO {
 
     @Query(QUERY_BY_ID)
     @Transaction
-    fun getPlaywaveWithPhotos(playwaveId: Int): PlaywaveWithPhotos
+    fun getPlaywaveWithPhotos(playwaveId: Int): PlaywaveWithPhotosEntity
 
     @Query(QUERY_BY_ID)
     @Transaction
-    fun getPlaywaveWithPhotosLiveData(playwaveId: Int): LiveData<PlaywaveWithPhotos>
+    fun getPlaywaveWithPhotosLiveData(playwaveId: Int): LiveData<PlaywaveWithPhotosEntity>
 
     @Query("SELECT COUNT(*) FROM playwave_contents WHERE playwaveId =:playwaveId")
     fun getPlaywaveSize(playwaveId: Int): Int
+
+    @Query("UPDATE playwaves SET size =:size WHERE id =:playwaveId")
+    fun setPlaywaveSize(playwaveId: Int, size: Int)
+
+    @Query("""
+        SELECT pw.id, pw.title, pw.size, pwc.photoId FROM playwaves as pw
+            LEFT JOIN playwave_contents as pwc ON pw.id == pwc.playwaveId AND pwc.photoId =:photoId
+    """)
+    fun getPlaywavesForPhoto(photoId: String): LiveData<List<PlaywaveForPhotoEntity>>
 
 }

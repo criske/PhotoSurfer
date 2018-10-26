@@ -52,6 +52,7 @@ class ListPhotosVH(private val glide: RequestManager,
                 itemView.context.startActivity(IntentUtils.webIntentUnsplashPhotographer(it.authorUsername))
             }
         }
+        itemView.imgPlaywave.setOnClickListener { _-> model?.let { action(ListPhotosAdapter.ActionWhat.PLAYWAVE, it) } }
         itemView.imgLike.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.LIKE, it) } }
         itemView.imgCollection.setOnClickListener { _ -> model?.let { action(ListPhotosAdapter.ActionWhat.COLLECTION, it) } }
     }

@@ -100,7 +100,7 @@ final class PhotoToEntityMappingReflect {
         return builder.toString();
     }
 
-    private static String transformUrls(EnumMap<ImageType, String> map) {
+   public static String transformUrls(EnumMap<ImageType, String> map) {
         List<String> kvList = new ArrayList<>();
         Set<Map.Entry<ImageType, String>> entries = map.entrySet();
         for (Map.Entry<ImageType, String> e : entries) {

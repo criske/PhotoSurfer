@@ -4,14 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="100dp"
-    app:cardElevation="5dp"
-    app:cardCornerRadius="10dp"
-    app:cardBackgroundColor="@color/colorPrimary"
     android:layout_marginBottom="-3dp"
+    app:cardBackgroundColor="@color/colorLike"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="5dp"
     tools:parentTag="androidx.cardview.widget.CardView">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
+        android:background="@android:color/transparent"
         android:layout_height="match_parent">
 
 

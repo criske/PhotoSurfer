@@ -6,7 +6,7 @@ import androidx.room.Relation
 /**
  * Created by Cristian Pela on 14.10.2018.
  */
-class PlaywaveWithPhotos() {
+class PlaywaveWithPhotosEntity() {
     @Embedded
     lateinit var playwaveEntity: PlaywaveEntity
 

@@ -32,6 +32,8 @@ class PaletteSampler(private val paletteRegions: Map<Int, Palette>, private val 
                 }
     }
 
+    operator fun invoke() = paletteRegions.entries.first().value
+
     operator fun get(id: Int): Palette = paletteRegions.takeIf { it.containsKey(id) }?.let { it[id]!! }
             ?: NON_REGION_PALETTE
 

@@ -20,15 +20,18 @@ class PlayerView : CardView {
 
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
 
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
+            : super(context, attrs, defStyleAttr) {
+
         LayoutInflater.from(context).inflate(R.layout.player_layout, this, true)
+
         imgBtnPlayerClose.setOnClickListener {
             listener?.onAction(Action.Close)
         }
         imgBtnPlayerPause.setOnClickListener {
             listener?.onAction(Action.Pause)
         }
-        imgBtnPlayerPlayStop?.setOnClickListener { v ->
+        imgBtnPlayerPlayStop?.setOnClickListener { _ ->
             listener?.onAction(Action.PlayOrStop)
         }
         seekBarPlayer.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -90,19 +93,19 @@ class PlayerView : CardView {
     private fun restore(state: PlayingSongState) {
         if (!isVisible) {
             isVisible = true
-            val song = state.song
-            textPlayerSongInfo.text = song?.fullInfo
-            seekBarPlayer.apply {
-                isEnabled = true
-                max = song?.durationInt ?: 0
-            }
+        }
+        val song = state.song
+        textPlayerSongInfo.text = song?.fullInfo
+        seekBarPlayer.apply {
+            isEnabled = true
+            max = song?.durationInt ?: 0
         }
     }
 
     private fun seeking(state: PlayingSongState.Seeking) {
         restore(state)
         seekBarPlayer.apply {
-            progress = state.position.toInt()
+            progress = state.position
         }
         textPlayerSeekPosition.text = state.positionDisplay
     }
@@ -114,7 +117,7 @@ class PlayerView : CardView {
             setImageResource(R.drawable.ic_stop_white_24dp)
         }
         imgBtnPlayerPause.isVisible = true
-        seekBarPlayer.progress = state.position.toInt()
+        seekBarPlayer.progress = state.position
         textPlayerSeekPosition.text = state.positionDisplay
     }
 

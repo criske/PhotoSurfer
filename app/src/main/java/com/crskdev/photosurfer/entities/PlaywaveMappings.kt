@@ -1,8 +1,9 @@
 package com.crskdev.photosurfer.entities
 
+import com.crskdev.photosurfer.data.local.photo.PhotoEntity
 import com.crskdev.photosurfer.data.local.playwave.PlaywaveContentEntity
 import com.crskdev.photosurfer.data.local.playwave.PlaywaveEntity
-import com.crskdev.photosurfer.data.local.playwave.PlaywaveWithPhotos
+import com.crskdev.photosurfer.data.local.playwave.PlaywaveWithPhotosEntity
 import com.crskdev.photosurfer.data.local.playwave.song.Song
 
 /**
@@ -18,7 +19,7 @@ fun PlaywaveEntity.toPlaywave(exists: Boolean, size: Int): Playwave =
                 songDuration,
                 exists), emptyList())
 
-fun PlaywaveWithPhotos.toPlaywave(exists: Boolean): Playwave =
+fun PlaywaveWithPhotosEntity.toPlaywave(exists: Boolean): Playwave =
         Playwave(playwaveEntity.id,
                 playwaveEntity.title,
                 playwaveContents.size,
@@ -35,7 +36,7 @@ fun PlaywaveWithPhotos.toPlaywave(exists: Boolean): Playwave =
                 }.toList())
 
 fun PlaywaveContentEntity.toPlaywavePhoto(): PlaywavePhoto =
-        PlaywavePhoto(photoId, url, photoExists)
+        PlaywavePhoto(photoId, transformStrMapToUrls(urls), photoExists)
 
 fun Playwave.toDB(): PlaywaveEntity =
         PlaywaveEntity().apply {
@@ -52,6 +53,14 @@ fun PlaywavePhoto.toDb(playwaveId: Int): PlaywaveContentEntity =
         PlaywaveContentEntity().apply {
             this.playwaveId = playwaveId
             this.photoId = this@toDb.id
-            this.url = this@toDb.url
+            this.urls = PhotoToEntityMappingReflect.transformUrls(this@toDb.urls)
             this.photoExists = this@toDb.exists
+        }
+
+fun PhotoEntity.toPlaywaveContentEntity(playwaveId: Int): PlaywaveContentEntity =
+        PlaywaveContentEntity().apply {
+            this.playwaveId = playwaveId
+            this.photoId = this@toPlaywaveContentEntity.id
+            this.urls = this@toPlaywaveContentEntity.urls
+            this.photoExists = true
         }

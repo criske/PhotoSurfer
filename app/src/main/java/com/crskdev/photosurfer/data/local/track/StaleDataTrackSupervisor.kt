@@ -6,6 +6,7 @@ import androidx.room.InvalidationTracker
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.PhotoSurferDB
 import com.crskdev.photosurfer.services.NetworkCheckService
+import com.crskdev.photosurfer.services.schedule.NowTimeProvider
 import java.util.concurrent.TimeUnit
 
 interface IStaleDataTrackSupervisor {
@@ -22,14 +23,6 @@ class StaleDataTrackSupervisor private constructor(
         staleThreshold: Long,
         unit: TimeUnit,
         private val nowTimeProvider: NowTimeProvider) : IStaleDataTrackSupervisor {
-
-    interface NowTimeProvider {
-        companion object {
-            val DEFAULT = object : NowTimeProvider {}
-        }
-
-        fun now() = System.currentTimeMillis()
-    }
 
     private var dao: StaleDataTackDAO = db.staleDataTrackDAO()
 

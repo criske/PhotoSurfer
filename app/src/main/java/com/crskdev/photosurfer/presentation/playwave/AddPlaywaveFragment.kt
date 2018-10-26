@@ -1,5 +1,6 @@
 package com.crskdev.photosurfer.presentation.playwave
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,10 +16,10 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.util.*
-import com.crskdev.photosurfer.util.glide.onError
+import com.crskdev.photosurfer.util.glide.asBitmapPalette
+import com.crskdev.photosurfer.util.glide.into
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_add_playwave.*
-import kotlin.math.roundToInt
 
 /**
  * Created by Cristian Pela on 17.10.2018.
@@ -91,10 +92,19 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             textAddPlaywaveSongTitle.text = it?.song?.title
             textAddPlaywaveSongArtist.text = it?.song?.artist
             Glide.with(this)
-                    .asDrawable()
+                    .asBitmapPalette()
                     .load(it.song?.albumPath)
-                    .apply(RequestOptions().transform(RoundedCorners(5.dpToPx(resources).roundToInt())).centerCrop())
-                    .into(imageSongAlbumArt)
+                    .apply(RequestOptions().transforms(RoundedCorners(20)))
+                    .into(imageSongAlbumArt) { bp ->
+                        val palette = bp.paletteSampler()
+                        val darkSwatch = palette.dominantSwatch
+                        darkSwatch?.titleTextColor?.let { it1 -> textAddPlaywaveSongTitle.setTextColor(it1) }
+                        darkSwatch?.bodyTextColor?.let { it1 -> textAddPlaywaveSongArtist.setTextColor(it1) }
+                        val colorAccent = R.color.colorAccent.colorResToInt(context!!)
+                        imgBtnAddPlaywaveSearch.backgroundTintList = ColorStateList.valueOf(palette.getDarkVibrantColor(colorAccent))
+                        imgBtnAddPlaywavePlay.setColorFilter(palette.getDarkVibrantColor(colorAccent))
+                        view.setBackgroundColor(palette.getDominantColor(R.color.colorPrimary.colorResToInt(context!!)))
+                    }
         })
 
         viewModel.playingSongStateLiveData.observe(this, Observer {

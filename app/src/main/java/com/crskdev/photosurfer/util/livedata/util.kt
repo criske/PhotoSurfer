@@ -4,7 +4,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import androidx.paging.PagedList
+import com.crskdev.photosurfer.services.schedule.NowTimeProvider
 import java.text.DecimalFormat
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -65,6 +67,30 @@ fun <T> LiveData<T>.skip(count: Int): LiveData<T> {
 
 fun <T> LiveData<T>.skipFirst(): LiveData<T> = skip(1)
 
+fun <T> LiveData<T>.interval(duration: Long, unit: TimeUnit, nowTimeProvider: NowTimeProvider = object : NowTimeProvider {}): LiveData<T> {
+    val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
+    mutableLiveData.addSource(this, object : Observer<T> {
+        var lastTime = 0L
+        val intervalMillis = unit.toMillis(duration)
+
+        override fun onChanged(t: T) {
+            val now = nowTimeProvider.now()
+            val delta = now - lastTime
+            if (delta > intervalMillis) {
+                mutableLiveData.value = t
+                lastTime = now
+            }
+        }
+    })
+    return mutableLiveData
+}
+
+fun <T, V> LiveData<T>.switchMap(block: (T) -> LiveData<V>): LiveData<V> =
+        Transformations.switchMap(this, block)
+
+fun <T, V> LiveData<T>.map(block: (T) -> V): LiveData<V> =
+        Transformations.map(this, block)
+
 inline fun <reified V : ViewModel> viewModelFromProvider(activity: FragmentActivity, crossinline provider: () -> V): V =
         ViewModelProviders.of(activity, object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -107,3 +133,5 @@ fun <T> empty() = MutableLiveData<T>()
 fun <T> just(item: T) = MutableLiveData<T>().apply {
     value = item
 }
+
+

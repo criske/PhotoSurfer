@@ -19,6 +19,7 @@ import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.services.permission.AppPermissionsHelper
 import com.crskdev.photosurfer.services.permission.HasAppPermissionAwareness
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
+import com.crskdev.photosurfer.util.livedata.map
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.tintIcons
 import kotlinx.android.synthetic.main.fragment_playwaves.*
@@ -56,10 +57,10 @@ class PlaywavesFragment : Fragment(), HasAppPermissionAwareness {
             }
             setOnMenuItemClickListener {
                 if (it.itemId == R.id.menu_action_add) {
-                    if( AppPermissionsHelper.hasStoragePermission(context)) {
+                    if (AppPermissionsHelper.hasStoragePermission(context)) {
                         navController.navigate(PlaywavesFragmentDirections.actionFragmentPlaywavesToUpsertPlaywaveFragment(R.id.addPlaywaveFragment),
                                 defaultTransitionNavOptions())
-                    }else{
+                    } else {
                         AppPermissionsHelper.requestStoragePermission(activity!!)
                     }
                 }
@@ -70,7 +71,9 @@ class PlaywavesFragment : Fragment(), HasAppPermissionAwareness {
         val playwavesAdapter = PlaywavesAdapter(LayoutInflater.from(context)) {
             when (it) {
                 is PlaywaveAction.Play -> {
-                    Toast.makeText(context, "TODO: Show play photo wave", Toast.LENGTH_SHORT).show()
+                    navController.navigate(PlaywavesFragmentDirections
+                            .actionFragmentPlaywavesToPlaywaveSlideShowFragment(it.playwaveId),
+                            defaultTransitionNavOptions())
                 }
                 is PlaywaveAction.Error -> {
                     Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
@@ -109,7 +112,7 @@ class PlaywavesFragment : Fragment(), HasAppPermissionAwareness {
 class PlaywavesViewModel(
         playwavesRepository: PlaywaveRepository) : ViewModel() {
 
-    val playwavesLiveData = Transformations.map(playwavesRepository.getPlaywaves()) { l ->
+    val playwavesLiveData = playwavesRepository.getPlaywaves().map { l ->
         l.asSequence().map { p -> p.toUI() }.toList()
     }
 }
