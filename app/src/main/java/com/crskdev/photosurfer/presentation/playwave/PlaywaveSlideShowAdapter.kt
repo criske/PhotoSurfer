@@ -27,8 +27,6 @@ class PlaywaveSlideShowAdapter(private val layoutInflater: LayoutInflater,
 
     private val items = mutableListOf<PlaywavePhoto>()
 
-    private var currentPositionInAnimation = -1
-
     fun submit(newItems: List<PlaywavePhoto>) {
         if (!items.isEmpty()) items.clear()
         items.addAll(newItems)
@@ -46,10 +44,6 @@ class PlaywaveSlideShowAdapter(private val layoutInflater: LayoutInflater,
         if (items.isNotEmpty()) {
             val realPosition = position.rem(items.size)
             holder.bind(items[realPosition])
-            if (currentPositionInAnimation != realPosition) {
-                currentPositionInAnimation = realPosition
-                holder.animate()
-            }
         }
     }
 
@@ -58,7 +52,6 @@ class PlaywaveSlideShowAdapter(private val layoutInflater: LayoutInflater,
     }
 
     override fun onViewDetachedFromWindow(holder: PlaywaveSlideShowVH) {
-        holder.clearAnimation()
         PlaywaveSlideShowVH.previous = null
     }
 }
@@ -67,7 +60,6 @@ class PlaywaveSlideShowVH(v: View, private val glide: RequestManager) : BindView
 
     companion object {
         var previous: Drawable? = null
-        private var prevId = ""
     }
 
 
@@ -90,19 +82,6 @@ class PlaywaveSlideShowVH(v: View, private val glide: RequestManager) : BindView
                     .into(imageSlideShow)
 
         }
-    }
-
-    fun animate() {
-//        val anim = ScaleAnimation(0.0f, 1.0f, 0.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f)
-//        anim.duration = 1000
-//        val anim = AnimationUtils.loadAnimation(itemView.context, android.R.anim.fade_in).apply {
-//            duration = 1000
-//        }
-        //itemView.startAnimation(anim)
-    }
-
-    fun clearAnimation() {
-        //itemView.clearAnimation()
     }
 
     override fun unBind() {

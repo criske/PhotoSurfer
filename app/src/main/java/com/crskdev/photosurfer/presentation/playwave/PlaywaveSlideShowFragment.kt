@@ -165,10 +165,8 @@ class PlaywaveSlideShowViewModel(playwaveId: Int,
 
     private val playerController = PlayingSongStateController(playwaveSoundPlayer)
 
-    val playwaveLiveData = playwaveRepository.getPlaywave(playwaveId).map {
-        //using map as side effect here
+    val playwaveLiveData = playwaveRepository.getPlaywave(playwaveId).onNext {
         playerController.loadAndPlay(it.song.toUI())
-        it
     }
 
     val slideShowResultLiveData: LiveData<SlideShowResult> = playerController

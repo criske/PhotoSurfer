@@ -127,6 +127,15 @@ inline fun <T, R> LiveData<T>.scan(initialValue: R, crossinline mapper: (R, T) -
     return mutableLiveData
 }
 
+inline fun <T> LiveData<T>.onNext(crossinline block: (T) -> Unit): LiveData<T> {
+    val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
+    mutableLiveData.addSource(this) { t ->
+        mutableLiveData.value = t
+        block(t)
+    }
+    return mutableLiveData
+}
+
 @Suppress("UNCHECKED_CAST")
 inline fun <reified R : Any> LiveData<*>.cast(): LiveData<R> {
     val mutableLiveData: MediatorLiveData<R> = MediatorLiveData()
