@@ -85,6 +85,59 @@ fun <T> LiveData<T>.interval(duration: Long, unit: TimeUnit, nowTimeProvider: No
     return mutableLiveData
 }
 
+fun <T> LiveData<T>.interval(itemThreshold: Int): LiveData<T> {
+    val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
+    mutableLiveData.addSource(this, object : Observer<T> {
+        var emitted = 0
+        override fun onChanged(t: T) {
+            if (emitted >= itemThreshold) {
+                mutableLiveData.value = t
+                emitted = 0
+            }
+            emitted += 1
+        }
+    })
+    return mutableLiveData
+}
+
+fun <T> merge(list: List<LiveData<T>>): LiveData<T> {
+    val mutableLiveData: MediatorLiveData<T> = MediatorLiveData()
+    list.forEach { ld ->
+        mutableLiveData.addSource(ld) {
+            mutableLiveData.value = it
+        }
+    }
+    return mutableLiveData
+}
+
+
+inline fun <T, R> LiveData<T>.splitAndMerge(block: LiveData<T>.() -> List<LiveData<R>>): LiveData<R> {
+    return merge(this.block())
+}
+
+inline fun <T, R> LiveData<T>.scan(initialValue: R, crossinline mapper: (R, T) -> R): LiveData<R> {
+    val mutableLiveData: MediatorLiveData<R> = MediatorLiveData()
+    mutableLiveData.addSource(this, object : Observer<T> {
+        var accValue = initialValue
+        override fun onChanged(t: T) {
+            accValue = mapper(accValue, t)
+            mutableLiveData.value = accValue
+        }
+    })
+    return mutableLiveData
+}
+
+@Suppress("UNCHECKED_CAST")
+inline fun <reified R : Any> LiveData<*>.cast(): LiveData<R> {
+    val mutableLiveData: MediatorLiveData<R> = MediatorLiveData()
+    mutableLiveData.addSource(this, object : Observer<Any> {
+        override fun onChanged(item: Any) {
+            mutableLiveData.value = item as R
+        }
+    })
+    return mutableLiveData
+}
+
 fun <T, V> LiveData<T>.switchMap(block: (T) -> LiveData<V>): LiveData<V> =
         Transformations.switchMap(this, block)
 

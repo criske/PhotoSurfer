@@ -35,7 +35,6 @@ class PlayerView : CardView {
             listener?.onAction(Action.PlayOrStop)
         }
         seekBarPlayer.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-
             var startManualSeek = false
 
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {

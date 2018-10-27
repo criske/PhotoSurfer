@@ -4,22 +4,19 @@ import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnimationUtils
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.Target
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.PlaywavePhoto
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 import kotlinx.android.synthetic.main.item_slide_show.view.*
-import android.view.animation.Animation
-import android.view.animation.ScaleAnimation
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
 
 
 /**
@@ -70,6 +67,7 @@ class PlaywaveSlideShowVH(v: View, private val glide: RequestManager) : BindView
 
     companion object {
         var previous: Drawable? = null
+        private var prevId = ""
     }
 
 
@@ -90,6 +88,7 @@ class PlaywaveSlideShowVH(v: View, private val glide: RequestManager) : BindView
 
                     })
                     .into(imageSlideShow)
+
         }
     }
 
