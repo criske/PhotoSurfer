@@ -11,14 +11,44 @@
         android:id="@+id/recyclerSlideShow"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:overScrollMode="never"
         android:orientation="horizontal"
+        android:overScrollMode="never"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/item_slide_show" />
+
+    <!--BOTTOM-->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarSlideShow"
+        style="@style/BasicAppToolbar.Common.Nav"
+        android:layout_width="match_parent"
+        android:background="@android:color/transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <!--MIDDLE-->
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnSlideShow"
+        app:elevation="0dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="true"
+        app:pressedTranslationZ="0dp"
+        app:backgroundTint="@android:color/transparent"
+        app:layout_constraintBottom_toTopOf="@+id/progressSlideShow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/recyclerSlideShow"
+        app:layout_constraintTop_toBottomOf="@+id/toolbarSlideShow"
+        app:srcCompat="@drawable/ic_play_arrow_white_24dp" />
+
+    <!--BOTTOM-->
 
     <TextView
         android:id="@+id/textSlideShowTitle"
@@ -31,18 +61,17 @@
         app:layout_constraintStart_toStartOf="parent"
         tools:text="Title" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnSlideShow"
+    <TextView
+        android:id="@+id/textSlideShowSong"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        app:backgroundTint="@android:color/transparent"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@+id/progressSlideShow"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/recyclerSlideShow"
-        app:layout_constraintTop_toBottomOf="@+id/toolbarSlideShow"
-        app:srcCompat="@drawable/ic_play_arrow_white_24dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="Song (10:20)" />
 
     <SeekBar
         android:id="@+id/progressSlideShow"
@@ -57,27 +86,6 @@
         app:layout_constraintStart_toStartOf="@+id/recyclerSlideShow"
         tools:max="100"
         tools:progress="50" />
-
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbarSlideShow"
-        style="@style/BasicAppToolbar.Common.Nav"
-        android:layout_width="match_parent"
-        android:background="@android:color/transparent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/textSlideShowSong"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="16dp"
-        android:textColor="@android:color/white"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toTopOf="@+id/progressSlideShow"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:text="Song (10:20)" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

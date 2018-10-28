@@ -1,13 +1,12 @@
 package com.crskdev.photosurfer.presentation.playwave
 
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowManager
+import android.view.*
 import android.widget.SeekBar
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.toColorFilter
@@ -30,7 +29,10 @@ import kotlinx.android.synthetic.main.fragment_playwave_slide_show.*
 import kotlin.math.sign
 
 class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
+
     private lateinit var viewModel: PlaywaveSlideShowViewModel
+
+    private var controlsAnimation: AnimatorSet? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +63,15 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         recyclerSlideShow.apply {
             // PagerSnapHelper().attachToRecyclerView(this)
             this.adapter = adapter
-            setOnTouchListener { _, _ -> true }
+            tag = true
+            setOnTouchListener { r, ev ->
+                if (ev.action == MotionEvent.ACTION_UP) {
+                    val areControlsShowing = (r.tag as Boolean?) ?: false
+                    animateControlsVisibility(!areControlsShowing)
+                    r.tag = !areControlsShowing //toggle
+                }
+                true
+            }
         }
         btnSlideShow.setOnClickListener {
             (it.tag as Boolean?)?.let { isPlaying ->
@@ -138,7 +148,56 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         })
     }
 
+
+    private fun animateControlsVisibility(showing: Boolean) {
+        if (controlsAnimation?.isRunning == true) {
+            return
+        }
+        fun View.translateYAnimator(toBottomOffscreen: Boolean, showing: Boolean, value: Float): ObjectAnimator {
+            val (from, to) = if (showing) {
+                if (toBottomOffscreen) {
+                    value
+                } else {
+                    -value
+                } to 0f
+            } else {
+                0f to if (toBottomOffscreen) {
+                    value
+                } else {
+                    -value
+                }
+            }
+            return ObjectAnimator.ofFloat(this, "translationY", from, to)
+        }
+
+        fun View.alphaAnimator(show: Boolean, transparency: Float = 0f): ObjectAnimator {
+            val (from, to) = if (show) transparency to 1f else 1f to transparency
+            return ObjectAnimator.ofFloat(this, "alpha", from, to)
+        }
+
+        val playButtonAnimation = btnSlideShow.alphaAnimator(showing).apply {
+            duration = 100
+        }
+
+        val groupAnimators = listOf(
+                toolbarSlideShow.translateYAnimator(false, showing, 200f),
+                progressSlideShow.translateYAnimator(true, showing, 200f),
+                textSlideShowSong.translateYAnimator(true, showing, 200f),
+                textSlideShowTitle.translateYAnimator(true, showing, 200f),
+                textSlideShowTitle.alphaAnimator(showing, 0.35f)
+        ).map {
+            it.apply { duration = 500 }
+        }
+        controlsAnimation?.cancel()
+        controlsAnimation = AnimatorSet().apply {
+            playTogether(groupAnimators)
+            play(playButtonAnimation).after(groupAnimators.first())
+            start()
+        }
+    }
+
     override fun onStop() {
+        controlsAnimation?.cancel()
         activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         super.onStop()
     }

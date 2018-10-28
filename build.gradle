@@ -33,7 +33,7 @@ buildscript {
         persistentCoookieJar='v1.0.1'
         crashlyticsVersion='2.9.5'
         legacyVersion='1.0.0'
-        firebaseMessaging='17.3.3'
+        firebaseMessaging='17.3.4'
     }
     repositories {
         google()
