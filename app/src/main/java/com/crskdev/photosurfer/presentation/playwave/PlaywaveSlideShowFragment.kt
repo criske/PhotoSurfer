@@ -22,8 +22,10 @@ import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.setStatusBarColor
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.getColorCompat
 import com.crskdev.photosurfer.util.glide.GlideApp
+import com.crskdev.photosurfer.util.inflateTintedMenu
 import com.crskdev.photosurfer.util.livedata.*
 import kotlinx.android.synthetic.main.fragment_playwave_slide_show.*
 import kotlin.math.sign
@@ -56,6 +58,18 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         toolbarSlideShow.apply {
             setNavigationOnClickListener {
                 findNavController().popBackStack()
+            }
+            inflateTintedMenu(R.menu.menu_playwave_play) {
+                when (it.itemId) {
+                    R.id.menu_action_edit_playwave -> {
+                        viewModel.pause()
+                        findNavController().navigate(PlaywaveSlideShowFragmentDirections
+                                .actionPlaywaveSlideShowFragmentToUpsertPlaywaveFragment(R.id.updatePlaywaveFragment)
+                                .setPlaywaveId(PlaywaveSlideShowFragmentArgs.fromBundle(arguments).playwaveId),
+                                defaultTransitionNavOptions())
+                    }
+                }
+                true
             }
         }
         val adapter = PlaywaveSlideShowAdapter(LayoutInflater.from(context),
@@ -136,6 +150,11 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
                                 tag = false
                                 setImageResource(R.drawable.ic_play_arrow_white_24dp)
                             }
+                            progressSlideShow.apply {
+                                max = it.state.song?.durationInt ?: 0
+                                if (it.state is PlayingSongState.Paused)
+                                    progress = it.state.position
+                            }
                         }
                     }
                 }
@@ -176,7 +195,7 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         }
 
         val playButtonAnimation = btnSlideShow.alphaAnimator(showing).apply {
-            duration = 100
+            duration = 250
         }
 
         val groupAnimators = listOf(
@@ -224,7 +243,7 @@ class PlaywaveSlideShowViewModel(playwaveId: Int,
 
     private val playerController = PlayingSongStateController(playwaveSoundPlayer)
 
-    val playwaveLiveData = playwaveRepository.getPlaywave(playwaveId).onNext {
+    val playwaveLiveData = playwaveRepository.getPlaywave(playwaveId, true).onNext {
         playerController.loadAndPlay(it.song.toUI())
     }
 

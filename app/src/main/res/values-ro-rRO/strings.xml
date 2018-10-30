@@ -45,4 +45,5 @@
     <string name="search_songs">Cauta Piese</string>
     <string name="new_playwave">Playwave Nou</string>
     <string name="create_new_playwave_with_photo">Playwave Nou Cu Poza</string>
+    <string name="update_playwave">Modifica Playwave</string>
 </resources>

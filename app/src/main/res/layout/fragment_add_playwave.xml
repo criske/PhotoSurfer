@@ -13,6 +13,7 @@
             android:id="@+id/toolbarAddPlaywave"
             style="@style/BasicAppToolbar.Common.Nav"
             app:layout_constraintEnd_toEndOf="parent"
+            app:titleTextAppearance="@style/TextAppearance.AppCompat.Subhead"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:title="@string/new_playwave" />
@@ -22,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="8dp"
             app:errorEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
@@ -34,6 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:hint="@string/title"
+                android:textSize="14sp"
                 android:inputType="text"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>

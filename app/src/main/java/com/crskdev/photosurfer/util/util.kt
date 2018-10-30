@@ -94,17 +94,6 @@ fun defaultTransitionNavOptionsBuilder(): NavOptions.Builder = NavOptions.Builde
 
 fun defaultTransitionNavOptions() = defaultTransitionNavOptionsBuilder().build()
 
-fun getSpanCountByScreenWidth(resources: Resources, itemWidthDp: Int, spacingDp: Int = 0): Int {
-    kotlin.assert(itemWidthDp > 0) {
-        "Item Width must bigger than 0. Provided : $itemWidthDp"
-    }
-    val screenWidth = resources.displayMetrics.widthPixels
-    val spacingGrid = if (spacingDp > 0) 2 * spacingDp.dpToPx(resources).toInt() else 0
-    val spanCount = screenWidth / (itemWidthDp.dpToPx(resources) + spacingGrid)
-    return Math.round(spanCount)
-}
-
-
 inline fun <T> T.runOn(executor: Executor, crossinline block: T.() -> Unit) {
     executor.execute {
         this@runOn.block()
@@ -161,9 +150,13 @@ fun Toolbar.tintIcons(@ColorRes color: Int = android.R.color.darker_gray) {
     }
 }
 
-fun Toolbar.inflateTintedMenu(@MenuRes menu: Int, @ColorRes color: Int = android.R.color.darker_gray) {
+inline fun Toolbar.inflateTintedMenu(@MenuRes menu: Int, @ColorRes color: Int = android.R.color.darker_gray,
+                                     crossinline menuItemListener: (MenuItem) -> Boolean = { true }) {
     inflateMenu(menu)
     tintIcons(color)
+    setOnMenuItemClickListener {
+        menuItemListener(it)
+    }
 }
 
 fun Toolbar.tintIcon(menuItemId: Int, @ColorRes color: Int = android.R.color.darker_gray) {
@@ -232,7 +225,7 @@ inline fun Menu.addSearch(context: Context, @StringRes title: Int, expandedByDef
     }
 }
 
-fun Fragment.popNavigationBackStack(): Boolean {
+fun Fragment.navigateUp(): Boolean {
     var popped = false
     var parent: Fragment? = this
     while (!popped) {

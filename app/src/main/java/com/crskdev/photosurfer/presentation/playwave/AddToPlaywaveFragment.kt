@@ -10,6 +10,7 @@ import androidx.core.graphics.toColorFilter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ListAdapter
@@ -17,6 +18,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.PlaywaveForPhoto
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 import kotlinx.android.synthetic.main.fragment_add_to_playwave.*
@@ -47,6 +49,9 @@ class AddToPlaywaveFragment : Fragment() {
         val adapter = AddToPlaywaveAdapter(LayoutInflater.from(view.context)) {
             when (it) {
                 is AddToPlaywaveVHAction.AddToPlaywave -> viewModel.addToPlaywave(it.playwave)
+                is AddToPlaywaveVHAction.Play -> findNavController()
+                        .navigate(AddToPlaywaveFragmentDirections
+                                .actionAddToPlaywaveFragmentToPlaywaveSlideShowFragment(it.playwave.playwaveId))
             }
         }
 
@@ -55,6 +60,12 @@ class AddToPlaywaveFragment : Fragment() {
             this.adapter = adapter
         }
 
+        btnAddToPlaywaveCreate.setOnClickListener {
+            findNavController().navigate(AddToPlaywaveFragmentDirections
+                            .ActionAddToPlaywaveFragmentToUpsertPlaywaveFragment(R.id.addPlaywaveFragment)
+                            .setPhotoId(AddToPlaywaveFragmentArgs.fromBundle(arguments).photoId),
+                            defaultTransitionNavOptions())
+        }
 
         viewModel.playwaves.observe(this, Observer {
             adapter.submitList(it)
@@ -117,6 +128,11 @@ class AddToPlaywaveVH(view: View, action: (AddToPlaywaveVHAction) -> Unit) : Bin
                     action(AddToPlaywaveVHAction.AddToPlaywave(it))
                 }
             }
+            setOnClickListener { _ ->
+                model?.let {
+                    action(AddToPlaywaveVHAction.Play(it))
+                }
+            }
         }
     }
 
@@ -138,8 +154,8 @@ class AddToPlaywaveVH(view: View, action: (AddToPlaywaveVHAction) -> Unit) : Bin
 }
 
 sealed class AddToPlaywaveVHAction {
-    class EditPlaywave(val playwave: PlaywaveForPhoto) : AddToPlaywaveVHAction()
     class AddToPlaywave(val playwave: PlaywaveForPhoto) : AddToPlaywaveVHAction()
+    class Play(val playwave: PlaywaveForPhoto) : AddToPlaywaveVHAction()
 }
 
 

@@ -1,11 +1,13 @@
 package com.crskdev.photosurfer.presentation.playwave
 
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.Transformations
@@ -79,10 +81,23 @@ class PlaywavesFragment : Fragment(), HasAppPermissionAwareness {
                     Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 }
                 is PlaywaveAction.Edit -> {
-                    Toast.makeText(context, "TODO: edit playwave", Toast.LENGTH_SHORT).show()
+                    navController.navigate(PlaywavesFragmentDirections
+                            .actionFragmentPlaywavesToUpsertPlaywaveFragment(R.id.updatePlaywaveFragment)
+                            .setPlaywaveId(it.playwaveId),
+                            defaultTransitionNavOptions())
                 }
                 is PlaywaveAction.Delete -> {
-                    Toast.makeText(context, "TODO: delete playwave", Toast.LENGTH_SHORT).show()
+                    AlertDialog.Builder(context)
+                            .setTitle("Delete this playwave permanently?")
+                            .setCancelable(true)
+                            .setNegativeButton("Cancel") { dialog, _ ->
+                                dialog.dismiss()
+                            }
+                            .setPositiveButton("OK") { dialog, _ ->
+                                viewModel.deletePlaywave(it.playwaveId)
+                                dialog.dismiss()
+                            }
+                            .create().show()
                 }
             }
         }
@@ -109,8 +124,11 @@ class PlaywavesFragment : Fragment(), HasAppPermissionAwareness {
 
 }
 
-class PlaywavesViewModel(
-        playwavesRepository: PlaywaveRepository) : ViewModel() {
+class PlaywavesViewModel(private val playwavesRepository: PlaywaveRepository) : ViewModel() {
+
+    fun deletePlaywave(id: Int) {
+        playwavesRepository.deletePlaywave(id)
+    }
 
     val playwavesLiveData = playwavesRepository.getPlaywaves().map { l ->
         l.asSequence().map { p -> p.toUI() }.toList()

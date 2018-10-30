@@ -15,10 +15,13 @@ interface PlaywaveDAO {
     }
 
     @Insert
-    fun insert(playwaveEntity: PlaywaveEntity)
+    fun insert(playwaveEntity: PlaywaveEntity): Long
 
     @Delete
     fun delete(playwaveEntity: PlaywaveEntity)
+
+    @Query("DELETE FROM playwaves WHERE id=:id")
+    fun delete(id: Int)
 
     @Update
     fun update(playwaveEntity: PlaywaveEntity)
@@ -28,6 +31,9 @@ interface PlaywaveDAO {
 
     @Delete
     fun removePhotoFromPlaywave(playwaveEntity: PlaywaveContentEntity)
+
+    @Query("DELETE FROM playwave_contents  WHERE  playwaveId=:playwaveId AND photoId=:photoId")
+    fun removePhotoFromPlaywave(playwaveId: Int, photoId: String)
 
     @Query(QUERY_ALL)
     fun getPlaywavesLiveData(): LiveData<List<PlaywaveEntity>>

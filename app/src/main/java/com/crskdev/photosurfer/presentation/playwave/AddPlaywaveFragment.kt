@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -20,6 +21,8 @@ import com.crskdev.photosurfer.util.glide.asBitmapPalette
 import com.crskdev.photosurfer.util.glide.into
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
 import kotlinx.android.synthetic.main.fragment_add_playwave.*
+import kotlinx.android.synthetic.main.item_list_playwaves_lite.*
+import kotlinx.android.synthetic.main.item_playwave.*
 
 /**
  * Created by Cristian Pela on 17.10.2018.
@@ -49,12 +52,13 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
         toolbarAddPlaywave.apply {
             inflateTintedMenu(R.menu.menu_single_add)
             setNavigationOnClickListener {
-                popNavigationBackStack()
+                navigateUp()
             }
             setOnMenuItemClickListener {
                 if (it.itemId == R.id.menu_action_add) {
                     activity?.hideSoftKeyboard()
-                    viewModel.upsertPlaywave(editAddPlaywaveTitle.text.toString())
+                    val withPhotoId = arguments?.getString("photoId", null)
+                    viewModel.upsertPlaywave(editAddPlaywaveTitle.text.toString(), withPhotoId)
                 }
                 true
             }
@@ -64,6 +68,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             if (isSelected) {
                 viewModel.removePlaywaveSong()
             } else {
+                activity?.hideSoftKeyboard()
                 navController.navigate(AddPlaywaveFragmentDirections.actionAddPlaywaveFragmentToSearchSongFragment(),
                         defaultTransitionNavOptions())
             }
@@ -94,7 +99,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             Glide.with(this)
                     .asBitmapPalette()
                     .load(it.song?.albumPath)
-                    .apply(RequestOptions().transforms(RoundedCorners(20)))
+                    .apply(RequestOptions().transforms(RoundedCorners(16)))
                     .into(imageSongAlbumArt) { bp ->
                         val palette = bp.paletteSampler()
                         val darkSwatch = palette.dominantSwatch
@@ -109,6 +114,16 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
 
         viewModel.playingSongStateLiveData.observe(this, Observer {
             playerAddPlaywave.changeState(it)
+        })
+        viewModel.messageLiveData.observe(this, Observer {
+            when (it) {
+                UpsertPlaywaveViewModel.Message.Added -> {
+                    Toast.makeText(context, "Playwave Added", Toast.LENGTH_SHORT).show()
+                }
+                is UpsertPlaywaveViewModel.Message.Error -> {
+                    Toast.makeText(context, it.err.message, Toast.LENGTH_SHORT).show()
+                }
+            }
         })
 
         playerAddPlaywave.setOnPlayerListener(object : PlayerView.PlayerListener {

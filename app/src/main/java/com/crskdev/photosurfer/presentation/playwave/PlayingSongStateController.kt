@@ -84,8 +84,6 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
             assert(state.value is PlayingSongState.Seeking) {
                 "The state before confirmation SEEK must be SEEK"
             }
-
-            println("SEEK THREAD " + Thread.currentThread())
             val stateBeforeSeek = (s as PlayingSongState.Seeking).stateBeforeSeek
             if (stateBeforeSeek is PlayingSongState.Playing) {
                 // we dispatch the seek to system player
@@ -110,20 +108,25 @@ class PlayingSongStateController(private val soundPlayer: PlaywaveSoundPlayer) :
         assert(state.value is PlayingSongState.Prepare) {
             "The state before READY must be PREPARE"
         }
-        state.postValue(PlayingSongState.Ready(state.value!!.song!!))
+        state.value?.song?.let {
+            state.postValue(PlayingSongState.Ready(it))
+        }
     }
 
     override fun onTrack(position: Int) {
         assert(state.value !is PlayingSongState.None) {
             "The state before PLAYING must not be NONE"
         }
-        val s = state.value!!
-        if (s !is PlayingSongState.Seeking || s.confirmedToPlayAt) { //while seeking and not confirmed from ui don't dispatch playing cues
-            val song = s.song!!
-            state.postValue(PlayingSongState.Playing(song,
-                    position,
-                    prettySongDuration(position.toLong()))
-            )
+        state.value?.let {
+            if (it !is PlayingSongState.Seeking || it.confirmedToPlayAt) { //while seeking and not confirmed from ui don't dispatch playing cues
+                it.song?.let { song ->
+                    state.postValue(PlayingSongState.Playing(song,
+                            position,
+                            prettySongDuration(position.toLong()))
+                    )
+                }
+
+            }
         }
     }
 

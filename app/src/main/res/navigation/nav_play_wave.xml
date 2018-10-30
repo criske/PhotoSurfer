@@ -16,4 +16,13 @@
         android:id="@+id/searchSongFragment"
         android:name="com.crskdev.photosurfer.presentation.playwave.SearchSongFragment"
         android:label="SearchSongFragment" />
+    <fragment
+        android:id="@+id/updatePlaywaveFragment"
+        android:name="com.crskdev.photosurfer.presentation.playwave.UpdatePlaywaveFragment"
+        android:label="fragment_update_playwave"
+        tools:layout="@layout/fragment_update_playwave">
+        <action
+            android:id="@+id/action_updatePlaywaveFragment_to_searchSongFragment"
+            app:destination="@id/searchSongFragment" />
+    </fragment>
 </navigation>

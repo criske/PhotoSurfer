@@ -25,6 +25,7 @@ class UpsertPlaywaveFragment : Fragment() {
         }
         navHostFragment.navController.attachNavGraph(R.navigation.nav_play_wave) {
             startDestination = UpsertPlaywaveFragmentArgs.fromBundle(arguments).upsertType
+            arguments?.let { addDefaultArguments(it) }
         }
     }
 

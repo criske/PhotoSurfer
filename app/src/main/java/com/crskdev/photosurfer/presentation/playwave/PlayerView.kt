@@ -167,6 +167,7 @@ class PlayerView : CardView {
         class SeekTo(val position: Int, val confirmedToPlay: Boolean = false) : Action()
     }
 
+    @FunctionalInterface
     interface PlayerListener {
         fun onAction(action: Action)
     }

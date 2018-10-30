@@ -294,7 +294,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
 
     val authStateLiveData = ListenableLiveData(listenableAuthState).map {
         it.username
-    }!!
+    }
 
     val needsAuthLiveData = SingleLiveEvent<Unit>()
 
@@ -313,24 +313,17 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
             errorLiveData)
 
 
-    private val NO_PHOTO_ID = ""
-    private val photoIDLiveData = MutableLiveData<String>()
-    val photoInfoLiveData = Transformations
-            .switchMap(photoIDLiveData) {
-                if (it == NO_PHOTO_ID) {
-                    AbsentLiveData.create()
-                } else {
-                    photoRepository.getPhotoLiveData(it)
-                }
-            }
-    //.filter { it != null }
+    private val photoInfoLiveDataHelper = PhotoInfoLiveDataHelper {
+        photoRepository.getPhotoLiveData(it)
+    }
+    val photoInfoLiveData = photoInfoLiveDataHelper()
 
     fun showInfo(photoId: String) {
-        photoIDLiveData.value = photoId
+        photoInfoLiveDataHelper.setPhotoId(photoId)
     }
 
     fun clearShowInfo() {
-        photoIDLiveData.value = NO_PHOTO_ID
+        photoInfoLiveDataHelper.setPhotoId(null)
     }
 
     fun cancel() {

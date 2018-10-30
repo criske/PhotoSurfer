@@ -11,6 +11,8 @@ import com.crskdev.photosurfer.data.local.Contract
  */
 @Entity(tableName = Contract.TABLE_PLAYWAVE_CONTENT,
         foreignKeys = [ForeignKey(entity = PlaywaveEntity::class,
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
                 parentColumns = ["id"], childColumns = ["playwaveId"])])
 class PlaywaveContentEntity {
     @PrimaryKey(autoGenerate = true)
