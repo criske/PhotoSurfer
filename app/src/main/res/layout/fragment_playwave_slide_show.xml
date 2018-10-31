@@ -7,18 +7,16 @@
     android:fitsSystemWindows="true"
     tools:context=".presentation.playwave.PlaywaveSlideShowFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerSlideShow"
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/scrollerSlideShow"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="horizontal"
         android:overScrollMode="never"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/item_slide_show" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!--BOTTOM-->
     <androidx.appcompat.widget.Toolbar
@@ -44,7 +42,7 @@
         app:backgroundTint="@android:color/transparent"
         app:layout_constraintBottom_toTopOf="@+id/progressSlideShow"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/recyclerSlideShow"
+        app:layout_constraintStart_toStartOf="@+id/scrollerSlideShow"
         app:layout_constraintTop_toBottomOf="@+id/toolbarSlideShow"
         app:srcCompat="@drawable/ic_play_arrow_white_24dp" />
 
@@ -81,9 +79,9 @@
         android:layout_marginBottom="16dp"
         android:indeterminate="false"
         app:background="@color/colorLike"
-        app:layout_constraintBottom_toBottomOf="@+id/recyclerSlideShow"
-        app:layout_constraintEnd_toEndOf="@+id/recyclerSlideShow"
-        app:layout_constraintStart_toStartOf="@+id/recyclerSlideShow"
+        app:layout_constraintBottom_toBottomOf="@+id/scrollerSlideShow"
+        app:layout_constraintEnd_toEndOf="@+id/scrollerSlideShow"
+        app:layout_constraintStart_toStartOf="@+id/scrollerSlideShow"
         tools:max="100"
         tools:progress="50" />
 

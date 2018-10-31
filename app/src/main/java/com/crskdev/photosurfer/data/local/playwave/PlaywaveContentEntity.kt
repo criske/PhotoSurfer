@@ -9,6 +9,7 @@ import com.crskdev.photosurfer.data.local.Contract
 /**
  * Created by Cristian Pela on 14.10.2018.
  */
+//TODO to bare bone.. when certain photo-tables cleared by staletracker, photo info are gone. This must be a PHOTO ENTITY type
 @Entity(tableName = Contract.TABLE_PLAYWAVE_CONTENT,
         foreignKeys = [ForeignKey(entity = PlaywaveEntity::class,
                 onDelete = ForeignKey.CASCADE,

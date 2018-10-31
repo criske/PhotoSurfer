@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
@@ -24,19 +23,22 @@ import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.entities.ImageType
 import com.crskdev.photosurfer.entities.PlaywavePhoto
+import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.presentation.photo.PhotoInfoLiveDataHelper
 import com.crskdev.photosurfer.presentation.photo.listadapter.PhotoInfoSheetDisplayHelper
-import com.crskdev.photosurfer.util.*
+import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.glide.GlideApp
-import com.crskdev.photosurfer.util.livedata.filter
+import com.crskdev.photosurfer.util.hideSoftKeyboard
+import com.crskdev.photosurfer.util.inflateTintedMenu
 import com.crskdev.photosurfer.util.livedata.viewModelFromProvider
+import com.crskdev.photosurfer.util.navigateUp
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 import com.crskdev.photosurfer.util.recyclerview.GridDivider
 import com.crskdev.photosurfer.util.recyclerview.getSpanCountByScreenWidth
 import kotlinx.android.synthetic.main.fragment_update_playwave.*
 import kotlinx.android.synthetic.main.item_list_playwave_photos.view.*
 
-class UpdatePlaywaveFragment : Fragment() {
+class UpdatePlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
 
     private lateinit var ownViewModel: UpdatePlaywaveViewModel
 
@@ -162,6 +164,11 @@ class UpdatePlaywaveFragment : Fragment() {
         ownViewModel.photoInfoLiveData.observe(this, Observer {
             infoSheetDisplayHelper.displayInfoBottomSheet(view.context, it)
         })
+    }
+
+    override fun onBackOrUpPressed() {
+        activity?.hideSoftKeyboard()
+        sharedViewModel.clearPlayingSong()
     }
 }
 

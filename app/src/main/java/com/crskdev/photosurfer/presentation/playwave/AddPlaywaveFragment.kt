@@ -146,6 +146,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
     override fun onBackOrUpPressed() {
+        activity?.hideSoftKeyboard()
         viewModel.clearPlayingSong()
     }
 

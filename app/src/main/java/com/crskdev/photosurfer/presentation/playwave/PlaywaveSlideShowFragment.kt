@@ -3,7 +3,6 @@ package com.crskdev.photosurfer.presentation.playwave
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.*
@@ -15,13 +14,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayerProvider
-import com.crskdev.photosurfer.setStatusBarColor
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.getColorCompat
 import com.crskdev.photosurfer.util.glide.GlideApp
@@ -54,7 +51,8 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        activity?.setStatusBarColor(Color.TRANSPARENT)
+        //TODO use a lib or something
+        // activity?.setStatusBarColor(Color.TRANSPARENT)
         toolbarSlideShow.apply {
             setNavigationOnClickListener {
                 findNavController().popBackStack()
@@ -72,11 +70,7 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
                 true
             }
         }
-        val adapter = PlaywaveSlideShowAdapter(LayoutInflater.from(context),
-                GlideApp.with(this))
-        recyclerSlideShow.apply {
-            // PagerSnapHelper().attachToRecyclerView(this)
-            this.adapter = adapter
+        scrollerSlideShow.apply {
             tag = true
             setOnTouchListener { r, ev ->
                 if (ev.action == MotionEvent.ACTION_UP) {
@@ -124,8 +118,11 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         }
         viewModel.playwaveLiveData.observe(this, Observer {
             textSlideShowTitle.text = it.title
+            //todo use playwaveUI
             textSlideShowSong.text = it.song.artist + " - " + it.song.title
-            adapter.submit(it.photos)
+            val adapter = PlaywaveSlideShowPagerAdapter(LayoutInflater.from(context),
+                    GlideApp.with(this), it.photos)
+            scrollerSlideShow.adapter = adapter
         })
 
         viewModel.slideShowResultLiveData.observe(this, Observer {
@@ -159,9 +156,8 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
                     }
                 }
                 is SlideShowResult.Tick -> {
-                    val nextPosition = (recyclerSlideShow.layoutManager as LinearLayoutManager)
-                            .findFirstCompletelyVisibleItemPosition() + it.direction
-                    recyclerSlideShow.scrollToPosition(nextPosition)
+                    val nextPosition = scrollerSlideShow.currentItem + 1 * it.direction
+                    scrollerSlideShow.setCurrentItem(nextPosition, true)
                 }
             }
         })
@@ -222,7 +218,6 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
     }
 
     override fun onBackOrUpPressed() {
-        context?.getColorCompat(R.color.colorPrimary)?.let { activity?.setStatusBarColor(it) }
     }
 
 }
