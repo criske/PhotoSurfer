@@ -32,7 +32,7 @@ class SearchSongFragment : Fragment(), HasUpOrBackPressedAwareness, HasAppPermis
             val graph = context!!.dependencyGraph()
             UpsertPlaywaveViewModel(graph.diskThreadExecutor,
                     graph.playwaveRepository,
-                    graph.playwaveSoundPlayer)
+                    graph.playwaveSoundPlayerProvider)
         }
     }
 

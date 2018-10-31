@@ -42,5 +42,6 @@ internal fun SongUI.toEntity(): Song = Song(id, albumId, path, title, artist, du
 internal fun Playwave.toUI(): PlaywaveUI = PlaywaveUI(this.id, this.title, this.size, this.song.toUI(),
         !this.song.exists, this.photos)
 
-internal fun PlaywaveUI.toEntity(): Playwave = Playwave(id, title, size,
+internal fun PlaywaveUI.toEntity(): Playwave = Playwave(id, title.trim().split(" ").map { it.capitalize() }
+        .joinToString(" "), size,
         song?.toEntity() ?: Song.NO_SONG, photos)

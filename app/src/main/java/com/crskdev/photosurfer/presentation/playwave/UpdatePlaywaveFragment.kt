@@ -72,7 +72,7 @@ class UpdatePlaywaveFragment : Fragment() {
             UpsertPlaywaveViewModel(
                     graph.diskThreadExecutor,
                     graph.playwaveRepository,
-                    graph.playwaveSoundPlayer,
+                    graph.playwaveSoundPlayerProvider,
                     true
             ).apply {
                 selectPlaywave(id)

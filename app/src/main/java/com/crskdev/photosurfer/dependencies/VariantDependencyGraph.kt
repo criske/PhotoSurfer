@@ -1,14 +1,12 @@
 package com.crskdev.photosurfer.dependencies
 
 import com.crskdev.photosurfer.data.local.DaoManager
-import com.crskdev.photosurfer.data.local.PhotoSurferDB
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade
 import com.crskdev.photosurfer.data.local.photo.external.ExternalDirectory
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDAO
 import com.crskdev.photosurfer.data.local.photo.external.ExternalPhotoGalleryDB
 import com.crskdev.photosurfer.data.local.search.SearchTermTracker
 import com.crskdev.photosurfer.data.local.track.IStaleDataTrackSupervisor
-import com.crskdev.photosurfer.data.local.track.StaleDataTrackSupervisor
 import com.crskdev.photosurfer.data.remote.APICallDispatcher
 import com.crskdev.photosurfer.data.remote.auth.AuthToken
 import com.crskdev.photosurfer.data.remote.auth.AuthTokenStorage
@@ -28,12 +26,10 @@ import com.crskdev.photosurfer.services.executors.KExecutor
 import com.crskdev.photosurfer.services.executors.ThreadCallChecker
 import com.crskdev.photosurfer.services.messaging.DevicePushMessagingManager
 import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
-import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayerProvider
 import com.crskdev.photosurfer.services.schedule.IWorkQueueBookKeeper
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManager
-import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
-import retrofit2.Retrofit
 
 interface VariantDependencyGraph {
     //EXECUTORS
@@ -115,6 +111,6 @@ interface VariantDependencyGraph {
     val authNavigatorMiddleware: AuthNavigatorMiddleware
 
     //play wave
-    val playwaveSoundPlayer: PlaywaveSoundPlayer
+    val playwaveSoundPlayerProvider: PlaywaveSoundPlayerProvider
 
 }

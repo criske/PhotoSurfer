@@ -9,9 +9,8 @@ import com.crskdev.photosurfer.data.repository.Repository
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.entities.Playwave
 import com.crskdev.photosurfer.services.executors.KExecutor
-import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayerProvider
 import com.crskdev.photosurfer.util.livedata.*
-import java.lang.Error
 
 /**
  * Created by Cristian Pela on 17.10.2018.
@@ -19,7 +18,7 @@ import java.lang.Error
 class UpsertPlaywaveViewModel(
         private val executor: KExecutor,
         private val playwaveRepository: PlaywaveRepository,
-        playwaveSoundPlayer: PlaywaveSoundPlayer,
+        playwaveSoundPlayerProvider: PlaywaveSoundPlayerProvider,
         showPlaywavePhotos: Boolean = false) : ViewModel() {
 
     companion object {
@@ -30,7 +29,7 @@ class UpsertPlaywaveViewModel(
         value = null
     }
 
-    private val songStateController = PlayingSongStateController(playwaveSoundPlayer)
+    private val songStateController = PlayingSongStateController(playwaveSoundPlayerProvider.create())
 
     val foundSongsLiveData: LiveData<PagedList<SongUI>> = searchQueryLiveData.switchMap { query ->
         defaultPageListConfig()

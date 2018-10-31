@@ -40,6 +40,13 @@ interface PlaywaveSoundPlayer {
     fun release()
 }
 
+
+interface PlaywaveSoundPlayerProvider {
+
+    fun create(): PlaywaveSoundPlayer
+
+}
+
 class PlaywaveSoundPlayerImpl : PlaywaveSoundPlayer {
 
     private var mediaPlayer: MediaPlayer? = null

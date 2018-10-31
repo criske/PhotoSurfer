@@ -32,6 +32,7 @@ import com.crskdev.photosurfer.services.messaging.remote.MessagingAPI
 import com.crskdev.photosurfer.services.messaging.remote.messagingRetrofit
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
 import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayerImpl
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayerProvider
 import com.crskdev.photosurfer.services.schedule.ScheduledWorkManagerImpl
 import com.crskdev.photosurfer.services.schedule.WorkQueueBookKeeper
 import com.crskdev.photosurfer.util.Listenable
@@ -154,6 +155,9 @@ open class ProdDependencyGraph(context: Context) : VariantDependencyGraph {
             PlaywaveRepositoryImpl(executorManager, transactionRunner,
                     photoDAOFacade,
                     SongDAOImpl(context.contentResolver), db.playwaveDAO())
-    override val playwaveSoundPlayer: PlaywaveSoundPlayer = PlaywaveSoundPlayerImpl()
+    override val playwaveSoundPlayerProvider: PlaywaveSoundPlayerProvider =
+            object : PlaywaveSoundPlayerProvider {
+                override fun create(): PlaywaveSoundPlayer = PlaywaveSoundPlayerImpl()
+            }
 
 }

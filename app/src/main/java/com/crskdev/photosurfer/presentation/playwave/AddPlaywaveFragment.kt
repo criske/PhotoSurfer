@@ -39,7 +39,7 @@ class AddPlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             UpsertPlaywaveViewModel(
                     graph.diskThreadExecutor,
                     graph.playwaveRepository,
-                    graph.playwaveSoundPlayer)
+                    graph.playwaveSoundPlayerProvider)
         }
     }
 

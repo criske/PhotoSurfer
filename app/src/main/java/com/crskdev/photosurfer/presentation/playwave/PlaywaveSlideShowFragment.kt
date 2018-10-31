@@ -20,7 +20,7 @@ import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.data.repository.playwave.PlaywaveRepository
 import com.crskdev.photosurfer.dependencies.dependencyGraph
 import com.crskdev.photosurfer.presentation.HasUpOrBackPressedAwareness
-import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayer
+import com.crskdev.photosurfer.services.playwave.PlaywaveSoundPlayerProvider
 import com.crskdev.photosurfer.setStatusBarColor
 import com.crskdev.photosurfer.util.defaultTransitionNavOptions
 import com.crskdev.photosurfer.util.getColorCompat
@@ -43,7 +43,7 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
             val playwaveId = PlaywaveSlideShowFragmentArgs.fromBundle(arguments).playwaveId
             PlaywaveSlideShowViewModel(playwaveId,
                     graph.playwaveRepository,
-                    graph.playwaveSoundPlayer)
+                    graph.playwaveSoundPlayerProvider)
         }
     }
 
@@ -239,9 +239,9 @@ sealed class SlideShowResult {
 
 class PlaywaveSlideShowViewModel(playwaveId: Int,
                                  playwaveRepository: PlaywaveRepository,
-                                 playwaveSoundPlayer: PlaywaveSoundPlayer) : ViewModel() {
+                                 playwaveSoundPlayerProvider: PlaywaveSoundPlayerProvider) : ViewModel() {
 
-    private val playerController = PlayingSongStateController(playwaveSoundPlayer)
+    private val playerController = PlayingSongStateController(playwaveSoundPlayerProvider.create())
 
     val playwaveLiveData = playwaveRepository.getPlaywave(playwaveId, true).onNext {
         playerController.loadAndPlay(it.song.toUI())
