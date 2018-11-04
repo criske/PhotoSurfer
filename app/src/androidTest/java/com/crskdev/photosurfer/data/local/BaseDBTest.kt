@@ -1,6 +1,6 @@
 package com.crskdev.photosurfer.data.local
 
-import android.support.test.InstrumentationRegistry
+import androidx.test.InstrumentationRegistry
 import androidx.annotation.CallSuper
 import androidx.arch.core.executor.ArchTaskExecutor
 import androidx.arch.core.executor.TaskExecutor

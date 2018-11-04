@@ -153,6 +153,14 @@ fun <T, V> LiveData<T>.switchMap(block: (T) -> LiveData<V>): LiveData<V> =
 fun <T, V> LiveData<T>.map(block: (T) -> V): LiveData<V> =
         Transformations.map(this, block)
 
+fun <T> empty() = MutableLiveData<T>()
+
+fun <T> just(item: T) = MutableLiveData<T>().apply {
+    value = item
+}
+
+//View MODEL
+
 inline fun <reified V : ViewModel> viewModelFromProvider(activity: FragmentActivity, crossinline provider: () -> V): V =
         ViewModelProviders.of(activity, object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -168,6 +176,8 @@ inline fun <reified V : ViewModel> viewModelFromProvider(fragment: Fragment, cro
                 return provider() as T
             }
         }).get(V::class.java)
+
+//PAGE LIST
 
 fun PagedList.Config.Builder.defaultConfigBuild() = this
         .setEnablePlaceholders(true)
@@ -190,10 +200,6 @@ fun Long.suffixFormat(): String {
     }
 }
 
-fun <T> empty() = MutableLiveData<T>()
 
-fun <T> just(item: T) = MutableLiveData<T>().apply {
-    value = item
-}
 
 

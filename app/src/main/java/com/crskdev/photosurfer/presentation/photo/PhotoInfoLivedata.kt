@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import com.crskdev.photosurfer.entities.Photo
 import com.crskdev.photosurfer.util.livedata.AbsentLiveData
 import com.crskdev.photosurfer.util.livedata.filter
+import com.crskdev.photosurfer.util.livedata.just
 import com.crskdev.photosurfer.util.livedata.switchMap
 
 /**
@@ -13,13 +14,13 @@ import com.crskdev.photosurfer.util.livedata.switchMap
 class PhotoInfoLiveDataHelper(source: (id: String) -> LiveData<Photo>) {
 
     companion object {
-        private const val NO_PHOTO_ID = ""
+        const val NO_PHOTO_ID = ""
     }
 
     private val photoIDLiveData = MutableLiveData<String>()
     private val photoInfoLiveData = photoIDLiveData.switchMap {
         if (it == NO_PHOTO_ID) {
-            AbsentLiveData.create()
+            just(Photo.EMPTY)
         } else {
             source(it)
         }
@@ -29,6 +30,10 @@ class PhotoInfoLiveDataHelper(source: (id: String) -> LiveData<Photo>) {
 
     fun setPhotoId(id: String? = NO_PHOTO_ID) {
         photoIDLiveData.value = id ?: NO_PHOTO_ID
+    }
+
+    fun clearPhotoId() {
+        photoIDLiveData.value = NO_PHOTO_ID
     }
 
     operator fun invoke(): LiveData<Photo> = getLiveData()

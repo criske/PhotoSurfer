@@ -66,23 +66,27 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
         view!!.context.dependencyGraph().authNavigatorMiddleware
     }
 
-    private var infoSheetDisplayHelper = PhotoInfoSheetDisplayHelper(object : PhotoInfoSheetDisplayHelper.ActionsListener {
+    private var infoSheetDisplayHelper =
+        PhotoInfoSheetDisplayHelper(object : PhotoInfoSheetDisplayHelper.ActionsListener {
 
-        override fun onClose() {
-            viewModel.clearShowInfo()
-        }
+            override fun onClose() {
+                viewModel.clearShowInfo()
+            }
 
-        override fun onRemoveFromCollection(collectionId: Int, photoId: String) {
-            viewModel.removeFromCollection(collectionId, photoId)
-        }
+            override fun onRemoveFromCollection(collectionId: Int, photoId: String) {
+                viewModel.removeFromCollection(collectionId, photoId)
+            }
 
-        override fun displayCollection(collectionId: Int) {
-            authNavigatorMiddleware.navigate(
+            override fun displayCollection(collectionId: Int) {
+                authNavigatorMiddleware.navigate(
                     findNavController(),
-                    ListPhotosFragmentDirections.actionFragmentListPhotosToCollectionListPhotosFragment(collectionId),
-                    defaultTransitionNavOptions())
-        }
-    })
+                    ListPhotosFragmentDirections.actionFragmentListPhotosToCollectionListPhotosFragment(
+                        collectionId
+                    ),
+                    defaultTransitionNavOptions()
+                )
+            }
+        })
 
     private val glide by lazy {
         GlideApp.with(this)
@@ -91,19 +95,19 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         currentFilter = savedInstanceState
-                ?.getParcelable<ParcelableFilter>(KEY_CURRENT_FILTER)
-                ?.deparcelize()
+            ?.getParcelable<ParcelableFilter>(KEY_CURRENT_FILTER)
+            ?.deparcelize()
                 ?: FilterVM(FilterVM.Type.TRENDING, R.string.trending)
         viewModel = viewModelFromProvider(this) {
             val graph = context!!.dependencyGraph()
             ListPhotosViewModel(
-                    currentFilter,
-                    graph.diskThreadExecutor,
-                    graph.userRepository,
-                    graph.photoRepository,
-                    graph.collectionsRepository,
-                    graph.searchTermTracker,
-                    graph.listenableAuthState
+                currentFilter,
+                graph.diskThreadExecutor,
+                graph.userRepository,
+                graph.photoRepository,
+                graph.collectionsRepository,
+                graph.searchTermTracker,
+                graph.listenableAuthState
             )
         }
     }
@@ -120,11 +124,11 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
     private fun adapterFactory(): RecyclerView.Adapter<*> {
         val actionHelper = ListPhotosAdapter.actionHelper(
-                view!!.findNavController(),
-                authNavigatorMiddleware,
-                { viewModel.showInfo(it.id) },
-                { viewModel.delete(it) },
-                { viewModel.like(it) })
+            view!!.findNavController(),
+            authNavigatorMiddleware,
+            { viewModel.showInfo(it.id) },
+            { viewModel.delete(it) },
+            { viewModel.like(it) })
         return ListPhotosAdapter(LayoutInflater.from(context), glide, actionHelper)
     }
 
@@ -138,7 +142,8 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
         val authNavigatorMiddleware = view.context.dependencyGraph().authNavigatorMiddleware
 
         recyclerUserListPhotos.apply {
-            (layoutParams as CoordinatorLayout.LayoutParams).behavior = AppBarLayout.ScrollingViewBehavior()
+            (layoutParams as CoordinatorLayout.LayoutParams).behavior =
+                    AppBarLayout.ScrollingViewBehavior()
             layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
             adapter = adapterFactory()
             addItemDecoration(HorizontalSpaceDivider.withDpOf(2, context))
@@ -146,7 +151,13 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
         searchPhotosView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                viewModel.changePageListingType(FilterVM(FilterVM.Type.SEARCH, R.string.search_title, query?.trim()?.toLowerCase()))
+                viewModel.changePageListingType(
+                    FilterVM(
+                        FilterVM.Type.SEARCH,
+                        R.string.search_title,
+                        query?.trim()?.toLowerCase()
+                    )
+                )
                 searchPhotosView.clearFocus()
                 return true
             }
@@ -164,39 +175,67 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
                 when (it.itemId) {
                     R.id.menu_item_account -> {
                         authNavigatorMiddleware.navigate(
-                                navController,
-                                ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(
-                                        viewModel.authStateLiveData.value ?: ""))
+                            navController,
+                            ListPhotosFragmentDirections.actionFragmentListPhotosToUserProfileFragment(
+                                viewModel.authStateLiveData.value ?: ""
+                            )
+                        )
                     }
                     R.id.menu_action_logout -> {
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
+                        viewModel.changePageListingType(
+                            FilterVM(
+                                FilterVM.Type.TRENDING,
+                                R.string.trending
+                            )
+                        )
                         viewModel.logout()
                     }
                     R.id.menu_action_likes -> {
                         rvRef.swapAdapter(adapterFactory(), false)
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.LIKES, R.string.likes, viewModel.authStateLiveData.value))
+                        viewModel.changePageListingType(
+                            FilterVM(
+                                FilterVM.Type.LIKES,
+                                R.string.likes,
+                                viewModel.authStateLiveData.value
+                            )
+                        )
                     }
                     R.id.menu_action_trending -> {
                         rvRef.swapAdapter(adapterFactory(), false)
-                        viewModel.changePageListingType(FilterVM(FilterVM.Type.TRENDING, R.string.trending))
+                        viewModel.changePageListingType(
+                            FilterVM(
+                                FilterVM.Type.TRENDING,
+                                R.string.trending
+                            )
+                        )
                     }
                     R.id.menu_saved -> {
                         if (AppPermissionsHelper.hasStoragePermission(context)) {
                             rvRef.swapAdapter(adapterFactory(), false)
-                            viewModel.changePageListingType(FilterVM(FilterVM.Type.SAVED, R.string.saved_photos))
+                            viewModel.changePageListingType(
+                                FilterVM(
+                                    FilterVM.Type.SAVED,
+                                    R.string.saved_photos
+                                )
+                            )
                         } else {
                             AppPermissionsHelper.requestStoragePermission(activity!!)
                         }
                     }
                     R.id.menu_item_search_users -> {
-                        navController.navigate(R.id.fragment_search_users, null,
-                                defaultTransitionNavOptions())
+                        navController.navigate(
+                            R.id.fragment_search_users, null,
+                            defaultTransitionNavOptions()
+                        )
                     }
                     R.id.menu_action_collections -> {
                         authNavigatorMiddleware.navigate(navController, R.id.fragment_collections)
                     }
                     R.id.menu_item_play_waves -> {
-                        navController.navigate(ListPhotosFragmentDirections.actionFragmentListPhotosToPlaywaves(), defaultTransitionNavOptions())
+                        navController.navigate(
+                            ListPhotosFragmentDirections.actionFragmentListPhotosToPlaywaves(),
+                            defaultTransitionNavOptions()
+                        )
                     }
                 }
                 true
@@ -240,7 +279,7 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
         })
 
         viewModel.photoInfoLiveData.observe(this, Observer {
-            if (it != null)
+            if (it != Photo.EMPTY)
                 infoSheetDisplayHelper.displayInfoBottomSheet(context!!, it)
         })
 
@@ -258,7 +297,8 @@ class ListPhotosFragment : Fragment(), HasAppPermissionAwareness {
 
     private fun FilterVM.parcelize(): ParcelableFilter = ParcelableFilter(type.ordinal, title, data)
 
-    private fun ParcelableFilter.deparcelize(): FilterVM = FilterVM(FilterVM.Type.values()[type], title, data)
+    private fun ParcelableFilter.deparcelize(): FilterVM =
+        FilterVM(FilterVM.Type.values()[type], title, data)
 }
 
 
@@ -269,7 +309,8 @@ data class FilterVM(val type: FilterVM.Type, @StringRes val title: Int, val data
 }
 
 @Parcelize
-data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: String? = null) : Parcelable
+data class ParcelableFilter(val type: Int, @StringRes val title: Int, val data: String? = null) :
+    Parcelable
 
 class ListPhotosViewModel(initialFilterVM: FilterVM,
                           diskExecutor: KExecutor,
@@ -281,7 +322,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
 
 
     private val searchTermTrackerLiveData = SearchTermTrackerLiveData(searchTermTracker)
-            .filter { it?.second != null && it.second?.type == SearchTermTracker.Type.PHOTO_TERM }
+        .filter { it?.second != null && it.second?.type == SearchTermTracker.Type.PHOTO_TERM }
 
     init {
         searchTermTrackerLiveData.observeForever {
@@ -305,12 +346,13 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
     }
 
     private val choosablePhotoDataSourceFactory: ChoosablePhotoDataSourceFactory =
-            ChoosablePhotoDataSourceFactory(photoRepository, toDataSourceFilter(initialFilterVM))
+        ChoosablePhotoDataSourceFactory(photoRepository, toDataSourceFilter(initialFilterVM))
 
     val photosLiveData = photosPageListConfigLiveData(
-            diskExecutor,
-            choosablePhotoDataSourceFactory,
-            errorLiveData)
+        diskExecutor,
+        choosablePhotoDataSourceFactory,
+        errorLiveData
+    )
 
 
     private val photoInfoLiveDataHelper = PhotoInfoLiveDataHelper {
@@ -323,7 +365,7 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
     }
 
     fun clearShowInfo() {
-        photoInfoLiveDataHelper.setPhotoId(null)
+        photoInfoLiveDataHelper.clearPhotoId()
     }
 
     fun cancel() {
@@ -339,9 +381,15 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
         var filter = vmFilter
         if (vmFilter.type == FilterVM.Type.SEARCH) {
             if (vmFilter.data != null)
-                searchTermTracker.setTerm(Term(SearchTermTracker.Type.PHOTO_TERM, vmFilter.data.trim()))
+                searchTermTracker.setTerm(
+                    Term(
+                        SearchTermTracker.Type.PHOTO_TERM,
+                        vmFilter.data.trim()
+                    )
+                )
             else
-                filter = vmFilter.copy(data = searchTermTracker.getTerm(SearchTermTracker.Type.PHOTO_TERM)?.data)
+                filter =
+                        vmFilter.copy(data = searchTermTracker.getTerm(SearchTermTracker.Type.PHOTO_TERM)?.data)
         }
         val dataSourceFilter = toDataSourceFilter(filter)
         choosablePhotoDataSourceFactory.changeFilter(dataSourceFilter)
@@ -363,12 +411,18 @@ class ListPhotosViewModel(initialFilterVM: FilterVM,
     }
 
     private fun toDataSourceFilter(vmFilter: FilterVM): DataSourceFilter =
-            when (vmFilter.type) {
-                FilterVM.Type.TRENDING -> DataSourceFilter.RANDOM
-                FilterVM.Type.LIKES -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS, vmFilter.data!!)
-                FilterVM.Type.SEARCH -> DataSourceFilter(ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS, vmFilter.data!!)
-                FilterVM.Type.SAVED -> DataSourceFilter.SAVED
-            }
+        when (vmFilter.type) {
+            FilterVM.Type.TRENDING -> DataSourceFilter.RANDOM
+            FilterVM.Type.LIKES -> DataSourceFilter(
+                ChoosablePhotoDataSourceFactory.Type.LIKED_PHOTOS,
+                vmFilter.data!!
+            )
+            FilterVM.Type.SEARCH -> DataSourceFilter(
+                ChoosablePhotoDataSourceFactory.Type.SEARCH_PHOTOS,
+                vmFilter.data!!
+            )
+            FilterVM.Type.SAVED -> DataSourceFilter.SAVED
+        }
 
     fun delete(photo: Photo) {
         photoRepository.delete(photo)

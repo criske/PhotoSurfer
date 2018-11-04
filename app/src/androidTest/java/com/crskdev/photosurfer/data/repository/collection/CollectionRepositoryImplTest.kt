@@ -1,6 +1,6 @@
 package com.crskdev.photosurfer.data.repository.collection
 
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.runner.AndroidJUnit4
 import androidx.room.Room
 import com.crskdev.photosurfer.data.local.*
 import com.crskdev.photosurfer.data.local.photo.PhotoDAOFacade

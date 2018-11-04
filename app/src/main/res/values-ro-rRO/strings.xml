@@ -46,4 +46,5 @@
     <string name="new_playwave">Playwave Nou</string>
     <string name="create_new_playwave_with_photo">Playwave Nou Cu Poza</string>
     <string name="update_playwave">Modifica Playwave</string>
+    <string name="error_playwave_no_pictures">Playwave-ul nu are imagini. Adaugati cateva!</string>
 </resources>

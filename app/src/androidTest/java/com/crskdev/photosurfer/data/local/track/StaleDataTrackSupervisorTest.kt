@@ -1,7 +1,7 @@
 package com.crskdev.photosurfer.data.local.track
 
 
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.runner.AndroidJUnit4
 import com.crskdev.photosurfer.data.local.BaseDBTest
 import com.crskdev.photosurfer.data.local.Contract
 import com.crskdev.photosurfer.data.local.photo.PhotoEntity

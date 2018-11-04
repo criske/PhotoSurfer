@@ -9,20 +9,24 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorFilter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
+import com.chauthai.swipereveallayout.ViewBinderHelper
 import com.crskdev.photosurfer.R
 import com.crskdev.photosurfer.util.recyclerview.BindViewHolder
 import kotlinx.android.synthetic.main.item_playwave.view.*
-import com.chauthai.swipereveallayout.ViewBinderHelper
 
 
 /**
  * Created by Cristian Pela on 16.10.2018.
  */
 class PlaywavesAdapter(private val layoutInflater: LayoutInflater,
-                       private val action: (PlaywaveAction) -> Unit) : ListAdapter<PlaywaveUI, PlaywavesVH>(
+                       private val action: (PlaywaveAction) -> Unit) :
+    ListAdapter<PlaywaveUI, PlaywavesVH>(
         object : DiffUtil.ItemCallback<PlaywaveUI>() {
-            override fun areItemsTheSame(oldItem: PlaywaveUI, newItem: PlaywaveUI): Boolean = oldItem.id == newItem.id
-            override fun areContentsTheSame(oldItem: PlaywaveUI, newItem: PlaywaveUI): Boolean = oldItem == newItem
+            override fun areItemsTheSame(oldItem: PlaywaveUI, newItem: PlaywaveUI): Boolean =
+                oldItem.id == newItem.id
+
+            override fun areContentsTheSame(oldItem: PlaywaveUI, newItem: PlaywaveUI): Boolean =
+                oldItem == newItem
         }) {
 
     private val swipeViewBinderHelper = ViewBinderHelper()
@@ -36,7 +40,7 @@ class PlaywavesAdapter(private val layoutInflater: LayoutInflater,
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaywavesVH =
-            PlaywavesVH(layoutInflater.inflate(R.layout.item_playwave, parent, false), action)
+        PlaywavesVH(layoutInflater.inflate(R.layout.item_playwave, parent, false), action)
 
     override fun onBindViewHolder(holder: PlaywavesVH, position: Int) {
         val model = getItem(position)
@@ -60,18 +64,20 @@ class PlaywavesVH(view: View, action: (PlaywaveAction) -> Unit) : BindViewHolder
                 model?.let {
                     val play = if (it.hasError) {
                         PlaywaveAction.Error(resources.getString(R.string.error_playwave_no_song_in_media))
+                    } else if (it.size == 0) {
+                        PlaywaveAction.Error(resources.getString(R.string.error_playwave_no_pictures))
                     } else {
                         PlaywaveAction.Play(it.id)
                     }
                     action(play)
                 }
             }
-            btnPlaywaveEdit.setOnClickListener { _->
+            btnPlaywaveEdit.setOnClickListener { _ ->
                 model?.let {
                     action(PlaywaveAction.Edit(it.id))
                 }
             }
-            btnPlaywaveDelete.setOnClickListener { _->
+            btnPlaywaveDelete.setOnClickListener { _ ->
                 model?.let {
                     action(PlaywaveAction.Delete(it.id))
                 }
@@ -85,8 +91,14 @@ class PlaywavesVH(view: View, action: (PlaywaveAction) -> Unit) : BindViewHolder
             textPlaywaveSongInfo.text = model.song?.fullInfo
             textPlaywaveSize.text = model.size.toString()
             if (model.hasError) {
-                textPlaywaveSongInfo.setTextColor(ContextCompat.getColor(context, R.color.colorLike))
-                imgBtnPlaywaveSongPlay.colorFilter = PorterDuff.Mode.SRC_IN.toColorFilter(Color.DKGRAY)
+                textPlaywaveSongInfo.setTextColor(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.colorLike
+                    )
+                )
+                imgBtnPlaywaveSongPlay.colorFilter =
+                        PorterDuff.Mode.SRC_IN.toColorFilter(Color.DKGRAY)
             }
         }
     }

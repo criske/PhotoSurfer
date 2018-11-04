@@ -1,7 +1,7 @@
 package com.crskdev.photosurfer.data.local.playwave
 
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.InstrumentationRegistry
+import androidx.test.runner.AndroidJUnit4
 import androidx.paging.PositionalDataSource
 import com.crskdev.photosurfer.data.local.playwave.song.Song
 import com.crskdev.photosurfer.data.local.playwave.song.SongDataSource

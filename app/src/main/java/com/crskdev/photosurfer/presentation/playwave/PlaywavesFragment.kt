@@ -87,6 +87,7 @@ class PlaywavesFragment : Fragment(), HasAppPermissionAwareness {
                             defaultTransitionNavOptions())
                 }
                 is PlaywaveAction.Delete -> {
+                    //TODO add i18n
                     AlertDialog.Builder(context)
                             .setTitle("Delete this playwave permanently?")
                             .setCancelable(true)

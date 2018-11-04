@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.viewpager.widget.PagerAdapter
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.resource.bitmap.CenterInside
 import com.bumptech.glide.load.resource.bitmap.FitCenter
 import com.bumptech.glide.request.RequestOptions
 import com.crskdev.photosurfer.R
@@ -49,7 +50,7 @@ class PlaywaveSlideShowPagerAdapter(private val layoutInflater: LayoutInflater,
                     .load(item.urls[ImageType.FULL])
                     .apply(RequestOptions()
                             .error(R.drawable.ic_logo)
-                            .transforms(FitCenter()))
+                            .transforms(CenterInside()))
                     .into(imageSlideShow)
 
         }

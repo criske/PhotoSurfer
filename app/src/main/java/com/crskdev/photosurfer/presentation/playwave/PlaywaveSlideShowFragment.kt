@@ -11,6 +11,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.toColorFilter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
@@ -25,6 +26,7 @@ import com.crskdev.photosurfer.util.glide.GlideApp
 import com.crskdev.photosurfer.util.inflateTintedMenu
 import com.crskdev.photosurfer.util.livedata.*
 import kotlinx.android.synthetic.main.fragment_playwave_slide_show.*
+import java.lang.Error
 import kotlin.math.sign
 
 class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
@@ -38,9 +40,11 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         viewModel = viewModelFromProvider(this) {
             val graph = context!!.dependencyGraph()
             val playwaveId = PlaywaveSlideShowFragmentArgs.fromBundle(arguments).playwaveId
-            PlaywaveSlideShowViewModel(playwaveId,
-                    graph.playwaveRepository,
-                    graph.playwaveSoundPlayerProvider)
+            PlaywaveSlideShowViewModel(
+                playwaveId,
+                graph.playwaveRepository,
+                graph.playwaveSoundPlayerProvider
+            )
         }
     }
 
@@ -61,10 +65,12 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
                 when (it.itemId) {
                     R.id.menu_action_edit_playwave -> {
                         viewModel.pause()
-                        findNavController().navigate(PlaywaveSlideShowFragmentDirections
+                        findNavController().navigate(
+                            PlaywaveSlideShowFragmentDirections
                                 .actionPlaywaveSlideShowFragmentToUpsertPlaywaveFragment(R.id.updatePlaywaveFragment)
                                 .setPlaywaveId(PlaywaveSlideShowFragmentArgs.fromBundle(arguments).playwaveId),
-                                defaultTransitionNavOptions())
+                            defaultTransitionNavOptions()
+                        )
                     }
                 }
                 true
@@ -92,9 +98,9 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         }
         progressSlideShow.apply {
             progressDrawable.colorFilter = PorterDuff.Mode.SRC_IN.toColorFilter(
-                    context.getColorCompat(R.color.colorAccent).let {
-                        ColorUtils.setAlphaComponent(it, 255 / 4)
-                    }
+                context.getColorCompat(R.color.colorAccent).let {
+                    ColorUtils.setAlphaComponent(it, 255 / 4)
+                }
             )
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 var startManualSeek = false
@@ -120,8 +126,10 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
             textSlideShowTitle.text = it.title
             //todo use playwaveUI
             textSlideShowSong.text = it.song.artist + " - " + it.song.title
-            val adapter = PlaywaveSlideShowPagerAdapter(LayoutInflater.from(context),
-                    GlideApp.with(this), it.photos)
+            val adapter = PlaywaveSlideShowPagerAdapter(
+                LayoutInflater.from(context),
+                GlideApp.with(this), it.photos
+            )
             scrollerSlideShow.adapter = adapter
         })
 
@@ -195,11 +203,11 @@ class PlaywaveSlideShowFragment : Fragment(), HasUpOrBackPressedAwareness {
         }
 
         val groupAnimators = listOf(
-                toolbarSlideShow.translateYAnimator(false, showing, 200f),
-                progressSlideShow.translateYAnimator(true, showing, 200f),
-                textSlideShowSong.translateYAnimator(true, showing, 200f),
-                textSlideShowTitle.translateYAnimator(true, showing, 200f),
-                textSlideShowTitle.alphaAnimator(showing, 0.35f)
+            toolbarSlideShow.translateYAnimator(false, showing, 200f),
+            progressSlideShow.translateYAnimator(true, showing, 200f),
+            textSlideShowSong.translateYAnimator(true, showing, 200f),
+            textSlideShowTitle.translateYAnimator(true, showing, 200f),
+            textSlideShowTitle.alphaAnimator(showing, 0.35f)
         ).map {
             it.apply { duration = 500 }
         }
@@ -238,24 +246,32 @@ class PlaywaveSlideShowViewModel(playwaveId: Int,
 
     private val playerController = PlayingSongStateController(playwaveSoundPlayerProvider.create())
 
+    val messagesLiveData: LiveData<Message> = SingleLiveEvent<Message>()
+
     val playwaveLiveData = playwaveRepository.getPlaywave(playwaveId, true).onNext {
         playerController.loadAndPlay(it.song.toUI())
     }
 
     val slideShowResultLiveData: LiveData<SlideShowResult> = playerController
-            .getStateLiveData()
-            .splitAndMerge {
-                listOf<LiveData<SlideShowResult>>(
-                        map { SlideShowResult.PlayerState(it) },
-                        filter { it is PlayingSongState.Dynamic }
-                                .cast<PlayingSongState.Dynamic>()
-                                .interval(10)
-                                .scan(SlideShowResult.Tick(0, SlideShowResult.Tick.FORWARD) as SlideShowResult) { acc, curr ->
-                                    val position = curr.position
-                                    val direction = curr.position.minus((acc as SlideShowResult.Tick).timePosition).sign
-                                    SlideShowResult.Tick(position, direction)
-                                })
-            }
+        .getStateLiveData()
+        .splitAndMerge {
+            listOf<LiveData<SlideShowResult>>(
+                map { SlideShowResult.PlayerState(it) },
+                filter { it is PlayingSongState.Dynamic }
+                    .cast<PlayingSongState.Dynamic>()
+                    .interval(10)
+                    .scan(
+                        SlideShowResult.Tick(
+                            0,
+                            SlideShowResult.Tick.FORWARD
+                        ) as SlideShowResult
+                    ) { acc, curr ->
+                        val position = curr.position
+                        val direction =
+                            curr.position.minus((acc as SlideShowResult.Tick).timePosition).sign
+                        SlideShowResult.Tick(position, direction)
+                    })
+        }
 
     override fun onCleared() {
         playerController.release()
@@ -266,11 +282,19 @@ class PlaywaveSlideShowViewModel(playwaveId: Int,
     }
 
     fun play() {
-        playerController.playOrStop()
+        if (playwaveLiveData.value?.size != 0) {
+            playerController.playOrStop()
+        } else {
+            (messagesLiveData as MutableLiveData<Message>).value = Message.NoPicturesError
+        }
     }
 
     fun seekTo(position: Int, confirmedToPlayAt: Boolean) {
         playerController.seekTo(position, confirmedToPlayAt)
+    }
+
+    sealed class Message {
+        object NoPicturesError : Message()
     }
 
 }

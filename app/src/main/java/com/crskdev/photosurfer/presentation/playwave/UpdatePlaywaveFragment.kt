@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -44,19 +45,20 @@ class UpdatePlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
 
     private lateinit var sharedViewModel: UpsertPlaywaveViewModel
 
-    private val infoSheetDisplayHelper = PhotoInfoSheetDisplayHelper(object : PhotoInfoSheetDisplayHelper.ActionsListener {
-        override fun onClose() {
-            ownViewModel.clearShowInfo()
-        }
+    private val infoSheetDisplayHelper =
+        PhotoInfoSheetDisplayHelper(object : PhotoInfoSheetDisplayHelper.ActionsListener {
+            override fun onClose() {
+                ownViewModel.clearShowInfo()
+            }
 
-        override fun onRemoveFromCollection(collectionId: Int, photoId: String) {
-            Toast.makeText(context, "Unsupported Yet!", Toast.LENGTH_SHORT).show()
-        }
+            override fun onRemoveFromCollection(collectionId: Int, photoId: String) {
+                Toast.makeText(context, "Unsupported Yet!", Toast.LENGTH_SHORT).show()
+            }
 
-        override fun displayCollection(collectionId: Int) {
-            Toast.makeText(context, "Unsupported Yet!", Toast.LENGTH_SHORT).show()
-        }
-    })
+            override fun displayCollection(collectionId: Int) {
+                Toast.makeText(context, "Unsupported Yet!", Toast.LENGTH_SHORT).show()
+            }
+        })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,18 +66,20 @@ class UpdatePlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             val id = arguments?.getInt("playwaveId", -1) ?: -1
             val graph = context!!.dependencyGraph()
             val playwaveRepository = graph
-            UpdatePlaywaveViewModel(id,
-                    graph.playwaveRepository,
-                    graph.photoRepository)
+            UpdatePlaywaveViewModel(
+                id,
+                graph.playwaveRepository,
+                graph.photoRepository
+            )
         }
         sharedViewModel = viewModelFromProvider(parentFragment!!) {
             val id = arguments?.getInt("playwaveId", -1) ?: -1
             val graph = context!!.dependencyGraph()
             UpsertPlaywaveViewModel(
-                    graph.diskThreadExecutor,
-                    graph.playwaveRepository,
-                    graph.playwaveSoundPlayerProvider,
-                    true
+                graph.diskThreadExecutor,
+                graph.playwaveRepository,
+                graph.playwaveSoundPlayerProvider,
+                true
             ).apply {
                 selectPlaywave(id)
             }
@@ -104,16 +108,20 @@ class UpdatePlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
             }
         }
         btnUpdatePlaywaveSearch.setOnClickListener {
-            findNavController().navigate(UpdatePlaywaveFragmentDirections
+            findNavController().navigate(
+                UpdatePlaywaveFragmentDirections
                     .actionUpdatePlaywaveFragmentToSearchSongFragment(),
-                    defaultTransitionNavOptions())
+                defaultTransitionNavOptions()
+            )
         }
         btnUpdatePlaywavePlay.setOnClickListener {
             (it.tag as SongUI?)?.let { song -> sharedViewModel.selectSongToPlay(song) }
         }
 
-        val adapter = PlaywavePhotosAdapter(LayoutInflater.from(context),
-                GlideApp.with(this)) {
+        val adapter = PlaywavePhotosAdapter(
+            LayoutInflater.from(context),
+            GlideApp.with(this)
+        ) {
             when (it) {
                 is PlaywavePhotosAdapter.Action.Remove -> ownViewModel.removePhotoFromPlaywave(it.id)
                 is PlaywavePhotosAdapter.Action.Info -> ownViewModel.showInfo(it.id)
@@ -121,7 +129,10 @@ class UpdatePlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
         }
         recyclerUpdatePlaywave.apply {
             val spacingPx = resources.getDimensionPixelSize(R.dimen.item_photo_text_margin)
-            val spans = getSpanCountByScreenWidth(resources.getDimensionPixelSize(R.dimen.item_photo_thumb_size), spacingPx)
+            val spans = getSpanCountByScreenWidth(
+                resources.getDimensionPixelSize(R.dimen.item_photo_thumb_size),
+                spacingPx
+            )
             layoutManager = GridLayoutManager(context, spans)
             addItemDecoration(GridDivider(spacingPx, spans))
             this.adapter = adapter
@@ -133,7 +144,10 @@ class UpdatePlaywaveFragment : Fragment(), HasUpOrBackPressedAwareness {
                     is PlayerView.Action.Close -> sharedViewModel.justStop()
                     is PlayerView.Action.PlayOrStop -> sharedViewModel.playOrStopSong()
                     is PlayerView.Action.Pause -> sharedViewModel.pausePlayingSong()
-                    is PlayerView.Action.SeekTo -> sharedViewModel.seekTo(action.position, action.confirmedToPlay)
+                    is PlayerView.Action.SeekTo -> sharedViewModel.seekTo(
+                        action.position,
+                        action.confirmedToPlay
+                    )
                 }
             }
         })
@@ -198,10 +212,14 @@ class UpdatePlaywaveViewModel(private val playwaveId: Int,
 
 class PlaywavePhotosAdapter(private val inflater: LayoutInflater,
                             private val glide: RequestManager,
-                            private val action: (Action) -> Unit) : ListAdapter<PlaywavePhoto, PlaywavePhotoVH>(
+                            private val action: (Action) -> Unit) :
+    ListAdapter<PlaywavePhoto, PlaywavePhotoVH>(
         object : DiffUtil.ItemCallback<PlaywavePhoto>() {
-            override fun areItemsTheSame(oldItem: PlaywavePhoto, newItem: PlaywavePhoto): Boolean = oldItem.id == newItem.id
-            override fun areContentsTheSame(oldItem: PlaywavePhoto, newItem: PlaywavePhoto): Boolean = oldItem == newItem
+            override fun areItemsTheSame(oldItem: PlaywavePhoto, newItem: PlaywavePhoto): Boolean =
+                oldItem.id == newItem.id
+
+            override fun areContentsTheSame(oldItem: PlaywavePhoto, newItem: PlaywavePhoto): Boolean =
+                oldItem == newItem
         }) {
 
     sealed class Action {
@@ -210,20 +228,37 @@ class PlaywavePhotosAdapter(private val inflater: LayoutInflater,
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaywavePhotoVH =
-            PlaywavePhotoVH(inflater.inflate(R.layout.item_list_playwave_photos, parent, false), glide, action)
+        PlaywavePhotoVH(
+            inflater.inflate(R.layout.item_list_playwave_photos, parent, false),
+            glide,
+            action
+        )
 
-    override fun onBindViewHolder(holder: PlaywavePhotoVH, position: Int) = holder.bind(getItem(position))
+    override fun onBindViewHolder(holder: PlaywavePhotoVH, position: Int) =
+        holder.bind(getItem(position))
 }
 
 class PlaywavePhotoVH(v: View,
                       private val glide: RequestManager,
-                      private val action: (PlaywavePhotosAdapter.Action) -> Unit) : BindViewHolder<PlaywavePhoto>(v) {
+                      private val action: (PlaywavePhotosAdapter.Action) -> Unit) :
+    BindViewHolder<PlaywavePhoto>(v) {
 
     init {
         with(itemView) {
             btnPlaywavePhotoRemove.setOnClickListener { _ ->
                 model?.let {
-                    action(PlaywavePhotosAdapter.Action.Remove(it.id))
+                    //TODO add i18n
+                    AlertDialog.Builder(context)
+                        .setTitle("Remove this photo from playwave?")
+                        .setCancelable(true)
+                        .setNegativeButton("Cancel") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .setPositiveButton("OK") { dialog, _ ->
+                            action(PlaywavePhotosAdapter.Action.Remove(it.id))
+                            dialog.dismiss()
+                        }
+                        .create().show()
                 }
             }
             imagePlaywavePhoto.setOnLongClickListener { _ ->
@@ -238,15 +273,17 @@ class PlaywavePhotoVH(v: View,
     override fun onBindModel(model: PlaywavePhoto) {
         with(itemView) {
             model.urls[ImageType.SMALL]
-                    ?.let {
-                        glide.asDrawable()
-                                .load(it)
-                                .apply(RequestOptions()
-                                        .transforms(CenterCrop(), RoundedCorners(8))
-                                        .placeholder(R.drawable.ic_logo))
-                                .into(imagePlaywavePhoto)
+                ?.let {
+                    glide.asDrawable()
+                        .load(it)
+                        .apply(
+                            RequestOptions()
+                                .transforms(CenterCrop(), RoundedCorners(8))
+                                .placeholder(R.drawable.ic_logo)
+                        )
+                        .into(imagePlaywavePhoto)
 
-                    }
+                }
         }
     }
 

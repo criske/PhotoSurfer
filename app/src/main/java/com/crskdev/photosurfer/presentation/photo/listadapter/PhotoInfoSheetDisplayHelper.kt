@@ -47,32 +47,32 @@ class PhotoInfoSheetDisplayHelper(private val listener: ActionsListener) {
     fun displayInfoBottomSheet(context: Context, photo: Photo) {
         if (mSheetDialog == null) {
             mSheetDialog = BottomSheetDialog(context)
-                    .apply {
-                        setCancelable(true)
-                        setCanceledOnTouchOutside(true)
-                        setOnCancelListener {
-                            dismiss()
-                        }
+                .apply {
+                    setCancelable(true)
+                    setCanceledOnTouchOutside(true)
+                    setOnCancelListener {
+                        dismiss()
                     }
+                }
         }
         if (mLayoutInflater == null) {
             mLayoutInflater = LayoutInflater.from(context)
         }
         if (mSheetLayout == null) {
             mSheetLayout = mLayoutInflater!!
-                    .inflate(R.layout.item_photo_info_sheet, null, false).apply {
-                        findViewById<ImageButton>(R.id.imagePhotoInfoClose).setOnClickListener {
-                            dismiss()
-                        }
-                        findViewById<TextView>(R.id.textPhotoInfoAuthor).setOnClickListener {
-                            it.tag?.toString()?.let { username ->
-                                context.startActivity(IntentUtils.webIntentUnsplashPhotographer(username))
-                            }
-                        }
-                        findViewById<TextView>(R.id.textPhotoInfoUnsplash).setOnClickListener {
-                            context.startActivity(IntentUtils.webIntentUnsplash())
+                .inflate(R.layout.item_photo_info_sheet, null, false).apply {
+                    findViewById<ImageButton>(R.id.imagePhotoInfoClose).setOnClickListener {
+                        dismiss()
+                    }
+                    findViewById<TextView>(R.id.textPhotoInfoAuthor).setOnClickListener {
+                        it.tag?.toString()?.let { username ->
+                            context.startActivity(IntentUtils.webIntentUnsplashPhotographer(username))
                         }
                     }
+                    findViewById<TextView>(R.id.textPhotoInfoUnsplash).setOnClickListener {
+                        context.startActivity(IntentUtils.webIntentUnsplash())
+                    }
+                }
             mSheetDialog!!.setContentView(mSheetLayout!!)
         }
 
@@ -83,11 +83,15 @@ class PhotoInfoSheetDisplayHelper(private val listener: ActionsListener) {
                 text = photo.authorFullName
                 tag = photo.authorUsername
             }
-            findViewById<TextView>(R.id.textPhotoInfoSize).text = context.getString(R.string.photo_info_size, photo.width, photo.height)
+            findViewById<TextView>(R.id.textPhotoInfoSize).text =
+                    context.getString(R.string.photo_info_size, photo.width, photo.height)
             val date = UNSPLASH_DATE_FORMATTER.parse(photo.createdAt)
 
             //TODO test this might not be accurate representation
-            findViewById<TextView>(R.id.textPhotoInfoCreationDate).text = context.getString(R.string.photo_info_created, DISPLAY_DATE_FORMATTER.format(date))
+            findViewById<TextView>(R.id.textPhotoInfoCreationDate).text = context.getString(
+                R.string.photo_info_created,
+                DISPLAY_DATE_FORMATTER.format(date)
+            )
             findViewById<Chip>(R.id.chipPhotoInfoColor).apply {
                 val color = Color.parseColor(photo.colorString)
                 chipBackgroundColor = ColorStateList.valueOf(color)
@@ -102,10 +106,16 @@ class PhotoInfoSheetDisplayHelper(private val listener: ActionsListener) {
 
             }
 
-            val chipGroupPhotoInfoCategories = findViewById<ChipGroup>(R.id.chipGroupPhotoInfoCollections)
+            val chipGroupPhotoInfoCategories =
+                findViewById<ChipGroup>(R.id.chipGroupPhotoInfoCollections)
             chipGroupPhotoInfoCategories.removeAllViews()
             photo.collections.forEach { collection ->
-                val chip = Chip(ContextThemeWrapper(context, R.style.Widget_MaterialComponents_Chip_Action)).apply {
+                val chip = Chip(
+                    ContextThemeWrapper(
+                        context,
+                        R.style.Widget_MaterialComponents_Chip_Action
+                    )
+                ).apply {
                     text = collection.title
                     tag = collection.id
                     isCloseIconVisible = true
@@ -123,8 +133,10 @@ class PhotoInfoSheetDisplayHelper(private val listener: ActionsListener) {
     }
 
     fun dismiss() {
-        mSheetDialog?.dismiss()
-        listener.onClose()
+        if (mSheetDialog?.isShowing == true) {
+            mSheetDialog?.dismiss()
+            listener.onClose()
+        }
     }
 
     fun clear() {
